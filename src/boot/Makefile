@@ -5,10 +5,6 @@
 # Makefile for the boot loader.
 #----------------------------------------------------------------------------
 
-DIR_ROOT	:= ..
-
-include $(DIR_ROOT)/scripts/config.mk
-
 DIR_TARGET	:= $(DIR_BUILD)/boot
 ASFLAGS 	:= -f bin
 

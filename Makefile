@@ -7,6 +7,7 @@
 DIR_ROOT := .
 
 include $(DIR_ROOT)/scripts/config.mk
+include $(DIR_ROOT)/docker/config.mk
 
 
 #----------------------------------------------------------------------------
@@ -29,7 +30,7 @@ qemu-debug-boot:
 
 .PHONY: gdb-debug-boot
 gdb-debug-boot: 
-	@$(GDB) -x scripts/gdb/debug_commands.txt
+	@$(GDB) -x $(DIR_SCRIPTS)/gdb/debug_commands.txt
 	@# Help: Runs GDB with some personal preferences to debug the bootloader
 
 .PHONY: test
@@ -42,6 +43,12 @@ clean:
 	@rm -rf $(DIR_BUILD)
 	@echo "[clean] Generated files deleted"
 	@# Help: Clean all generated files
+
+.PHONY: prepare-build-env
+prepare-build-env:
+	@echo "[prepare-build-env] Building container that can compile AlmeidaOS"
+	@$(DOCKER) build -t $(IMAGE_NAME):$(IMAGE_TAG) $(DIR_DOCKER)
+	@# Help: Build the docker container that can compile the OS
 
 MAKEOVERRIDES =
 help:

@@ -1,10 +1,10 @@
 #--------------------
 # Project directories
 #--------------------
-DIR_BOOT	:= $(DIR_ROOT)/boot
+DIR_BOOT	:= $(DIR_ROOT)/src/boot
 DIR_BUILD	:= $(DIR_ROOT)/build
 DIR_SCRIPTS	:= $(DIR_ROOT)/scripts
-
+DIR_INCLUDE	:= $(DIR_ROOT)/TO_BE_DEFINED
 
 #-------------------
 # Tool configuration
