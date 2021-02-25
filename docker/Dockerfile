@@ -45,4 +45,7 @@ RUN set -x \
 	&& ./build-binutils.sh ${BINUTILS_VERSION} \
 	&& ./build-gcc.sh ${GCC_VERSION}
 
+# Install NASM
+RUN set -x && apt-get install nasm
+
 CMD ["/bin/bash"]

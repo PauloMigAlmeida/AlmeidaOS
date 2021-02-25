@@ -5,6 +5,10 @@
 # Makefile for the boot loader.
 #----------------------------------------------------------------------------
 
+DIR_ROOT	:= $(CURDIR)/../../
+
+include $(DIR_ROOT)/scripts/config.mk
+
 DIR_TARGET	:= $(DIR_BUILD)/boot
 ASFLAGS 	:= -f bin
 
@@ -14,7 +18,7 @@ BIN_ASM_FILES	:= $(SRC_ASM_FILES:%.asm=$(DIR_TARGET)/%.bin)
 TAG 		:= [boot]
 
 all: mkdir $(BIN_ASM_FILES)
-	@echo "$(TAG) SUCCESS"
+	@echo "$(TAG) Compiled successfully"
 
 .PHONY: mkdir
 mkdir:
