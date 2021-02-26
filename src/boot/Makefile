@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------------
 # AlmeidaOS boot loader makefile
 #
@@ -31,5 +30,3 @@ clean:
 $(BIN_ASM_FILES): $(DIR_TARGET)/%.bin: %.asm
 	@echo "$(TAG) Assembling $<"
 	@$(AS) $(ASFLAGS) $< -o $@
-
-
