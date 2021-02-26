@@ -10,3 +10,10 @@ To build it you have to run:
 ```{shell}
 make build
 ```
+
+## Run
+In order to run this app, you are expected to have `make` and `qemu-system-x86_64` installed in your machine.
+
+```{shell}
+make test
+```
