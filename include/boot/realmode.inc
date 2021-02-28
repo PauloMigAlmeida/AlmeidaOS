@@ -11,6 +11,10 @@
 ; Global variables
 ;=============================================================================
 BIOS.Drive.Id   equ   0
+; While I don't choose the filesystem to be used, physical device blocks
+; will be the unit used for now. This defines that the second stage Loader
+; can't be bigger than 5*512 bytes (which ought to be enough for now)
+Loader.File.NumberOfBlocks   equ   5
 
 ;===============================================================================
 ; Functions

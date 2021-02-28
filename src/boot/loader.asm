@@ -47,3 +47,10 @@ start:
 
   ; enter a endless loop. This instruction should never be reached
   jmp endless_loop
+
+; On physical devices this isn't required because the BIOS will
+; pull the x number of blocks regardless of their content, however,
+; if you are using QEMU and a raw image, it will strugle to Read
+; the BIOS Disk Access Packet (DAP ) because the file finishes
+; way earlier than the number of blocks requested.
+times (Loader.File.NumberOfBlocks * 512) - ($ - $$) db 0

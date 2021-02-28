@@ -42,7 +42,7 @@ start:
     xor ax, ax
     mov ds, ax
     mov es, ax
-    mov bx, Mem.Stack.Top
+    mov bx, MBR.Mem.Stack.Top
 
     ; Turn off interrupts for SS:SP update to avoid a problem with buggy 8088 CPUs
     cli
@@ -66,10 +66,18 @@ boot:
     ; If it doesn't it hangs the system, otherwise it returns from the function
     call bios_check_extensions_present
 
+    ; Read the second-stage loader from the disk.
+    ; If it can't read it the system will hang, otherwise it returns from the fnc
+    call bios_extended_read_sectors_from_drive
+
+    ; Perform a long jump to the second-stage loader
+    jmp 0:Loader.Mem.Stack.Top
+
     ; enter a endless loop. This instruction should never be reached
     jmp endless_loop
 
 
+; Zero-pad the file all the way up to the byte number 510
 times 510-($-$$) db 0
 
 ; Add the boot signature AA55 at the very end (Little endian)
