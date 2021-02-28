@@ -34,16 +34,38 @@
 jmp start
 
 ; Include functions/constants that are useful in real mode
-%include "../../include/boot/realmode.inc"
-%include "../../include/boot/second_stage_loader.inc"
+%include "../../include/boot/realmode.asm"
+%include "../../include/boot/second_stage_loader.asm"
 
 start:
+
+  ; Proper initialisation of stack during BIOS bootloader
+  ;   https://stackoverflow.com/a/33975465/832748
+  xor ax, ax
+  mov ds, ax
+  mov es, ax
+  mov bx, Loader.Mem.Stack.Top
+
+  ; Turn off interrupts for SS:SP update to avoid a problem with buggy 8088 CPUs
+  cli
+  ; SS = 0x0000
+  mov ss, ax
+  ; SP = 0x7c00
+  ; Set the stack starting just below where the bootloader is at 0x0:0x7c00.
+  mov sp, bx
+  ; Turn interrupts back on
+  sti
+
+boot:
   ; Save DriveId for later
   mov [BIOS.Drive.Id], dl
 
   ; Print booting message
   mov si, Realmode.SecondStage.Booting.Msg
   call display_string
+
+  ; Attempt to enable the A20 line if necessary.
+  call EnableA20
 
   ; enter a endless loop. This instruction should never be reached
   jmp endless_loop

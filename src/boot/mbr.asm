@@ -33,8 +33,8 @@
 jmp start
 
 ; Include functions/constants that are useful in real mode
-%include "../../include/boot/realmode.inc"
-%include "../../include/boot/first_stage_loader.inc"
+%include "../../include/boot/realmode.asm"
+%include "../../include/boot/first_stage_loader.asm"
 
 start:
     ; Proper initialisation of stack during BIOS bootloader
@@ -69,6 +69,9 @@ boot:
     ; Read the second-stage loader from the disk.
     ; If it can't read it the system will hang, otherwise it returns from the fnc
     call bios_extended_read_sectors_from_drive
+
+    ; Save DriveId to dl to be retrieved on second stage loader -> TBC
+    mov dl,[BIOS.Drive.Id]
 
     ; Perform a long jump to the second-stage loader
     jmp 0:Loader.Mem.Stack.Top
