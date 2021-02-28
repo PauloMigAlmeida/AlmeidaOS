@@ -1,6 +1,8 @@
 [BITS 16]
 [ORG 0x7c00]
 
+; Produce a map file containing all symbols and sections.
+[map all ../../build/boot/mbr.map]
 ;===============================================================================
 ; boot
 ;
@@ -32,6 +34,7 @@ jmp start
 
 ; Include functions/constants that are useful in real mode
 %include "../../include/boot/realmode.inc"
+%include "../../include/boot/first_stage_loader.inc"
 
 start:
     ; Proper initialisation of stack during BIOS bootloader
@@ -55,15 +58,16 @@ start:
     mov [BIOS.Drive.Id], dl
 
 boot:
-    mov si, Realmode.Booting.Msg
+    ; Print booting message
+    mov si, Realmode.FirstStage.Booting.Msg
     call display_string
 
+    ; Check if disk extensions is available in the BIOS
+    ; If it doesn't it hangs the system, otherwise it returns from the function
     call bios_check_extensions_present
-
 
     ; enter a endless loop. This instruction should never be reached
     jmp endless_loop
-
 
 
 times 510-($-$$) db 0

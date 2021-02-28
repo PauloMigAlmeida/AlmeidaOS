@@ -14,32 +14,38 @@ include $(DIR_ROOT)/docker/config.mk
 # Build targets
 #----------------------------------------------------------------------------
 
-default: boot
+default: boot raw-disk
 
-all: boot 
+all: boot raw-disk
 
 .PHONY: boot
-boot: 
+boot:
 	@$(MAKE) $(MAKE_FLAGS) --directory=$(DIR_BOOT)
 	@# Help: Build the bootloader
 
-.PHONY: qemu-debug-boot
-qemu-debug-boot: 
-	@$(QEMU) -gdb tcp::8864 -drive format=raw,file=$(DIR_BUILD)/boot/boot.bin -S
+.PHONY: raw-disk
+raw-disk:
+	@echo "[raw-disk] Creating Raw disk image containing the AlmeidaOS"
+	@$(DIR_SCRIPTS)/raw_disk.sh
+	@# Help: Creates a Raw disk image containing the AlmeidaOS
+
+.PHONY: qemu-debug
+qemu-debug:
+	@$(QEMU) -gdb tcp::8864 -drive format=raw,file=$(OUTPUT_RAW_DISK) -S
 	@# Help: Runs QEMU in debug mode so that we can debug the bootloader
 
-.PHONY: gdb-debug-boot
-gdb-debug-boot: 
+.PHONY: gdb-debug
+gdb-debug:
 	@$(GDB) -x $(DIR_SCRIPTS)/gdb/debug_commands.txt
 	@# Help: Runs GDB with some personal preferences to debug the bootloader
 
 .PHONY: test
-test: 
-	@$(QEMU) -drive format=raw,file=$(DIR_BUILD)/boot/boot.bin
+test:
+	@$(QEMU) -drive format=raw,file=$(OUTPUT_RAW_DISK)
 	@# Help: Runs QEMU without debugging settings
 
 .PHONY: clean
-clean: 
+clean:
 	@rm -rf $(DIR_BUILD)
 	@echo "[clean] Generated files deleted"
 	@# Help: Clean all generated files
@@ -52,7 +58,7 @@ prepare-build-env:
 
 .PHONY: build
 build: prepare-build-env
-	@echo "[build] Buiilding AlmeidaOS"
+	@echo "[build] Building AlmeidaOS"
 	@$(DIR_DOCKER)/build.sh all
 	@# Help: Build the OS using a docker container
 
