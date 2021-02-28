@@ -18,6 +18,9 @@ Loader.Mem.Stack.Top  equ   0x00007e00
 Realmode.SecondStage.Booting.Msg            db '[AlmeidaOS] :: Booting Second Stage Loader',0x0d,0x0a,0
 Realmode.SecondStage.A20Enabled.Msg         db '[AlmeidaOS] :: A20 enabled successfully',0x0d,0x0a,0
 Realmode.SecondStage.A20EnablingError.Msg   db '[AlmeidaOS] :: A20 could not be enabled. aborting',0x0d,0x0a,0
+Realmode.SecondStage.CPUIDNotSupported.Msg   db '[AlmeidaOS] :: CPUID instruction is not available. aborting',0x0d,0x0a,0
+Realmode.SecondStage.64BitNotSupported.Msg   db '[AlmeidaOS] :: 64-bit mode is not available. aborting',0x0d,0x0a,0
+Realmode.SecondStage.64BitSupported.Msg     db '[AlmeidaOS] :: 64-bit mode is available',0x0d,0x0a,0
 
 
 ;===============================================================================
@@ -25,7 +28,7 @@ Realmode.SecondStage.A20EnablingError.Msg   db '[AlmeidaOS] :: A20 could not be 
 ;===============================================================================
 
 ;=============================================================================
-; EnableA20
+; enable_A20
 ;
 ; Enable the A20 address line, so memory above 1MiB can be accessed.
 ;
@@ -35,13 +38,13 @@ Realmode.SecondStage.A20EnablingError.Msg   db '[AlmeidaOS] :: A20 could not be 
 ; Killed registers:
 ;   None
 ;=============================================================================
-EnableA20:
+enable_A20:
 
     ; Preserve ax register.
     push    ax
 
     ; Check if the A20 line is already enabled.
-    call    TestA20
+    call    test_A20
     jc      .done
 
     .attempt1:
@@ -51,7 +54,7 @@ EnableA20:
       int     0x15
 
       ; Check if A20 line is now enabled.
-      call    TestA20
+      call    test_A20
       jc      .done
 
     .attempt2:
@@ -91,7 +94,7 @@ EnableA20:
       call    .attempt2.wait1
 
       ; Check if the A20 line is now enabled.
-      call    TestA20
+      call    test_A20
       jc      .done
 
       jmp     .attempt3
@@ -119,7 +122,7 @@ EnableA20:
       xor     ax,     ax
 
       ; Check if A20 line is now enabled.
-      call TestA20
+      call test_A20
       jc  .done
 
     .failed:
@@ -142,7 +145,7 @@ EnableA20:
 
 
 ;=============================================================================
-; TestA20
+; test_A20
 ;
 ; Check to see if the A20 address line is enabled.
 ;
@@ -152,7 +155,7 @@ EnableA20:
 ; Killed registers:
 ;   None
 ;=============================================================================
-TestA20:
+test_A20:
 
     ; Preserve registers.
     push    ds
@@ -213,6 +216,108 @@ TestA20:
         pop     ds
 
         ret
+
+
+;=============================================================================
+; HasCPUID
+;
+; Detect if the cpu supports the CPUID instruction.
+;
+; Bit 21 of the EFLAGS register can be modified only if the CPUID instruction
+; is supported.
+;
+; Return flags:
+;   CF      Set if CPUID is supported
+;
+; Killed registers:
+;   None
+;=============================================================================
+HasCPUID:
+
+  ; Preserve registers.
+  push    eax
+  push    ecx
+
+  ; Copy flags to eax and ecx.
+  pushfd
+  pop     eax
+  mov     ecx,    eax
+
+  ; Set flag 21 (the ID bit)
+  xor     eax,    (1 << 21)
+  push    eax
+  popfd
+
+  ; Copy flags back to eax. If CPUID is supported, bit 21 will still be set.
+  pushfd
+  pop     eax
+
+  ; Restore the original flags from ecx.
+  push    ecx
+  popfd
+
+  ; Initialize the return flag (carry) to unsupported.
+  clc
+
+  ; If eax and ecx are equal, then flag 21 didn't remain set, and CPUID is
+  ; not supported.
+  xor     eax,    ecx
+  jz      .done       ; CPUID is not supported
+
+  .supported:
+
+    ; CPUID is supported.
+    stc
+
+  .done:
+
+    ; Restore registers.
+    pop     ecx
+    pop     eax
+
+    ret
+
+cpu_supports_64_bit_mode:
+    ; Detect if the cpuid instruction is available.
+    call    HasCPUID
+    jnc     .error.noCPUID
+
+    ; Is the processor info function supported?
+    mov     eax,    0x80000000  ; Get Highest Extended Function Supported
+    cpuid
+    cmp     eax,    0x80000001
+    jb      .error.no64BitMode
+
+    ; Use processor info function to see if 64-bit mode is supported.
+    mov     eax,    0x80000001  ; Extended Processor Info and Feature Bits
+    cpuid
+    test    edx,    (1 << 29)   ; 64-bit mode bit
+    jz      .error.no64BitMode
+
+    ; Clear 32-bit register values.
+    xor     eax,    eax
+    xor     edx,    edx
+
+    ; Display a status message.
+    mov     si,     Realmode.SecondStage.64BitSupported.Msg
+    call    display_string
+    ; returns from function
+    ret
+
+    .error.noCPUID:
+      ; Display a status message.
+      mov     si,     Realmode.SecondStage.CPUIDNotSupported.Msg
+      call    display_string
+      ; hangs the system
+      jmp endless_loop
+
+    .error.no64BitMode:
+      ; Display a status message.
+      mov     si,     Realmode.SecondStage.64BitNotSupported.Msg
+      call    display_string
+      ; hangs the system
+      jmp endless_loop
+
 
 
 %endif ; __ALMEIDAOS_SSL_INC__

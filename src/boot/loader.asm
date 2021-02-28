@@ -65,7 +65,10 @@ boot:
   call display_string
 
   ; Attempt to enable the A20 line if necessary.
-  call EnableA20
+  call enable_A20
+
+  ; Check whether we are running on a 64-bit processor
+  call cpu_supports_64_bit_mode
 
   ; enter a endless loop. This instruction should never be reached
   jmp endless_loop
