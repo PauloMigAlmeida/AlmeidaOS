@@ -70,8 +70,67 @@ boot:
   ; Check whether we are running on a 64-bit processor
   call cpu_supports_64_bit_mode
 
+  ; Prepare to enter protected mode
+  call enter_protected_mode
+
   ; enter a endless loop. This instruction should never be reached
   jmp endless_loop
+
+
+[BITS 32]
+
+; TODO:
+;  1 -> Revisit the GDT descriptions created...I don't think we need one for 16-bit... in fact, I think we may not need more than 3 (Null, code, data)
+;  2 -> Initialise the segments on protected mode correctly...the ! is printing at the top...this doesn't look good at all.
+;  3 -> Add docs/comments for the things you decide (bits/cnfs) -> GDT segments
+;  4 -> Try to refactor that second_stage_loader...the GDT stuff made it look a bit weird
+;  5 -> Create a display string function for protected mode.
+;  6 -> Push stuff to stack on enter_protected_mode function
+
+
+TestMessage db 'Protected Mode',0xc,0xa,0
+
+protected_mode_boot:
+
+  sti;
+
+  mov ebx,0xb8000    ; The video address
+  mov ax,'P'         ; The character to be print
+  mov ah,0x0F        ; The color: white(F) on black(0)
+  mov [ebx],ax        ; Put the character into the video memory
+
+  ; Disable interruptions
+  cli
+
+  .end:
+    hlt
+    jmp .end
+
+display_string_32:
+    pusha
+
+    mov     ah,     0x0e    ; int 10 AH=0x0e
+    xor     bx,     bx
+
+    cld
+
+    .loop:
+
+        ; Read next string character into al register.
+        lodsb
+
+        ; Break when a null terminator is reached.
+        cmp     al,     0
+        je      .done
+
+        ; Call int 10 function 0eh (print character to teletype)
+        int     0x10
+        jmp     .loop
+
+    .done:
+
+        popa
+        ret
 
 ; On physical devices this isn't required because the BIOS will
 ; pull the x number of blocks regardless of their content, however,

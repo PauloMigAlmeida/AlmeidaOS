@@ -17,9 +17,9 @@ Loader.Mem.Stack.Top  equ   0x00007e00
 ;===============================================================================
 Realmode.SecondStage.Booting.Msg            db '[AlmeidaOS] :: Booting Second Stage Loader',0x0d,0x0a,0
 Realmode.SecondStage.A20Enabled.Msg         db '[AlmeidaOS] :: A20 enabled successfully',0x0d,0x0a,0
-Realmode.SecondStage.A20EnablingError.Msg   db '[AlmeidaOS] :: A20 could not be enabled. aborting',0x0d,0x0a,0
-Realmode.SecondStage.CPUIDNotSupported.Msg   db '[AlmeidaOS] :: CPUID instruction is not available. aborting',0x0d,0x0a,0
-Realmode.SecondStage.64BitNotSupported.Msg   db '[AlmeidaOS] :: 64-bit mode is not available. aborting',0x0d,0x0a,0
+Realmode.SecondStage.A20EnablingError.Msg   db '[AlmeidaOS] :: A20 could not be enabled. Aborting',0x0d,0x0a,0
+Realmode.SecondStage.CPUIDNotSupported.Msg  db '[AlmeidaOS] :: CPUID instruction is not available. Aborting',0x0d,0x0a,0
+Realmode.SecondStage.64BitNotSupported.Msg  db '[AlmeidaOS] :: 64-bit mode is not available. Aborting',0x0d,0x0a,0
 Realmode.SecondStage.64BitSupported.Msg     db '[AlmeidaOS] :: 64-bit mode is available',0x0d,0x0a,0
 
 
@@ -318,6 +318,75 @@ cpu_supports_64_bit_mode:
       ; hangs the system
       jmp endless_loop
 
+;-----------------------------------------------------------------------------
+; Global Descriptor Table used (temporarily) in 32-bit protected mode
+;-----------------------------------------------------------------------------
+GDT32.Table:
+
+    ; Null descriptor
+    dw      0x0000  ; LimitLow
+    dw      0x0000  ; BaseLow
+    db      0x00    ; BaseMiddle
+    db      0x00    ; Access
+    db      0x00    ; LimitHighFlags
+    db      0x00    ; BaseHigh
+
+    ; 32-bit protected mode - code segment descriptor (selector = 0x08)
+    ; (Base=0, Limit=4GiB-1, RW=1, DC=0, EX=1, PR=1, Priv=0, SZ=1, GR=1)
+    dw      0xffff      ; LimitLow
+    dw      0x0000      ; BaseLow
+    db      0x00        ; BaseMiddle
+    db      10011010b   ; Access
+    db      11001111b   ; LimitHighFlags
+    db      0x00        ; BaseHigh
+
+    ; 32-bit protected mode - data segment descriptor (selector = 0x10)
+    ; (Base=0, Limit=4GiB-1, RW=1, DC=0, EX=0, PR=1, Priv=0, SZ=1, GR=1)
+    dw      0xffff      ; LimitLow
+    dw      0x0000      ; BaseLow
+    db      0x00        ; BaseMiddle
+    db      10010010b   ; Access
+    db      11001111b   ; LimitHighFlags
+    db      0x00        ; BaseHigh
+
+    ; 16-bit protected mode - code segment descriptor (selector = 0x18)
+    ; (Base=0, Limit=1MiB-1, RW=1, DC=0, EX=1, PR=1, Priv=0, SZ=0, GR=0)
+    dw      0xffff      ; LimitLow
+    dw      0x0000      ; BaseLow
+    db      0x00        ; BaseMiddle
+    db      10011010b   ; Access
+    db      00000001b   ; LimitHighFlags
+    db      0x00        ; BaseHigh
+
+    ; 16-bit protected mode - data segment descriptor (selector = 0x20)
+    ; (Base=0, Limit=1MiB-1, RW=1, DC=0, EX=0, PR=1, Priv=0, SZ=0, GR=0)
+    dw      0xffff      ; LimitLow
+    dw      0x0000      ; BaseLow
+    db      0x00        ; BaseMiddle
+    db      10010010b   ; Access
+    db      00000001b   ; LimitHighFlags
+    db      0x00        ; BaseHigh
+
+GDT32.Table.Size    equ     ($ - GDT32.Table)
+
+GDT32.Table.Pointer:
+    dw  GDT32.Table.Size - 1    ; Limit = offset of last byte in table
+    dd  GDT32.Table
+
+
+enter_protected_mode:
+  ; Disable interruptions
+  cli
+
+  ; Load 32-bit GDT
+  lgdt [GDT32.Table.Pointer]
+
+  ; Enable protected mode.
+   mov     eax,    cr0
+   or      eax,    (1 << 0)    ; CR.PE
+   mov     cr0,    eax
+
+   jmp 8:protected_mode_boot
 
 
 %endif ; __ALMEIDAOS_SSL_INC__
