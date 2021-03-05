@@ -75,7 +75,7 @@ bios_extended_read_sectors_from_drive:
   mov dl, [BIOS.Drive.Id] ; (realmode.inc)
 
   ; Setting the DAP: Disk Address Packet
-  ; 
+  ;
   ; mov the address of the variable BIOSDAPReadPacket to SI register
   mov si, BIOSDAPReadPacket
   ; offset: 00h  | range size: 1 byte | size of DAP (set this to 10h)

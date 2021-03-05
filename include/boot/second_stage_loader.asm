@@ -15,12 +15,17 @@ Loader.Mem.Stack.Top  equ   0x00007e00
 ;===============================================================================
 ; Message Constants
 ;===============================================================================
-Realmode.SecondStage.Booting.Msg            db '[AlmeidaOS] :: Booting Second Stage Loader',0x0d,0x0a,0
-Realmode.SecondStage.A20Enabled.Msg         db '[AlmeidaOS] :: A20 enabled successfully',0x0d,0x0a,0
-Realmode.SecondStage.A20EnablingError.Msg   db '[AlmeidaOS] :: A20 could not be enabled. Aborting',0x0d,0x0a,0
-Realmode.SecondStage.CPUIDNotSupported.Msg  db '[AlmeidaOS] :: CPUID instruction is not available. Aborting',0x0d,0x0a,0
-Realmode.SecondStage.64BitNotSupported.Msg  db '[AlmeidaOS] :: 64-bit mode is not available. Aborting',0x0d,0x0a,0
-Realmode.SecondStage.64BitSupported.Msg     db '[AlmeidaOS] :: 64-bit mode is available',0x0d,0x0a,0
+CR                                          equ 0x0d
+LF                                          equ 0x0a
+Realmode.SecondStage.Booting.Msg            db '[AlmeidaOS] :: Booting Second Stage Loader',CR,LF,0
+Realmode.SecondStage.A20Enabled.Msg         db '[AlmeidaOS] :: A20 enabled successfully',CR,LF,0
+Realmode.SecondStage.A20EnablingError.Msg   db '[AlmeidaOS] :: A20 could not be enabled. Aborting',CR,LF,0
+Realmode.SecondStage.CPUIDNotSupported.Msg  db '[AlmeidaOS] :: CPUID instruction is not available. Aborting',CR,LF,0
+Realmode.SecondStage.64BitNotSupported.Msg  db '[AlmeidaOS] :: 64-bit mode is not available. Aborting',CR,LF,0
+Realmode.SecondStage.64BitSupported.Msg     db '[AlmeidaOS] :: 64-bit mode is available',CR,LF,0
+Realmode.SecondStage.LoadingGDT.Msg         db '[AlmeidaOS] :: Loading 32-bit Global Table Descriptor',CR,LF,0
+Realmode.SecondStage.EnteringPMode.Msg      db '[AlmeidaOS] :: Enabling Protected Mode in the CPU',CR,LF,0
+ProtectedMode.SecondStage.Booting.Msg       db '[AlmeidaOS] :: Protected Mode was enabled',CR,LF,0
 
 
 ;===============================================================================
@@ -349,23 +354,6 @@ GDT32.Table:
     db      11001111b   ; LimitHighFlags
     db      0x00        ; BaseHigh
 
-    ; 16-bit protected mode - code segment descriptor (selector = 0x18)
-    ; (Base=0, Limit=1MiB-1, RW=1, DC=0, EX=1, PR=1, Priv=0, SZ=0, GR=0)
-    dw      0xffff      ; LimitLow
-    dw      0x0000      ; BaseLow
-    db      0x00        ; BaseMiddle
-    db      10011010b   ; Access
-    db      00000001b   ; LimitHighFlags
-    db      0x00        ; BaseHigh
-
-    ; 16-bit protected mode - data segment descriptor (selector = 0x20)
-    ; (Base=0, Limit=1MiB-1, RW=1, DC=0, EX=0, PR=1, Priv=0, SZ=0, GR=0)
-    dw      0xffff      ; LimitLow
-    dw      0x0000      ; BaseLow
-    db      0x00        ; BaseMiddle
-    db      10010010b   ; Access
-    db      00000001b   ; LimitHighFlags
-    db      0x00        ; BaseHigh
 
 GDT32.Table.Size    equ     ($ - GDT32.Table)
 
@@ -375,18 +363,54 @@ GDT32.Table.Pointer:
 
 
 enter_protected_mode:
+
+; Instructions from the Intel 64 manual
+; 9.9.1 Switching to Protected Mode
+;
+; Before switching to protected mode from real mode, a minimum set of system data structures and code modules must be loaded into memory, as described in Section 9.8, “Software Initialization for Protected-Mode Operation.” Once these tables are created, software initialization code can switch into protected mode.
+; Protected mode is entered by executing a MOV CR0 instruction that sets the PE flag in the CR0 register. (In the same instruction, the PG flag in register CR0 can be set to enable paging.) Execution in protected mode begins with a CPL of 0.
+; Intel 64 and IA-32 processors have slightly different requirements for switching to protected mode. To insure upwards and downwards code compatibility with Intel 64 and IA-32 processors, we recommend that you follow these steps:
+; 1. Disable interrupts. A CLI instruction disables maskable hardware interrupts. NMI interrupts can be disabled with external circuitry. (Software must guarantee that no exceptions or interrupts are generated during the mode switching operation.)
+; 2. Execute the LGDT instruction to load the GDTR register with the base address of the GDT.
+; 3. Execute a MOV CR0 instruction that sets the PE flag (and optionally the PG flag) in control register CR0.
+; 4. Immediately following the MOV CR0 instruction, execute a far JMP or far CALL instruction. (This operation is typically a far jump or call to the next instruction in the instruction stream.)
+; 5. The JMP or CALL instruction immediately after the MOV CR0 instruction changes the flow of execution and serializes the processor.
+; 6. If paging is enabled, the code for the MOV CR0 instruction and the JMP or CALL instruction must come from a page that is identity mapped (that is, the linear address before the jump is the same as the physical address after paging and protected mode is enabled). The target instruction for the JMP or CALL instruction does not need to be identity mapped.
+; 7. If a local descriptor table is going to be used, execute the LLDT instruction to load the segment selector for the LDT in the LDTR register.
+; 8. Execute the LTR instruction to load the task register with a segment selector to the initial protected-mode task or to a writable area of memory that can be used to store TSS information on a task switch.
+; 9. After entering protected mode, the segment registers continue to hold the contents they had in real-address mode. The JMP or CALL instruction in step 4 resets the CS register. Perform one of the following operations to update the contents of the remaining segment registers.
+; — Reload segment registers DS, SS, ES, FS, and GS. If the ES, FS, and/or GS registers are not going to be used, load them with a null selector.
+; — Perform a JMP or CALL instruction to a new task, which automatically resets the values of the segment registers and branches to a new code segment.
+; 10. Execute the LIDT instruction to load the IDTR register with the address and limit of the protected-mode IDT.
+; 11. Execute the STI instruction to enable maskable hardware interrupts and perform the necessary hardware operation to enable NMI interrupts.
+
   ; Disable interruptions
   cli
+
+  ; print status message (yes, int x10 is a software interrupt hence not affected by cli)
+  mov si, Realmode.SecondStage.LoadingGDT.Msg
+  call display_string
 
   ; Load 32-bit GDT
   lgdt [GDT32.Table.Pointer]
 
-  ; Enable protected mode.
-   mov     eax,    cr0
-   or      eax,    (1 << 0)    ; CR.PE
-   mov     cr0,    eax
+  ; print status message
+  mov si, Realmode.SecondStage.EnteringPMode.Msg
+  call display_string
 
-   jmp 8:protected_mode_boot
+  ; Enable protected mode.
+  mov     eax,    cr0
+  or      eax,    (1 << 0)    ; CR.PE
+  mov     cr0,    eax
+
+  ; Accoring to Intel 64 manual
+  ; Section: 9.9.1 Switching to Protected Mode
+  ;
+  ; 4. Immediately following the MOV CR0 instruction,
+  ;    execute a far JMP or far CALL instruction.
+  ;    (This operation is typically a far jump or call
+  ;     to the next instruction in the instruction stream.)
+  jmp 0x08:protected_mode_boot
 
 
 %endif ; __ALMEIDAOS_SSL_INC__
