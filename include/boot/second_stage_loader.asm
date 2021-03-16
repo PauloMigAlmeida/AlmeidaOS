@@ -1,5 +1,5 @@
 ;=============================================================================
-; @file second_stage_loader.inc
+; @file second_stage_loader.asm
 ;
 ; Memory/Message constants and macros used by second stage loader code.
 ;=============================================================================
@@ -360,6 +360,7 @@ GDT32.Table.Size    equ     ($ - GDT32.Table)
 GDT32.Table.Pointer:
     dw  GDT32.Table.Size - 1    ; Limit = offset of last byte in table
     dd  GDT32.Table
+
 
 
 enter_protected_mode:

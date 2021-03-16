@@ -82,11 +82,6 @@ boot:
 ; Include Constants/Variables/routines useful in protected mode
 %include "../../include/boot/protectedmode.asm"
 
-; TODO:
-;  3 -> Add docs/comments for the things you decide (bits/cnfs) -> GDT segments
-;  4 -> Try to refactor that second_stage_loader...the GDT stuff made it look a bit weird
-;  5 -> Create a display string function for protected mode.
-;  6 -> Push stuff to stack on enter_protected_mode function
 
 protected_mode_boot:
 
@@ -110,8 +105,15 @@ protected_mode_boot:
   mov gs, ax
   mov ss, ax
   mov esp, Loader.Mem.Stack.Top
-  ; Turn interrupts back on
-  sti;
+
+
+  ; 10. Execute the LIDT instruction to load the IDTR register with the address
+  ;   and limit of the protected-mode IDT.
+  lidt [IDT32.Table.Pointer]
+
+  ; 11. Execute the STI instruction to enable maskable hardware interrupts and
+  ;   perform the necessary hardware operation to enable NMI interrupts.
+  sti
 
   ; fix video text printing
   call pm_retrive_video_cursor_settings

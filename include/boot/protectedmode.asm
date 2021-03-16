@@ -13,6 +13,11 @@
 PM.Video_Text.Addr        equ 0xb8000
 PM.Video_Text.Colour      equ 0x07    ; White on black attribute
 
+;===============================================================================
+; Message Constants
+;===============================================================================
+ProtectedMode.SecondStage.32IDTVec0.Msg  db '[AlmeidaOS] :: Div by 0 32-bit trap gate trigged',0x0d,0x0a,0
+
 ;=============================================================================
 ; Global variables
 ;=============================================================================
@@ -20,10 +25,68 @@ cur_row:      dd 0x00
 cur_col:      dd 0x00
 screen_width: dd 0x00
 
+;-----------------------------------------------------------------------------
+; Interrupt Descriptor Table used (temporarily) in 32-bit protected mode
+;-----------------------------------------------------------------------------
+IDT32.Table:
+.vec0:
+    dw pm_div0_int_handler  ; offset bits 0..15
+    dw 0x0008               ; a code segment selector in GDT or LDT
+    db 0x00                 ; unused, set to 0
+    db 10001111b            ; ( P=1, DPL=00b, S=0, type=1111b ) -> 32-bit trap gate
+    dw 0x0000               ; offset bits 16..31
+
+IDT32.Table.Size  equ  ($ - IDT32.Table)
+
+IDT32.Table.Pointer:
+  dw IDT32.Table.Size - 1
+  dq IDT32.Table
+
 ;===============================================================================
 ; Functions
 ;===============================================================================
 
+;===============================================================================
+; pm_div0_int_handler:
+;
+; Dummy 32-bit trap gate handler that displays a message when triggered.
+; The rationale for creating this function here is to get me used to the IDT
+; structure (took me a while to understand it) as I know I will have to use it
+; in long mode for real work.
+;
+; Refs: https://wiki.osdev.org/Interrupts_Descriptor_Table
+;       https://stackoverflow.com/a/3425381/832748
+;       https://www.amd.com/system/files/TechDocs/24593.pdf (Chapter 8)
+;
+; Killed registers:
+;   None
+;===============================================================================
+pm_div0_int_handler:
+  ; preserve the registers
+  pusha;
+
+  ; display the status message
+  mov eax, ProtectedMode.SecondStage.32IDTVec0.Msg
+  call pm_display_string
+
+  ; restore the registers
+  popa
+
+  ; at this point of the booting process/developement, any int is 'fatal'.
+  ; usually, we would use iret to return to the EIP that triggered this
+  ; interruption but this would only trigger it again.. so I'm halting the os
+  jmp pm_endless_loop
+  ; iret
+
+;===============================================================================
+; pm_retrive_video_cursor_settings
+;
+; Obtains BIOS cursor position that was used in real mode so new messages can
+; be printed where the BIOS stopped at
+;
+; Killed registers:
+;   None
+;===============================================================================
 pm_retrive_video_cursor_settings:
   ; To be able to print content using 0xb8000 below the last message, we have to
   ; pull the position where the BIOS cursor stopped at. For that we are going to
@@ -76,9 +139,14 @@ pm_retrive_video_cursor_settings:
   ret
 
 
-
-; Each cell on the screen is two bytes. The current byte offset in video
-; memory can be computed as 0xb8000+(cur_row * screen_width + cur_col) * 2
+;===============================================================================
+; pm_display_string
+;
+; Print funtion used in protected mode
+;
+; Killed registers:
+;   None
+;===============================================================================
 pm_display_string:
   pusha
 
@@ -107,6 +175,9 @@ pm_display_string:
     je .cr_lf
 
   .print_char:
+    ; Each cell on the screen is two bytes. The current byte offset in video
+    ; memory can be computed as 0xb8000+(cur_row * screen_width + cur_col) * 2
+
     ; mul instruction will override the content of edx, save that to the stack
     push edx
     ; (cur_row * screen_width + cur_col)
@@ -154,13 +225,18 @@ pm_display_string:
     ;return
     ret
 
-; Function: set_cursor
-;           set the hardware cursor position based on the
-;           current column (cur_col) and current row (cur_row) coordinates
-; See:      https://wiki.osdev.org/Text_Mode_Cursor#Moving_the_Cursor_2
-;
-; Inputs:   None
 
+;===============================================================================
+; set_cursor
+;
+; Set the hardware cursor position based on the current column (cur_col) and
+; current row (cur_row) coordinates
+; See:      https://wiki.osdev.org/Text_Mode_Cursor#Moving_the_Cursor_2
+; See:      https://stackoverflow.com/a/53866689/832748
+;
+; Killed registers:
+;   ecx, edx
+;===============================================================================
 set_cursor:
     ; EAX = cur_row
     mov ecx, [cur_row]
