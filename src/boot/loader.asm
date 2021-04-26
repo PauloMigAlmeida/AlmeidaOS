@@ -183,9 +183,11 @@ protected_mode_boot:
   ;===============================================================================
 
   ; TODO -> Find an area of the memory to set up paging.. I only need 8192 bytes
+  ;   -> Done: Defined in mem.asm (Loader.Paging.Base.Address - 0x10000)
   ; TODO -> Set up paging
+  ;   -> Doing 
   ; TODO -> Load GDT 64 after paging is configured.
-  ; TODO -> Enter Long mode 
+  ; TODO -> Enter Long mode
 
   ; enter a endless loop. This instruction should never be reached
   jmp pm_endless_loop
