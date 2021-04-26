@@ -122,6 +122,70 @@ protected_mode_boot:
   mov eax, ProtectedMode.SecondStage.Booting.Msg
   call pm_display_string
 
+  ;===============================================================================
+  ; Paging study area:
+  ;
+  ; I've been struggling to fully grasp paging given the complexity of the subject
+  ; and the fact that it's hard to keep track of all the small details after a few
+  ; days. I'm gonna just dump relevant bits here to help me with the implementation
+  ;
+  ; Paging
+  ;   to enable paging in long mode with 4kb size: (More info on page 189 AMD 64 manual)
+  ;   * CR4.PAE=Enabled
+  ;   * PDPE.PS=0
+  ;   * PDE.PS=0
+  ;   * Set CR3 to PML4 base address
+  ;   Maximum virtual address -> 64-bit
+  ;   Maximum physical address -> 52-bit
+  ;
+  ;
+  ; Page translation is controlled by the PG bit in CR0 (bit 31).
+  ;   -> Set to 1 to enable
+  ; Physical-address extensions are controlled by the PAE bit in CR4 (bit 5)
+  ;   -> Setting CR4.PAE = 1 enables virtual addresses to be translated into
+  ;       physical addresses up to 52 bits long.
+  ; Page-Size Extensions (PSE) Bit ->  CR4 (bit 4)
+  ;   -> If both CR4.PAE=0 and CR4.PSE=0, the only available page size is 4 Kbytes. (which is the one I want)
+  ;   -> The value of CR4.PSE is ignored when long mode is active. This is because
+  ;        physical-address extensions must be enabled in long mode, and
+  ;         the only available page sizes are 4 Kbytes and 2 Mbytes.
+  ;
+  ;
+  ; Long mode translation:
+  ;   -> Before activating long mode, PAE must be enabled by setting CR4.PAE to 1.
+  ;   -> Activating long mode before enabling PAE causes a general-protection
+  ;       exception (#GP) to occur.
+  ;
+  ; Canonical Address Form:
+  ;   -> The AMD64 architecture requires implementations supporting fewer than
+  ;       the full 64-bit virtual address to ensure that those addresses are in
+  ;       canonical form.
+  ;
+  ; CR3
+  ;   -> Points to the PML4 base address
+  ;   -> CR3 is expanded to 64 bits in long mode, allowing the PML4 table to be
+  ;       located anywhere in the 52-bit physical-address space.
+  ;   -> Details about the contents of each bit can be found on page 200 of the AMD 64 manual)
+  ;
+  ; 4-Kbyte Page Translation:
+  ;   -> In long mode, 4-Kbyte physical-page translation is performed by dividing
+  ;       the virtual address into six fields
+  ;
+  ;     Bits 63:48 are a sign extension of bit 47, as required for canonical-address forms.
+  ;     Bits 47:39 index into the 512-entry page-map level-4 table.
+  ;     Bits 38:30 index into the 512-entry page-directory pointer table.
+  ;     Bits 29:21 index into the 512-entry page-directory table.
+  ;     Bits 20:12 index into the 512-entry page table.
+  ;     Bits 11:0 provide the byte offset into the physical page.
+  ;
+  ;
+  ;
+  ;===============================================================================
+
+  ; TODO -> Find an area of the memory to set up paging.. I only need 8192 bytes
+  ; TODO -> Set up paging
+  ; TODO -> Load GDT 64 after paging is configured.
+  ; TODO -> Enter Long mode 
 
   ; enter a endless loop. This instruction should never be reached
   jmp pm_endless_loop
