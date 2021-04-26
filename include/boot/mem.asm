@@ -31,7 +31,14 @@ Loader.Mem.Stack.Top        equ   0x00007e00
 
 ; Rationale:
 ; Second stage loader can grow up from 0x00007e00 to 0x00009fff (+- 8.5 Kb)
-Loader.Paging.Base.Address  equ   0x00010000
+Mem.PML4.Start.Address  equ   0x00010000
+Mem.PML4.End.Address    equ   0x00018000 ; 0x10000 + (512 entries of 64 bits each)
+Mem.PDPE.Start.Address  equ   0x00018000
+Mem.PDPE.End.Address    equ   0x00020000 ; 0x18000 + (512 entries of 64 bits each)
+Mem.PDE.Start.Address   equ   0x00020000
+Mem.PDE.End.Address     equ   0x00028000 ; 0x20000 + (512 entries of 64 bits each)
+Mem.PTE.Start.Address   equ   0x00028000
+Mem.PTE.End.Address     equ   0x00030000 ; 0x28000 + (512 entries of 64 bits each)
 
 
 %endif ; __ALMEIDAOS_GLOBALMEM_INC__

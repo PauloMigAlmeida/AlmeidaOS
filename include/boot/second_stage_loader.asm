@@ -404,7 +404,17 @@ GDT64.Table.Pointer:
     dw  GDT64.Table.Size - 1    ; Limit = offset of last byte in table
     dd  GDT64.Table
 
-
+;=============================================================================
+; Enter_protected_mode
+;
+; Prepare the system to enter the protected mode (32-bits).
+;
+; Return flags:
+;   None
+;
+; Killed registers:
+;   All, nothing will be saved.
+;=============================================================================
 enter_protected_mode:
 
 ; Instructions from the Intel 64 manual

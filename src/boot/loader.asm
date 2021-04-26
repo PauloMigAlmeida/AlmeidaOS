@@ -183,11 +183,17 @@ protected_mode_boot:
   ;===============================================================================
 
   ; TODO -> Find an area of the memory to set up paging.. I only need 8192 bytes
-  ;   -> Done: Defined in mem.asm (Loader.Paging.Base.Address - 0x10000)
+  ;   -> Done: Defined in mem.asm (Mem.PML4.Start.Address - 0x10000)
   ; TODO -> Set up paging
-  ;   -> Doing 
+  ;   -> Sub tasks:
+  ;       -> Clean memmory that's gonna be used by the pages -> Done
+  ;       -> Set up the pages there with the right bits set
+  ;       ->
   ; TODO -> Load GDT 64 after paging is configured.
   ; TODO -> Enter Long mode
+
+  ; Setup paging
+  call pm_setup_page_tables
 
   ; enter a endless loop. This instruction should never be reached
   jmp pm_endless_loop

@@ -267,6 +267,38 @@ set_cursor:
 
     ret
 
+;=============================================================================
+; setup_page_tables
+;
+; Setup Paging mechanism used in long mode (64-bits). This routine cleans the
+; memory used, create pages and enable paging
+;
+; Return flags:
+;   None
+;
+; Killed registers:
+;   None
+;=============================================================================
+pm_setup_page_tables:
+  ; Preserve registers
+  pusha
+
+  ; clean memory used to hold the page tables
+  .clean_memory:
+    ;TODO print message 
+    cld
+    xor eax, eax
+    xor ecx, ecx
+    mov edi, Mem.PML4.Start.Address
+    mov ecx, (Mem.PTE.End.Address - Mem.PML4.Start.Address) >> 2
+    rep stosd
+
+
+  ; Restore registers.
+  popa
+
+  ret
+
 
 pm_endless_loop:
 ; Disable interruptions
