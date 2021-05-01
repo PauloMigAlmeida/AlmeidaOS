@@ -50,14 +50,8 @@ clean:
 	@echo "[clean] Generated files deleted"
 	@# Help: Clean all generated files
 
-.PHONY: prepare-build-env
-prepare-build-env:
-	@echo "[prepare-build-env] Building container that can compile AlmeidaOS"
-	@$(DOCKER) build -t $(IMAGE_NAME):$(IMAGE_TAG) $(DIR_DOCKER)
-	@# Help: Build the docker container that can compile the OS
-
 .PHONY: build
-build: prepare-build-env
+build:
 	@echo "[build] Building AlmeidaOS"
 	@$(DIR_DOCKER)/build.sh all
 	@# Help: Build the OS using a docker container

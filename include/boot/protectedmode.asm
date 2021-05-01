@@ -17,6 +17,7 @@ PM.Video_Text.Colour      equ 0x07    ; White on black attribute
 ; Message Constants
 ;===============================================================================
 ProtectedMode.SecondStage.32IDTVec0.Msg  db '[AlmeidaOS] :: Div by 0 32-bit trap gate trigged',0x0d,0x0a,0
+ProtectedMode.SecondStage.CleanPages.Msg db '[AlmeidaOS] :: Cleaning 4-level paging structure',0x0d,0x0a,0
 
 ;=============================================================================
 ; Global variables
@@ -283,16 +284,47 @@ pm_setup_page_tables:
   ; Preserve registers
   pusha
 
-  ; clean memory used to hold the page tables
+  ; TODO: set the PDE.PS bit (bit 7) cleared to 0, indicating a 4-Kbyte physical-page translation.
+
+  ; Clean memory used to hold the page tables
   .clean_memory:
-    ;TODO print message 
+    ; Display status message
+    mov eax, ProtectedMode.SecondStage.CleanPages.Msg
+    call pm_display_string
+
     cld
     xor eax, eax
     xor ecx, ecx
-    mov edi, Mem.PML4.Start.Address
-    mov ecx, (Mem.PTE.End.Address - Mem.PML4.Start.Address) >> 2
+    mov edi, Mem.PML4.Address
+    mov ecx, (Paging.End.Address - Paging.Start.Address) >> 2
     rep stosd
 
+  ; Setup pages structure and flag bits
+  .setup_tables:
+    ; Real address is left shifted 12 bits to allow page entry bits to be set
+    .LeftShift equ 12
+    ; Present (1) and ReadWrite(2) bits set
+    .StdBits   equ 0x03
+
+    ; Create a single entry [0] in PML4 Table.
+    ;   -> one entry in a PML4T can address 512GB
+    mov DWORD [Mem.PML4.Address], (Mem.PDPE.Address << .LeftShift) | .StdBits
+
+    ; Create a single entry [0] in PDPT Table.
+    ;   -> one entry in a PDPT can address 1GB
+    mov DWORD [Mem.PDPE.Address], (Mem.PDE.Address << .LeftShift) | .StdBits
+
+    ; Create entries [0...4] in PDE Table.
+    ;   -> one entry in a PDE can address 2MB
+    mov DWORD [Mem.PDE.Address], (Mem.PTE.Address << .LeftShift) | .StdBits
+    mov DWORD [Mem.PDE.Address + 0x08], ((Mem.PTE.Address + 0x1000) << .LeftShift) | .StdBits
+    mov DWORD [Mem.PDE.Address + 0x10], ((Mem.PTE.Address + 0x1000 * 2) << .LeftShift) | .StdBits
+    mov DWORD [Mem.PDE.Address + 0x18], ((Mem.PTE.Address + 0x1000 * 3) << .LeftShift) | .StdBits
+    mov DWORD [Mem.PDE.Address + 0x20], ((Mem.PTE.Address + 0x1000 * 4) << .LeftShift) | .StdBits
+
+    ; Create all 512 entries in the PT table.
+    ;   -> one entry in a PT can address 4Kb
+    ; TODO: implement loop
 
   ; Restore registers.
   popa

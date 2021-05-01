@@ -178,6 +178,14 @@ protected_mode_boot:
   ;     Bits 20:12 index into the 512-entry page table.
   ;     Bits 11:0 provide the byte offset into the physical page.
   ;
+  ; Misc:
+  ; -> In long mode, however, you only have 512 entries per table as each entry is eight bytes long.
+  ;     This means that,,,,
+  ;         -> one entry in a PT can address 4kB,
+  ;         -> one entry in a PDT can address 2MB,
+  ;         -> one entry in a PDPT can address 1GB and
+  ;         -> one entry in a PML4T can address 512GB.
+  ;      ... This means that only 256TB can be addressed.
   ;
   ;
   ;===============================================================================
@@ -186,7 +194,10 @@ protected_mode_boot:
   ;   -> Done: Defined in mem.asm (Mem.PML4.Start.Address - 0x10000)
   ; TODO -> Set up paging
   ;   -> Sub tasks:
-  ;       -> Clean memmory that's gonna be used by the pages -> Done
+  ;       -> Clean memmory that's gonna be used by the pages ->
+  ;         -> I thought that cleaning was done...but not really...I feel like I'm either overcleaning or undercleaning it
+  ;             https://stackoverflow.com/questions/45665451/how-does-this-osdev-identity-map-work-for-pae-paging
+  ;             https://gist.github.com/hibariya/9dc9b836e39a04300a410e92368dec7d
   ;       -> Set up the pages there with the right bits set
   ;       ->
   ; TODO -> Load GDT 64 after paging is configured.
