@@ -18,6 +18,7 @@ PM.Video_Text.Colour      equ 0x07    ; White on black attribute
 ;===============================================================================
 ProtectedMode.SecondStage.32IDTVec0.Msg  db '[AlmeidaOS] :: Div by 0 32-bit trap gate trigged',0x0d,0x0a,0
 ProtectedMode.SecondStage.CleanPages.Msg db '[AlmeidaOS] :: Cleaning 4-level paging structure',0x0d,0x0a,0
+ProtectedMode.SecondStage.PagesBuilt.Msg db '[AlmeidaOS] :: Identity-mapped pages setup for first 10MiB',0x0d,0x0a,0
 
 ;=============================================================================
 ; Global variables
@@ -284,8 +285,6 @@ pm_setup_page_tables:
   ; Preserve registers
   pusha
 
-  ; TODO: set the PDE.PS bit (bit 7) cleared to 0, indicating a 4-Kbyte physical-page translation.
-
   ; Clean memory used to hold the page tables
   .clean_memory:
     ; Display status message
@@ -295,41 +294,112 @@ pm_setup_page_tables:
     cld
     xor eax, eax
     xor ecx, ecx
+
     mov edi, Mem.PML4.Address
     mov ecx, (Paging.End.Address - Paging.Start.Address) >> 2
+    ; mov ecx, 0x10000/4
+    ; mov edi, 0x80000
+
     rep stosd
 
   ; Setup pages structure and flag bits
   .setup_tables:
+
     ; Real address is left shifted 12 bits to allow page entry bits to be set
-    .LeftShift equ 12
-    ; Present (1) and ReadWrite(2) bits set
+    ; .LeftShift equ 12
+    ; Present (bit 1) and ReadWrite(bit 2) bits are set
     .StdBits   equ 0x03
 
     ; Create a single entry [0] in PML4 Table.
     ;   -> one entry in a PML4T can address 512GB
-    mov DWORD [Mem.PML4.Address], (Mem.PDPE.Address << .LeftShift) | .StdBits
+    mov DWORD [Mem.PML4.Address], (Mem.PDPE.Address ) | .StdBits
 
     ; Create a single entry [0] in PDPT Table.
     ;   -> one entry in a PDPT can address 1GB
-    mov DWORD [Mem.PDPE.Address], (Mem.PDE.Address << .LeftShift) | .StdBits
+    mov DWORD [Mem.PDPE.Address], (Mem.PDE.Address ) | .StdBits
 
     ; Create entries [0...4] in PDE Table.
     ;   -> one entry in a PDE can address 2MB
-    mov DWORD [Mem.PDE.Address], (Mem.PTE.Address << .LeftShift) | .StdBits
-    mov DWORD [Mem.PDE.Address + 0x08], ((Mem.PTE.Address + 0x1000) << .LeftShift) | .StdBits
-    mov DWORD [Mem.PDE.Address + 0x10], ((Mem.PTE.Address + 0x1000 * 2) << .LeftShift) | .StdBits
-    mov DWORD [Mem.PDE.Address + 0x18], ((Mem.PTE.Address + 0x1000 * 3) << .LeftShift) | .StdBits
-    mov DWORD [Mem.PDE.Address + 0x20], ((Mem.PTE.Address + 0x1000 * 4) << .LeftShift) | .StdBits
+    mov DWORD [Mem.PDE.Address], (Mem.PTE.Address ) | .StdBits
+    mov DWORD [Mem.PDE.Address + 0x08], ((Mem.PTE.Address + 0x1000) ) | .StdBits
+    mov DWORD [Mem.PDE.Address + 0x10], ((Mem.PTE.Address + 0x1000 * 2) ) | .StdBits
+    mov DWORD [Mem.PDE.Address + 0x18], ((Mem.PTE.Address + 0x1000 * 3) ) | .StdBits
+    mov DWORD [Mem.PDE.Address + 0x20], ((Mem.PTE.Address + 0x1000 * 4) ) | .StdBits
 
     ; Create all 512 entries in the PT table.
     ;   -> one entry in a PT can address 4Kb
-    ; TODO: implement loop
+
+    ; Prep
+    mov edi, Mem.PTE.Address
+    mov ecx, 512 * 5
+    ; mov eax, (Paging.End.Address << .LeftShift) | .StdBits
+    mov eax,  .StdBits
+
+    ; Scratch area:
+    ;   -> 0x00 01 80 00 -> 0x18 00 00 00 | 0x3
+    ;   -> 0x18 00 00 03 + 0x10 00 00 00
+    ;   -> 0x19 00 00 03
+    .make_page:
+      mov [edi], eax
+      add edi, 8
+      ; add eax, 0x1000 << .LeftShift AINDA NAO CONCORDO PORQUE NAO TENHO QUE FAZER SHIFT :S 
+      add eax, 0x1000
+      loop .make_page
+
+    ; mov dword[0x80000], 0x81007 ; talvez a chave esta aqui
+    ; mov dword[0x81000], 10000111b
+
+      ; Display status message
+      mov eax, ProtectedMode.SecondStage.PagesBuilt.Msg
+      call pm_display_string
 
   ; Restore registers.
   popa
 
   ret
+
+;-------------------------------------------------------------------------
+; Enable 64-bit protected mode and paging
+;-------------------------------------------------------------------------
+pm_enter_long_mode:
+  ; Disable interruptions
+  cli
+
+  ; Load the 64-bit GDT.
+  lgdt    [GDT64.Table.Pointer]
+
+  ; Enable PAE paging.
+  mov     eax,    cr4
+  or      eax,    (1 << 5)    ; CR4.PAE
+  mov     cr4,    eax
+
+  ; CR3 is the page directory base register.
+  mov     eax,    Paging.Start.Address
+  ; mov eax, 0x80000
+  mov     cr3,    eax
+
+  ; Enable 64-bit mode
+  mov     ecx,    0xc0000080 ; Extended Feature Enable Register (EFER)
+  rdmsr
+  or      eax,    (1 << 8)
+  wrmsr
+
+  ; Enable paging.
+  mov     eax,    cr0
+  or      eax,    (1 << 31)    ; CR0.PG
+  mov     cr0,    eax
+
+
+  ; ; Enable global pages
+  ; mov     eax,    cr4
+  ; or      eax,    (1 << 7)    ; CR4.PGE
+  ; mov     cr4,    eax
+
+
+  ; Do a long jump using the new GDT, which forces the switch to 64-bit
+  ; mode.
+
+  jmp     0x08:long_mode_boot
 
 
 pm_endless_loop:
