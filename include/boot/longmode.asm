@@ -15,7 +15,7 @@ LM.Video_Text.Colour      equ 0x0a    ; Green on black attribute
 ;===============================================================================
 ; Message Constants
 ;===============================================================================
-LongMode.SecondStage.Booting.Msg  db '[AlmeidaOS] :: Long mode was enabled \o/',0x0d,0x0a,0
+LongMode.SecondStage.Booting.Msg  db '[AlmeidaOS] :: Long mode (64-bit) was enabled in the CPU \o/',0x0d,0x0a,0
 
 ;===============================================================================
 ; NASM Macros

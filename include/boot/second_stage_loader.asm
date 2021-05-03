@@ -25,7 +25,7 @@ Realmode.SecondStage.64BitNotSupported.Msg  db '[AlmeidaOS] :: 64-bit mode is no
 Realmode.SecondStage.64BitSupported.Msg     db '[AlmeidaOS] :: 64-bit mode is available',CR,LF,0
 Realmode.SecondStage.LoadingGDT.Msg         db '[AlmeidaOS] :: Loading 32-bit Global Table Descriptor',CR,LF,0
 Realmode.SecondStage.EnteringPMode.Msg      db '[AlmeidaOS] :: Enabling Protected Mode in the CPU',CR,LF,0
-ProtectedMode.SecondStage.Booting.Msg       db '[AlmeidaOS] :: Protected Mode was enabled',CR,LF,0
+ProtectedMode.SecondStage.Booting.Msg       db '[AlmeidaOS] :: Protected Mode (32-bit) was enabled',CR,LF,0
 
 
 ;===============================================================================
@@ -384,7 +384,7 @@ GDT64.Table:
     db      10011000b   ; P=1, DPL=00, 1, 1, C=0, R=0 , A=0
     db      00100000b   ; G=0, D=0, L=1, AVL=0, Segment limit [19:16] = 0
     db      0x00        ; BaseHigh
-    
+
     ; kernel: data segment descriptor (selector = 0x10)
     ; most fields are ignored (hence set to 0) according to AMD 64 manual
     ;   Section 4.8.3 - Long-Mode Data Segment Descriptiors

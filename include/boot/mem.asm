@@ -37,8 +37,6 @@ Mem.PDPE.Address      equ   0x00011000 ; 0x10000 + PML4 (512 entries of 64 bits)
 Mem.PDE.Address       equ   0x00012000 ; 0x11000 + PDPE (512 entries of 64 bits)
 Mem.PTE.Address       equ   0x00013000 ; 0x12000 + PDE (512 entries of 64 bits)
 Paging.End.Address    equ   0x00018000 ; 0x13000 + 5 PT tables (512 entries of 64 bits)
-;TODO: Do we really need this?
-; Mem.GDT64.Real.Addr   equ   0x00018000  ; I'm not sure if this is correct
 
 
 %endif ; __ALMEIDAOS_GLOBALMEM_INC__
