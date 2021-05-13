@@ -305,8 +305,6 @@ pm_setup_page_tables:
   ; Setup pages structure and flag bits
   .setup_tables:
 
-    ; Real address is left shifted 12 bits to allow page entry bits to be set
-    ; .LeftShift equ 12
     ; Present (bit 1) and ReadWrite(bit 2) bits are set
     .StdBits   equ 0x03
 
@@ -332,22 +330,13 @@ pm_setup_page_tables:
     ; Prep
     mov edi, Mem.PTE.Address
     mov ecx, 512 * 5
-    ; mov eax, (Paging.End.Address << .LeftShift) | .StdBits
     mov eax,  .StdBits
 
-    ; Scratch area:
-    ;   -> 0x00 01 80 00 -> 0x18 00 00 00 | 0x3
-    ;   -> 0x18 00 00 03 + 0x10 00 00 00
-    ;   -> 0x19 00 00 03
-    .make_page:
+    .make_pte_page:
       mov [edi], eax
       add edi, 8
-      ; add eax, 0x1000 << .LeftShift AINDA NAO CONCORDO PORQUE NAO TENHO QUE FAZER SHIFT :S 
       add eax, 0x1000
-      loop .make_page
-
-    ; mov dword[0x80000], 0x81007 ; talvez a chave esta aqui
-    ; mov dword[0x81000], 10000111b
+      loop .make_pte_page
 
       ; Display status message
       mov eax, ProtectedMode.SecondStage.PagesBuilt.Msg
@@ -390,15 +379,8 @@ pm_enter_long_mode:
   mov     cr0,    eax
 
 
-  ; ; Enable global pages
-  ; mov     eax,    cr4
-  ; or      eax,    (1 << 7)    ; CR4.PGE
-  ; mov     cr4,    eax
-
-
   ; Do a long jump using the new GDT, which forces the switch to 64-bit
   ; mode.
-
   jmp     0x08:long_mode_boot
 
 
