@@ -51,9 +51,10 @@ clean:
 	@# Help: Clean all generated files
 
 .PHONY: build
-build:
+build: clean
 	@echo "[build] Building AlmeidaOS"
-	@$(DIR_DOCKER)/build.sh all
+	@$(DOCKER) run --rm -it -v `pwd`:/code $(IMAGE_NAME):$(IMAGE_TAG) \
+		/bin/bash -c "cd /code &&  make all"
 	@# Help: Build the OS using a docker container
 
 MAKEOVERRIDES =
