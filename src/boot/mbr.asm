@@ -33,8 +33,9 @@
 jmp start
 
 ; Include functions/constants that are useful in real mode
-%include "../../include/boot/realmode.asm"
-%include "../../include/boot/first_stage_loader.asm"
+%include "../../include/boot/global/const.asm"
+%include "../../include/boot/global/mem.asm"
+%include "../../include/boot/mode/realmode.asm"
 
 start:
     ; Proper initialisation of stack during BIOS bootloader

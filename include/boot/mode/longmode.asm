@@ -15,7 +15,7 @@ LM.Video_Text.Colour      equ 0x0a    ; Green on black attribute
 ;===============================================================================
 ; Message Constants
 ;===============================================================================
-LongMode.SecondStage.Booting.Msg  db '[AlmeidaOS] :: Long mode (64-bit) was enabled in the CPU \o/',0x0d,0x0a,0
+LongMode.SecondStage.Booting.Msg  db 'Long mode (64-bit) was enabled in the CPU',CR,LF,0
 
 ;===============================================================================
 ; NASM Macros
@@ -59,15 +59,42 @@ LongMode.SecondStage.Booting.Msg  db '[AlmeidaOS] :: Long mode (64-bit) was enab
 ;===============================================================================
 ; Functions
 ;===============================================================================
+
 ;===============================================================================
 ; lm_display_string
+;
+; Print funtion used in protected mode with log prefix
+;
+; Killed registers:
+;   None
+;===============================================================================
+lm_display_string:
+  ; preserve registers
+  pushaq
+
+  ; save reference to intended message so we print log prefix
+  push rax
+  mov rax, LOG_PREFIX
+  call lm_display_string_internal
+
+  ; get the original message back
+  pop rax
+  call lm_display_string_internal
+
+  ; restore registers
+  popaq
+  ; return
+  ret
+
+;===============================================================================
+; lm_display_string_internal
 ;
 ; Print funtion used in protected mode
 ;
 ; Killed registers:
 ;   None
 ;===============================================================================
-lm_display_string:
+lm_display_string_internal:
   pushaq
 
   ; move pointer to ebx so I keep eax free for later use

@@ -34,7 +34,10 @@
 jmp start
 
 ; Include functions/constants that are useful in real mode
-%include "../../include/boot/realmode.asm"
+%include "../../include/boot/global/const.asm"
+%include "../../include/boot/global/mem.asm"
+%include "../../include/boot/global/gdt.asm"
+%include "../../include/boot/mode/realmode.asm"
 %include "../../include/boot/second_stage_loader.asm"
 
 start:
@@ -80,7 +83,7 @@ boot:
 [BITS 32]
 
 ; Include Constants/Variables/routines useful in protected mode
-%include "../../include/boot/protectedmode.asm"
+%include "../../include/boot/mode/protectedmode.asm"
 
 
 protected_mode_boot:
@@ -135,7 +138,7 @@ protected_mode_boot:
 [BITS 64]
 
 ; Include Constants/Variables/routines useful in protected mode
-%include "../../include/boot/longmode.asm"
+%include "../../include/boot/mode/longmode.asm"
 
 ;-------------------------------------------------------------------------
 ; Launch the 64-bit kernel

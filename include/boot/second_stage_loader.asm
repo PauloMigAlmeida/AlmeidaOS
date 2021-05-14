@@ -7,25 +7,19 @@
 %ifndef __ALMEIDAOS_SSL_INC__
 %define __ALMEIDAOS_SSL_INC__
 
-;=============================================================================
-; Memory layout
-;=============================================================================
-%include "../../include/boot/mem.asm"
 
 ;===============================================================================
 ; Message Constants
 ;===============================================================================
-CR                                          equ 0x0d
-LF                                          equ 0x0a
-Realmode.SecondStage.Booting.Msg            db '[AlmeidaOS] :: Booting Second Stage Loader',CR,LF,0
-Realmode.SecondStage.A20Enabled.Msg         db '[AlmeidaOS] :: A20 enabled successfully',CR,LF,0
-Realmode.SecondStage.A20EnablingError.Msg   db '[AlmeidaOS] :: A20 could not be enabled. Aborting',CR,LF,0
-Realmode.SecondStage.CPUIDNotSupported.Msg  db '[AlmeidaOS] :: CPUID instruction is not available. Aborting',CR,LF,0
-Realmode.SecondStage.64BitNotSupported.Msg  db '[AlmeidaOS] :: 64-bit mode is not available. Aborting',CR,LF,0
-Realmode.SecondStage.64BitSupported.Msg     db '[AlmeidaOS] :: 64-bit mode is available',CR,LF,0
-Realmode.SecondStage.LoadingGDT.Msg         db '[AlmeidaOS] :: Loading 32-bit Global Table Descriptor',CR,LF,0
-Realmode.SecondStage.EnteringPMode.Msg      db '[AlmeidaOS] :: Enabling Protected Mode in the CPU',CR,LF,0
-ProtectedMode.SecondStage.Booting.Msg       db '[AlmeidaOS] :: Protected Mode (32-bit) was enabled',CR,LF,0
+Realmode.SecondStage.Booting.Msg            db 'Booting Second Stage Loader',CR,LF,0
+Realmode.SecondStage.A20Enabled.Msg         db 'A20 enabled successfully',CR,LF,0
+Realmode.SecondStage.A20EnablingError.Msg   db 'A20 could not be enabled. Aborting',CR,LF,0
+Realmode.SecondStage.CPUIDNotSupported.Msg  db 'CPUID instruction is not available. Aborting',CR,LF,0
+Realmode.SecondStage.64BitNotSupported.Msg  db '64-bit mode is not available. Aborting',CR,LF,0
+Realmode.SecondStage.64BitSupported.Msg     db '64-bit mode is available',CR,LF,0
+Realmode.SecondStage.LoadingGDT.Msg         db 'Loading 32-bit Global Table Descriptor',CR,LF,0
+Realmode.SecondStage.EnteringPMode.Msg      db 'Enabling Protected Mode in the CPU',CR,LF,0
+ProtectedMode.SecondStage.Booting.Msg       db 'Protected Mode (32-bit) was enabled',CR,LF,0
 
 
 ;===============================================================================
@@ -323,85 +317,6 @@ cpu_supports_64_bit_mode:
       ; hangs the system
       jmp endless_loop
 
-;-----------------------------------------------------------------------------
-; Global Descriptor Table used (temporarily) in 32-bit protected mode
-;-----------------------------------------------------------------------------
-GDT32.Table:
-
-    ; Null descriptor
-    dw      0x0000  ; LimitLow
-    dw      0x0000  ; BaseLow
-    db      0x00    ; BaseMiddle
-    db      0x00    ; Access
-    db      0x00    ; LimitHighFlags
-    db      0x00    ; BaseHigh
-
-    ; 32-bit protected mode - code segment descriptor (selector = 0x08)
-    ; (Base=0, Limit=4GiB-1, RW=1, DC=0, EX=1, PR=1, Priv=0, SZ=1, GR=1)
-    dw      0xffff      ; LimitLow
-    dw      0x0000      ; BaseLow
-    db      0x00        ; BaseMiddle
-    db      10011010b   ; Access
-    db      11001111b   ; LimitHighFlags
-    db      0x00        ; BaseHigh
-
-    ; 32-bit protected mode - data segment descriptor (selector = 0x10)
-    ; (Base=0, Limit=4GiB-1, RW=1, DC=0, EX=0, PR=1, Priv=0, SZ=1, GR=1)
-    dw      0xffff      ; LimitLow
-    dw      0x0000      ; BaseLow
-    db      0x00        ; BaseMiddle
-    db      10010010b   ; Access
-    db      11001111b   ; LimitHighFlags
-    db      0x00        ; BaseHigh
-
-
-GDT32.Table.Size    equ     ($ - GDT32.Table)
-
-GDT32.Table.Pointer:
-    dw  GDT32.Table.Size - 1    ; Limit = offset of last byte in table
-    dd  GDT32.Table
-
-
-;-----------------------------------------------------------------------------
-; Global Descriptor Table used in 64-bit protected mode
-;-----------------------------------------------------------------------------
-GDT64.Table:
-
-    ; Null descriptor
-    dw      0x0000  ; LimitLow
-    dw      0x0000  ; BaseLow
-    db      0x00    ; BaseMiddle
-    db      0x00    ; Access
-    db      0x00    ; LimitHighFlags
-    db      0x00    ; BaseHigh
-
-    ; kernel: code segment descriptor (selector = 0x08)
-    ; most fields are ignored (hence set to 0) according to AMD 64 manual
-    ;   Section 4.8.1 - Long-Mode Code Segment Descriptiors
-    dw      0x0000      ; LimitLow
-    dw      0x0000      ; BaseLow
-    db      0x00        ; BaseMiddle
-    db      10011000b   ; P=1, DPL=00, 1, 1, C=0, R=0 , A=0
-    db      00100000b   ; G=0, D=0, L=1, AVL=0, Segment limit [19:16] = 0
-    db      0x00        ; BaseHigh
-
-    ; kernel: data segment descriptor (selector = 0x10)
-    ; most fields are ignored (hence set to 0) according to AMD 64 manual
-    ;   Section 4.8.3 - Long-Mode Data Segment Descriptiors
-    dw      0x0000      ; LimitLow
-    dw      0x0000      ; BaseLow
-    db      0x00        ; BaseMiddle
-    db      10010010b   ; Access -> P=1, DPL=00, 1, 0, E=0, W=1 , A=0
-    db      0x00        ; LimitHighFlags -> G=0, D=0, L=0, AVL=0, Segment limit [19:16] = 0
-    db      0x00        ; BaseHigh
-
-
-GDT64.Table.Size    equ     ($ - GDT64.Table)
-
-GDT64.Table.Pointer:
-    dw  GDT64.Table.Size - 1    ; Limit = offset of last byte in table
-    ; dd  Mem.GDT64.Real.Addr
-    dd  GDT64.Table
 
 ;=============================================================================
 ; Enter_protected_mode

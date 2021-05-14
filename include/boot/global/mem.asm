@@ -11,7 +11,7 @@
 %define __ALMEIDAOS_GLOBALMEM_INC__
 
 ;===============================================================================
-; Memory layout before this code starts running:
+; Memory layout:
 ;
 ;   00000000 - 000003ff        1,024 bytes     Real mode IVT
 ;   00000400 - 000004ff          256 bytes     BIOS data area

@@ -16,9 +16,9 @@ PM.Video_Text.Colour      equ 0x07    ; White on black attribute
 ;===============================================================================
 ; Message Constants
 ;===============================================================================
-ProtectedMode.SecondStage.32IDTVec0.Msg  db '[AlmeidaOS] :: Div by 0 32-bit trap gate trigged',0x0d,0x0a,0
-ProtectedMode.SecondStage.CleanPages.Msg db '[AlmeidaOS] :: Cleaning 4-level paging structure',0x0d,0x0a,0
-ProtectedMode.SecondStage.PagesBuilt.Msg db '[AlmeidaOS] :: Identity-mapped pages setup for first 10MiB',0x0d,0x0a,0
+ProtectedMode.SecondStage.32IDTVec0.Msg  db 'Div by 0 32-bit trap gate trigged',CR,LF,0
+ProtectedMode.SecondStage.CleanPages.Msg db 'Cleaning 4-level paging structure',CR,LF,0
+ProtectedMode.SecondStage.PagesBuilt.Msg db 'Identity-mapped pages setup for first 10MiB',CR,LF,0
 
 ;=============================================================================
 ; Global variables
@@ -144,12 +144,38 @@ pm_retrive_video_cursor_settings:
 ;===============================================================================
 ; pm_display_string
 ;
-; Print funtion used in protected mode
+; Print funtion used in protected mode with log prefix
 ;
 ; Killed registers:
 ;   None
 ;===============================================================================
 pm_display_string:
+  ; preserve registers
+  pusha
+
+  ; save reference to intended message so we print log prefix
+  push eax
+  mov eax, LOG_PREFIX
+  call pm_display_string_internal
+
+  ; get the original message back
+  pop eax
+  call pm_display_string_internal
+
+  ; restore registers
+  popa
+  ; return
+  ret
+
+;===============================================================================
+; pm_display_string_internal
+;
+; Print funtion used in protected mode
+;
+; Killed registers:
+;   None
+;===============================================================================
+pm_display_string_internal:
   pusha
 
   ; move pointer to ebx so I keep eax free for later use
@@ -219,17 +245,17 @@ pm_display_string:
     je .loop
 
   .done:
-
-    call set_cursor             ; Update hardware cursor position
+    ; Update hardware cursor position
+    call pm_set_cursor
 
     ; restore registers
     popa
-    ;return
+    ; return
     ret
 
 
 ;===============================================================================
-; set_cursor
+; pm_set_cursor
 ;
 ; Set the hardware cursor position based on the current column (cur_col) and
 ; current row (cur_row) coordinates
@@ -239,7 +265,7 @@ pm_display_string:
 ; Killed registers:
 ;   ecx, edx
 ;===============================================================================
-set_cursor:
+pm_set_cursor:
     ; EAX = cur_row
     mov ecx, [cur_row]
     ; ECX = cur_row * screen_width

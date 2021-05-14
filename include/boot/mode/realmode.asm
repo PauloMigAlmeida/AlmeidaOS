@@ -1,34 +1,37 @@
 ;=============================================================================
-; @file first_stage_loader.inc
+; @file realmode.inc
 ;
-; Memory/Message constants and macros used by first stage loader code.
+; Memory/Message constants and macros used by boot loader code.
 ;=============================================================================
 
-%ifndef __ALMEIDAOS_FSL_INC__
-%define __ALMEIDAOS_FSL_INC__
-
-;=============================================================================
-; Memory layout
-;=============================================================================
-%include "../../include/boot/mem.asm"
+%ifndef __ALMEIDAOS_BOOT_MEM_INC__
+%define __ALMEIDAOS_BOOT_MEM_INC__
 
 ;===============================================================================
 ; Message Constants
 ;===============================================================================
-Realmode.FirstStage.Booting.Msg             db '[AlmeidaOS] :: Booting BIOS First Stage Loader',0x0d,0x0a,0
-Realmode.BIOSDiskExtensionPresent.Msg       db '[AlmeidaOS] :: BIOS Disk Extension is present',0x0d,0x0a,0
-Realmode.BIOSDiskExtensionNotPresent.Msg    db '[AlmeidaOS] :: BIOS Disk Extension is not present... aborting',0x0d,0x0a,0
-Realmode.BIOSDiskExtensionLoadingError.Msg  db '[AlmeidaOS] :: BIOS Disk Extension failed to read loader aborting',0x0d,0x0a,0
+Realmode.FirstStage.Booting.Msg             db 'Booting BIOS First Stage Loader',CR,LF,0
+Realmode.BIOSDiskExtensionPresent.Msg       db 'BIOS Disk Extension is present',CR,LF,0
+Realmode.BIOSDiskExtensionNotPresent.Msg    db 'BIOS Disk Extension is not present... aborting',CR,LF,0
+Realmode.BIOSDiskExtensionLoadingError.Msg  db 'BIOS Disk Extension failed to read loader aborting',CR,LF,0
 
-;===============================================================================
-; Variables
-;===============================================================================
+;=============================================================================
+; Global variables
+;=============================================================================
+BIOS.Drive.Id   equ   0
+
 ; Specifically used during BIOS read sectors operations
 BIOSDAPReadPacket times 16 db 0
+
+; While I don't choose the filesystem to be used, physical device blocks
+; will be the unit used for now. This defines that the second stage Loader
+; can't be bigger than 5*512 bytes (which ought to be enough for now)
+Loader.File.NumberOfBlocks   equ   5
 
 ;===============================================================================
 ; Functions
 ;===============================================================================
+
 bios_check_extensions_present:
   ; push values into the stack to preserve them once we are done with this fnc
   pusha
@@ -113,4 +116,55 @@ bios_extended_read_sectors_from_drive:
     ; halt the machine as there is no other way to continue booting the os
     jmp endless_loop
 
-%endif ; __ALMEIDAOS_FSL_INC__
+display_string:
+    ; preserve all registers
+    pusha
+
+    ; preserve original message so we can print the log prefix
+    push si
+    mov si, LOG_PREFIX
+    call display_string_internal
+
+    ; get the original message reference back
+    pop si
+    call display_string_internal
+
+    ; restore registers
+    popa
+    ret
+
+display_string_internal:
+    pusha
+
+    mov     ah,     0x0e    ; int 10 AH=0x0e
+    xor     bx,     bx
+
+    cld
+
+    .loop:
+
+        ; Read next string character into al register.
+        lodsb
+
+        ; Break when a null terminator is reached.
+        cmp     al,     0
+        je      .done
+
+        ; Call int 10 function 0eh (print character to teletype)
+        int     0x10
+        jmp     .loop
+
+    .done:
+
+        popa
+        ret
+
+
+endless_loop:
+; Disable interruptions
+cli
+  .end:
+    hlt
+    jmp .end
+
+%endif ; __ALMEIDAOS_BOOT_MEM_INC__

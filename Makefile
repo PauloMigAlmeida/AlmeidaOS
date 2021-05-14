@@ -41,7 +41,7 @@ gdb-debug:
 
 .PHONY: test
 test:
-	@$(QEMU) -drive format=raw,file=$(OUTPUT_RAW_DISK) -d guest_errors 
+	@$(QEMU) -drive format=raw,file=$(OUTPUT_RAW_DISK) -d guest_errors -d int -no-reboot -no-shutdown
 	@# Help: Runs QEMU without debugging settings
 
 .PHONY: clean
