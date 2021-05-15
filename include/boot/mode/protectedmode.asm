@@ -295,6 +295,30 @@ pm_set_cursor:
 
     ret
 
+;===============================================================================
+; pm_move_kernel
+;
+; Move the kernel blocks to a different location in memory
+;
+; Killed registers:
+;   None
+;===============================================================================
+pm_move_kernel:
+  pusha
+
+  cld
+  xor edi, edi
+  xor ecx, ecx
+  xor esi, esi
+
+  mov edi, Kernel.New.Start.Address
+  mov esi, (Loader.Mem.Stack.Top + Loader.File.NumberOfBlocks * 512) ; 0x8800
+  mov ecx, (512 * Kernel.File.NumberOfBlocks) / 4 ; ; 512*100/4 = 12800 quadword
+  rep movsd
+
+  popa
+  ret
+
 ;=============================================================================
 ; setup_page_tables
 ;

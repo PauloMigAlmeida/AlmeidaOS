@@ -125,6 +125,9 @@ protected_mode_boot:
   mov eax, ProtectedMode.SecondStage.Booting.Msg
   call pm_display_string
 
+  ; copy kernel to the right location
+  call pm_move_kernel
+
   ; Setup paging
   call pm_setup_page_tables
 
@@ -158,6 +161,9 @@ long_mode_boot:
     ; display status message
     mov rax, LongMode.SecondStage.Booting.Msg
     call lm_display_string
+
+    ; jump to memory address in which the kernel should be (fingers crossed)
+    jmp Kernel.New.Start.Address
 
     ; enter a endless loop. This instruction should never be reached
     jmp lm_endless_loop

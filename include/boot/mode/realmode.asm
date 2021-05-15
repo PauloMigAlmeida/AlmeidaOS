@@ -23,10 +23,6 @@ BIOS.Drive.Id   equ   0
 ; Specifically used during BIOS read sectors operations
 BIOSDAPReadPacket times 16 db 0
 
-; While I don't choose the filesystem to be used, physical device blocks
-; will be the unit used for now. This defines that the second stage Loader
-; can't be bigger than 5*512 bytes (which ought to be enough for now)
-Loader.File.NumberOfBlocks   equ   5
 
 ;===============================================================================
 ; Functions
@@ -85,7 +81,7 @@ bios_extended_read_sectors_from_drive:
   ; offset: 01h  | range size: 1 byte | unused, should be zero
   mov byte[si+1], 0
   ; offset: 02h..03h  | range size: 2 byte | number of sectors to be read
-  mov word[si+2], Loader.File.NumberOfBlocks
+  mov word[si+2], Loader.File.NumberOfBlocks + 1
   ; offset: 04h..07h  | range size: 4 byte | segment:offset pointer to the memory
   ;   buffer to which sectors will be transferred (note that x86 is
   ;   little-endian: if declaring the segment and offset separately,

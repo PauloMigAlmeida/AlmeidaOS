@@ -26,15 +26,14 @@ CCFLAGS		:= -std=c99 -I$(DIR_INCLUDE) -Qn -g \
 
 AS				:= nasm
 
-# ASFLAGS		:= -f elf64
 ASFLAGS		:= -f bin
-#
-# AR		:= $(TARGET)-ar
-#
+
+
 LD				:= $(TARGET)-ld
 
 LDFLAGS		:= -nostdlib -z max-page-size=0x1000
 
+OBJCOPY		:= $(TARGET)-objcopy
 
 MAKE_FLAGS	:= --quiet --no-print-directory
 
