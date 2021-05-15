@@ -1,6 +1,6 @@
 #include <stddef.h>
 
-void kmain(void)
+void bla_main(void)
 {
   char* video = (char*)0xb8000;
   video[0] = 'P';

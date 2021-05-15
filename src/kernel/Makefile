@@ -14,7 +14,7 @@ BIN_C_FILES	:= $(SRC_C_FILES:%.c=$(DIR_TARGET)/%.o)
 
 TAG 		:= [kernel]
 
-all: mkdir compile
+all: mkdir compile linker
 	@echo "$(TAG) Compiled successfully"
 
 .PHONY: mkdir
@@ -35,3 +35,8 @@ $(BIN_C_FILES): $(DIR_TARGET)/%.o: %.c
 .PHONY: $(DIR_SRC_SUBSYSTEMS)
 $(DIR_SRC_SUBSYSTEMS):
 	@$(MAKE) $(MAKE_FLAGS) --directory=$@
+
+.PHONY: linker
+linker:
+	@$(LD) $(LDFLAGS) -T linker.ld -o $(DIR_TARGET)/kernel $(shell find $(DIR_TARGET)/ -type f -name "*.o")
+	@objcopy -O binary $(DIR_TARGET)/kernel $(DIR_TARGET)/kernel.bin

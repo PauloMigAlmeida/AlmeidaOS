@@ -22,7 +22,7 @@ CC				:= $(TARGET)-gcc
 CCFLAGS		:= -std=c99 -I$(DIR_INCLUDE) -Qn -g \
 		   				-m64 -mno-red-zone -mno-mmx -masm=intel \
 		   				-ffreestanding -fno-asynchronous-unwind-tables \
-		   				-Wall -Wextra -Wpedantic
+		   				-Wall -Wextra -Wpedantic -mcmodel=large
 
 AS				:= nasm
 
@@ -31,11 +31,11 @@ ASFLAGS		:= -f bin
 #
 # AR		:= $(TARGET)-ar
 #
-# LDFLAGS		:= -g -nostdlib -m64 -mno-red-zone -ffreestanding -lgcc \
-# 		   -z max-page-size=0x1000
-#
-# CTAGS		:= ctags
-#
+LD				:= $(TARGET)-ld
+
+LDFLAGS		:= -nostdlib -z max-page-size=0x1000
+
+
 MAKE_FLAGS	:= --quiet --no-print-directory
 
 QEMU		:= qemu-system-x86_64
