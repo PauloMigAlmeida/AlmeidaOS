@@ -171,9 +171,6 @@ long_mode_boot:
     ;TODOS:
     ; -> lm_display_string -> Try to make use of 64 bit registers where possible
     ; -> lm_set_cursor -> Try to make use of 64 bit registers where possible
-    ; -> pm_setup_page_tables -> You still have a few questions about the 4kb pages format bits (LeftShift remember?)
-    ; -> ProtectedMode.asm -> Please refactor this a bit...this looks like a mess
-    ; -> Display string -> refactor this function to allow the OS tag name to be stored just once.. no biggie, but relevant
 
 
 ; On physical devices this isn't required because the BIOS will
