@@ -9,19 +9,22 @@ DIR_ROOT := $(CURDIR)
 include $(DIR_ROOT)/scripts/config.mk
 include $(DIR_ROOT)/docker/config.mk
 
+DIR_SRC_SUBSYSTEMS := $(wildcard $(DIR_SRC)/*)
 
 #----------------------------------------------------------------------------
 # Build targets
 #----------------------------------------------------------------------------
 
-default: boot raw-disk
+default: build raw-disk
 
-all: boot raw-disk
+all: clean compile raw-disk
 
-.PHONY: boot
-boot:
-	@$(MAKE) $(MAKE_FLAGS) --directory=$(DIR_BOOT)
-	@# Help: Build the bootloader
+.PHONY: compile
+compile: $(DIR_SRC_SUBSYSTEMS)
+
+.PHONY: $(DIR_SRC_SUBSYSTEMS)
+$(DIR_SRC_SUBSYSTEMS):
+	@$(MAKE) $(MAKE_FLAGS) --directory=$@
 
 .PHONY: raw-disk
 raw-disk:
@@ -51,7 +54,7 @@ clean:
 	@# Help: Clean all generated files
 
 .PHONY: build
-build: clean
+build:
 	@echo "[build] Building AlmeidaOS"
 	@$(DOCKER) run --rm -it -v `pwd`:/code $(IMAGE_NAME):$(IMAGE_TAG) \
 		/bin/bash -c "cd /code &&  make all"

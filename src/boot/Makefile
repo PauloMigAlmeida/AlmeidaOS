@@ -1,7 +1,5 @@
 #----------------------------------------------------------------------------
 # AlmeidaOS boot loader makefile
-#
-# Makefile for the boot loader.
 #----------------------------------------------------------------------------
 
 DIR_ROOT	:= $(CURDIR)/../../
@@ -9,7 +7,7 @@ DIR_ROOT	:= $(CURDIR)/../../
 include $(DIR_ROOT)/scripts/config.mk
 
 DIR_TARGET	:= $(DIR_BUILD)/boot
-ASFLAGS 	:= -f bin
+# ASFLAGS 	:= -f bin
 
 SRC_ASM_FILES	:= $(wildcard *.asm)
 BIN_ASM_FILES	:= $(SRC_ASM_FILES:%.asm=$(DIR_TARGET)/%.bin)

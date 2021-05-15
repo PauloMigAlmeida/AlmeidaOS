@@ -1,10 +1,11 @@
 #--------------------
 # Project directories
 #--------------------
-DIR_BOOT	:= $(DIR_ROOT)/src/boot
-DIR_BUILD	:= $(DIR_ROOT)/build
+DIR_SRC		:= $(DIR_ROOT)/src
+
+DIR_BUILD		:= $(DIR_ROOT)/build
 DIR_SCRIPTS	:= $(DIR_ROOT)/scripts
-DIR_INCLUDE	:= $(DIR_ROOT)/TO_BE_DEFINED
+DIR_INCLUDE	:= $(DIR_ROOT)/include
 
 #--------------------
 # Key files
@@ -16,16 +17,17 @@ OUTPUT_RAW_DISK := $(DIR_BUILD)/disk.img
 #-------------------
 TARGET		:= x86_64-elf
 
-# CC		:= $(TARGET)-gcc
-#
-# CCFLAGS		:= -std=gnu11 -I$(DIR_INCLUDE) -Qn -g \
-# 		   -m64 -mno-red-zone -mno-mmx -mfpmath=sse -masm=intel \
-# 		   -ffreestanding -fno-asynchronous-unwind-tables \
-# 		   -Wall -Wextra -Wpedantic
-#
-AS		:= nasm
-#
+CC				:= $(TARGET)-gcc
+
+CCFLAGS		:= -std=c99 -I$(DIR_INCLUDE) -Qn -g \
+		   				-m64 -mno-red-zone -mno-mmx -masm=intel \
+		   				-ffreestanding -fno-asynchronous-unwind-tables \
+		   				-Wall -Wextra -Wpedantic
+
+AS				:= nasm
+
 # ASFLAGS		:= -f elf64
+ASFLAGS		:= -f bin
 #
 # AR		:= $(TARGET)-ar
 #
@@ -34,8 +36,8 @@ AS		:= nasm
 #
 # CTAGS		:= ctags
 #
-# MAKE_FLAGS	:= --quiet --no-print-directory
+MAKE_FLAGS	:= --quiet --no-print-directory
 
 QEMU		:= qemu-system-x86_64
 
-GDB		:= gdb
+GDB			:= gdb
