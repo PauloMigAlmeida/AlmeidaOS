@@ -8,4 +8,4 @@ dd if=/code/build/kernel/kernel.bin of=/code/build/disk.img bs=512 count=100 see
 # if that terminates prematurely. In a real computer, this wouldn't be likely to
 # happen as (assming that the usb stick used has a bigger capacity then the file copied),
 # BIOS would read garbage from whatever happens to be on the subsequent blocks.
-truncate --io-blocks -s $(expr 512 \* 106) /code/build/disk.img
+truncate -s $(expr 512 \* 106) /code/build/disk.img

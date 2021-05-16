@@ -168,9 +168,10 @@ long_mode_boot:
     ; enter a endless loop. This instruction should never be reached
     jmp lm_endless_loop
 
-    ;TODOS:
-    ; -> lm_display_string -> Try to make use of 64 bit registers where possible
-    ; -> lm_set_cursor -> Try to make use of 64 bit registers where possible
+    ; TODO: lm_display_string -> Try to make use of 64 bit registers where possible
+    ; TODO: lm_set_cursor -> Try to make use of 64 bit registers where possible
+    ; TODO: set up base functions to be accessible in C (memseet, memoryinfo)
+    ; TODO: learn about which elf sections must be aligned... I'm still not convinced
 
 
 ; On physical devices this isn't required because the BIOS will
