@@ -81,7 +81,8 @@ bios_extended_read_sectors_from_drive:
   ; offset: 01h  | range size: 1 byte | unused, should be zero
   mov byte[si+1], 0
   ; offset: 02h..03h  | range size: 2 byte | number of sectors to be read
-  mov word[si+2], Loader.File.NumberOfBlocks + 1
+  ;  (some Phoenix BIOSes are limited to a maximum of 127 sectors)
+  mov word[si+2], Loader.File.NumberOfBlocks + Kernel.File.NumberOfBlocks
   ; offset: 04h..07h  | range size: 4 byte | segment:offset pointer to the memory
   ;   buffer to which sectors will be transferred (note that x86 is
   ;   little-endian: if declaring the segment and offset separately,

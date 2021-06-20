@@ -40,6 +40,6 @@ Paging.End.Address    equ   0x00018000 ; 0x13000 + 5 PT tables (512 entries of 6
 
 ; Kernel code:
 Loader.Kernel.Start.Address equ (Loader.Mem.Stack.Top + Loader.File.NumberOfBlocks * 512)
-Kernel.New.Start.Address    equ 0x00200000 ; to be defined yet...
+Kernel.New.Start.Address    equ 0x00200000 ; TODO: to be defined yet...
 
 %endif ; __ALMEIDAOS_GLOBALMEM_INC__

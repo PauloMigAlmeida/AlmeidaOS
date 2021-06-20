@@ -19,10 +19,11 @@ TARGET		:= x86_64-elf
 
 CC				:= $(TARGET)-gcc
 
-CCFLAGS		:= -std=c99 -I$(DIR_INCLUDE) -Qn -g \
+# gnu99 is used instead of c99 so we can use the GCC inline assembly extensions
+CCFLAGS		:= -std=gnu99 -I$(DIR_INCLUDE) -Qn -g \
 		   				-m64 -mno-red-zone -mno-mmx -masm=intel \
 		   				-ffreestanding -fno-asynchronous-unwind-tables \
-		   				-Wall -Wextra -Wpedantic -mcmodel=large
+		   				-Wall -Wextra -Wpedantic -mcmodel=large -fno-builtin
 
 AS				:= nasm
 

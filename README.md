@@ -19,11 +19,11 @@ make test
 ```
 
 ## Wishlist
-To make sure I won't lose focus on what I want this OS to be able to do, I decided to write a list of features 
+To make sure I won't lose focus on what I want this OS to be able to do, I decided to write a list of features
 that I want to implement in the short to medium term.
 
 - [ ] Serial port driver
-- [ ] Early printk (contigent on serial port driver) -> will help debugging in real computers
+- [ ] Early printk (contingent on serial port driver) -> will help debugging in real computers
 - [ ] limited libc
 - [ ] Userspace
 - [ ] Rudimentary Bash-like terminal
