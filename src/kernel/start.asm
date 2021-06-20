@@ -28,7 +28,7 @@ kernel_start:
   ;
   ; https://refspecs.linuxfoundation.org/elf/elf.pdf - Page 29
 
-  mov rsp, Kernel.New.Start.Address + 0x1000
+  mov rsp, Kernel.New.Start.Address + Kernel.New.ELFTextHeader.Offset
   call kmain
 
 .endless_loop:

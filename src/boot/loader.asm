@@ -163,7 +163,7 @@ long_mode_boot:
     call lm_display_string
 
     ; jump to memory address in which the kernel should be (fingers crossed)
-    jmp Kernel.New.Start.Address + 0x1000
+    jmp Kernel.New.Start.Address + Kernel.New.ELFTextHeader.Offset
 
     ; enter a endless loop. This instruction should never be reached
     jmp lm_endless_loop

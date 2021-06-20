@@ -39,7 +39,8 @@ Mem.PTE.Address       equ   0x00013000 ; 0x12000 + PDE (512 entries of 64 bits)
 Paging.End.Address    equ   0x00018000 ; 0x13000 + 5 PT tables (512 entries of 64 bits)
 
 ; Kernel code:
-Loader.Kernel.Start.Address equ (Loader.Mem.Stack.Top + Loader.File.NumberOfBlocks * 512)
-Kernel.New.Start.Address    equ 0x00200000 ; TODO: to be defined yet...
+Loader.Kernel.Start.Address       equ (Loader.Mem.Stack.Top + Loader.File.NumberOfBlocks * 512)
+Kernel.New.Start.Address          equ 0x00200000 ; TODO: to be defined yet...
+Kernel.New.ELFTextHeader.Offset   equ 0x00001000 ; .text starts <p> + 0x1000
 
 %endif ; __ALMEIDAOS_GLOBALMEM_INC__
