@@ -21,6 +21,9 @@ kernel_start:
   xor ax,ax
   mov ss, ax
 
+	; prepare stack for the env
+	mov rsp, Kernel.New.Start.Address + Kernel.New.ELFTextHeader.Offset
+
   ; ELF specification dictates that we must clean BSS area before init
   ;
   ; .bss: This section holds uninitialized data that contribute to the program's
@@ -29,13 +32,11 @@ kernel_start:
   ; indicated by the section type, SHT_NOBITS.
   ;
   ; https://refspecs.linuxfoundation.org/elf/elf.pdf - Page 29
-
-  mov rsp, Kernel.New.Start.Address + Kernel.New.ELFTextHeader.Offset
-
   mov rdi, _BSS_START
   mov rcx, _BSS_SIZE
   call memzero
 
+	; enter the kernel 
   call kmain
 
 .endless_loop:
@@ -61,3 +62,6 @@ memzero:
 		loop .iter;
 
   ret
+
+; Paulo, if you want to change that to stob, you can get the speed boost when you
+; enable fast-string in the processor
