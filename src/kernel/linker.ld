@@ -43,9 +43,14 @@ SECTIONS
     *(.data)
   }
 
-  .bss : {
-    *(.bss)
+
+  .bss : ALIGN(4K)
+  {
+		_BSS_START = ABSOLUTE(.);
+		*(.bss)
+		*(COMMON)
   }
+  _BSS_SIZE = ABSOLUTE(.) - _BSS_START;
 
 
   .rodata : {

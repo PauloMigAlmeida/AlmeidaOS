@@ -1,14 +1,18 @@
 #include <stddef.h>
 #include "kernel/lib/string.h"
 
-/*
-  TODO: debugging info is getting lost during linking...so I can't use gdb layout src
-*/
+static int force_bss_content;
+static char force_bss_content2;
 
 int kmain(void) {
-  // int a = 10;
-  // int b = 8;
-  // memcpy(&b, &a, sizeof(int));
+  //force_bss_content
+  force_bss_content = 11;
+  force_bss_content2 = 'o';
+
+  // dummy test of the memcpy function
+  int a = 10;
+  int b = 8;
+  memcpy(&b, &a, sizeof(int));
 
   char* video = (char*)0xb8000;
   video[0] = 'P';
