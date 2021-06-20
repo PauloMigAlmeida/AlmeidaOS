@@ -50,4 +50,7 @@ $(DIR_SRC_SUBSYSTEMS):
 linker:
 	@echo "$(TAG) Linking Kernel"
 	@$(LD) $(LDFLAGS) -T linker.ld -o $(DIR_TARGET)/kernel $(shell find $(DIR_TARGET)/ -type f -name "*.o")
-	@$(OBJCOPY) -O binary $(DIR_TARGET)/kernel $(DIR_TARGET)/kernel.bin
+	# split kernel for debug symbol files.
+	@$(OBJCOPY) --only-keep-debug $(DIR_TARGET)/kernel $(DIR_TARGET)/kernel.debug
+	@$(OBJCOPY) --strip-debug $(DIR_TARGET)/kernel 
+

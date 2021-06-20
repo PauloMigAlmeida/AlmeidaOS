@@ -3,7 +3,10 @@ ENTRY(kernel_start)
 
 SECTIONS
 {
-  /* . = 0x200000; */
+  /* 
+  	Kernel ELF file loads at 0x200000 but the text section starts with an 
+  	offset 0x1000. Hence, 0x201000
+  */
   . = 0x201000;
 
   /*
@@ -48,14 +51,6 @@ SECTIONS
   .rodata : {
     *(.rodata)
   }
-
-
-  /*
-    TODO: Make sure that we can carry debug info in the final file, I have a
-    hunch that as of now we may not including those here..
-
-    A good reference can be: https://github.com/torvalds/linux/blob/57fa2369ab17d67e6232f85b868652fbf4407206/include/asm-generic/vmlinux.lds.h#L790
-  */
 
 /*
   /DISCARD/ : {
