@@ -10,8 +10,8 @@ int kmain(void) {
   force_bss_content2 = 'o';
 
   // dummy test of the memcpy function
-  int a = 10;
-  int b = 8;
+  int a = 1;
+  int b = 2;
   memcpy(&b, &a, sizeof(int));
 
   char* video = (char*)0xb8000;
