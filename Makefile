@@ -34,12 +34,16 @@ raw-disk:
 
 .PHONY: qemu-debug
 qemu-debug:
-	@$(QEMU) -qmp tcp:localhost:4444,server,nowait -gdb tcp::8864 -drive format=raw,file=$(OUTPUT_RAW_DISK) -S -d guest_errors -d int -no-reboot -no-shutdown
+	@$(QEMU) -qmp tcp:localhost:4444,server,nowait \
+		-gdb tcp::8864 -drive format=raw,file=$(OUTPUT_RAW_DISK) \
+		-S -d guest_errors -d int -no-reboot -no-shutdown
 	@# Help: Runs QEMU in debug mode so that we can debug the bootloader
 
 .PHONY: gdb-debug
 gdb-debug:
-	@$(GDB) -x $(DIR_SCRIPTS)/gdb/debug_commands.txt
+	@$(GDB) -x $(DIR_SCRIPTS)/gdb/debug_commands.txt \
+		-ex "set directories $(shell find src/ include/ -type d -exec echo -n {}: \;)" \
+		-ex 'b kmain'
 	@# Help: Runs GDB with some personal preferences to debug the bootloader
 
 .PHONY: test
