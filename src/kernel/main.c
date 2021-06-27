@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include "kernel/lib/string.h"
+#include "kernel/lib/printk.h"
 
 static int force_bss_content;
 static char force_bss_content2;
@@ -14,9 +15,18 @@ int kmain(void) {
   int b = 2;
   memcpy(&b, &a, sizeof(int));
 
-  char* video = (char*)0xb8000;
-  video[0] = 'P';
-  video[1] = 0x0a;
+  printk("a: %d\n", a);
+  printk("Value of b is: %d\n", b);
+
+  // test row reset;
+  for(int i=0; i < 30; i++){
+	  printk("i: %d\n", i);
+  }
+
+  // test soft wrap
+  printk("abcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxz\n");
+
+  printk("Test negative numbers: %d", -15);
 
   return 0;
 }
