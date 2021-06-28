@@ -102,7 +102,7 @@ char* itoa(int value, char *buf, int radix) {
 //		value = abs(value);
 //	}
 
-	while (value != 0) {
+	do{
 		int digit = (value % radix);
 		if (digit < 10)
 			*p = digit + '0';
@@ -110,7 +110,7 @@ char* itoa(int value, char *buf, int radix) {
 			*p = digit + 'a';
 		p--;
 		value = value / radix;
-	}
+	}while (value != 0);
 
 	char *old_buf = buf;
 	p++;

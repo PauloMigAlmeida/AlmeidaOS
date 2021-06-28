@@ -1,6 +1,6 @@
 #include <stddef.h>
 
-#include "kernel/lib/vga_console.h"
+#include "kernel/video/vga_console.h"
 #include "kernel/lib/string.h"
 #include "kernel/lib/printk.h"
 
@@ -23,14 +23,14 @@ int kmain(void) {
   printk("Value of b is: %d\n", b);
 
   // test row reset;
-  for(int i=0; i < 30; i++){
+  for(int i=0; i < 23; i++){
 	  printk("i: %d\n", i);
   }
 
   // test soft wrap
   printk("abcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxz\n");
 
-  printk("Test negative numbers: %d", -15);
+//  printk("Test negative numbers: %d", -15);
 
   return 0;
 }

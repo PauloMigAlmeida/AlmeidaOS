@@ -4,8 +4,9 @@
  *  Created on: Jun 28, 2021
  *      Author: Paulo Almeida
  */
-#include "kernel/lib/vga_console.h"
-#include <stdint.h>
+
+#include "kernel/video/vga_console.h"
+#include "kernel/asm/generic.h"
 
 #define VIDEO_MEM_ADDR 0xb8000
 #define VGA_WIDTH 80
@@ -13,16 +14,6 @@
 
 static int row = 0;
 static int col = 0;
-
-//TODO move this to a dedicated file
-inline __attribute__((always_inline)) void outb(uint16_t port, uint8_t value)
-{
-    asm volatile (
-        "outb  %[p],  %[v]"
-        :
-        : [p] "Nd" (port), [v] "a" (value)
-        );
-}
 
 void update_cursor(int row, int col) {
 	// ensures that caret position is always visible even on certain edge cases
@@ -41,7 +32,7 @@ void update_cursor(int row, int col) {
 
 void clear_console() {
 	int nchars = VGA_WIDTH * VGA_HEIGHT;
-	volatile char *video_address = (volatile char*) VIDEO_MEM_ADDR;
+	volatile char* video_address = (volatile char*) VIDEO_MEM_ADDR;
 	for(int i = 0; i < nchars; i++ ){
 		video_address[0] = ' ';
 		video_address[1] = 0xf;
@@ -72,7 +63,7 @@ void write_console(const char *buf) {
 			continue;
 		}
 
-		char *video_address = (char*) VIDEO_MEM_ADDR;
+		volatile char* video_address = (volatile char*) VIDEO_MEM_ADDR;
 		video_address += row * VGA_WIDTH * 2 + col * 2;
 
 		video_address[0] = *buf;
