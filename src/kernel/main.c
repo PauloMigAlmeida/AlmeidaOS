@@ -1,4 +1,6 @@
 #include <stddef.h>
+
+#include "kernel/lib/vga_console.h"
 #include "kernel/lib/string.h"
 #include "kernel/lib/printk.h"
 
@@ -6,6 +8,8 @@ static int force_bss_content;
 static char force_bss_content2;
 
 int kmain(void) {
+  clear_console();
+
   //force_bss_content
   force_bss_content = 11;
   force_bss_content2 = 'o';

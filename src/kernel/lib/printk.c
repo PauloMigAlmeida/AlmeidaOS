@@ -8,37 +8,8 @@
 #include "kernel/lib/string.h"
 #include <stdarg.h>
 #include <stdbool.h>
+#include "../../../include/kernel/lib/vga_console.h"
 
-static int row = 0;
-static int col = 0;
-
-void write_to_console(const char* buf){
-	//TODO implement a way to push the lines up to make space and give the visual effect that the content is scrolling
-	char c = *buf;
-	do{
-		// 0xb8000 supports 80 x 25
-		if(col == 80 || c == '\n'){
-			col = 0;
-			row++;
-
-			if(c == '\n') continue;
-		}
-
-		if(row > 24){
-			col = 0;
-			row = 0;
-			buf--;
-			continue;
-		}
-
-		char* video_address = (char*)(0xb8000 + row * 80 * 2  + col * 2);
-		video_address[0] = *buf;
-		video_address[1] = 0x0a;
-
-		col++;
-
-	}while((c = *(++buf)) != '\0');
-}
 
 void printk(const char *fmt, ...) {
 	va_list args;
@@ -87,6 +58,6 @@ void printk(const char *fmt, ...) {
 	}
 
 	va_end(args);
-	write_to_console(buffer);
+	write_console(buffer);
 }
 
