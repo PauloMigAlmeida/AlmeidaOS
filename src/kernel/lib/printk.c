@@ -4,11 +4,12 @@
  *  Created on: Jun 27, 2021
  *      Author: Paulo Almeida
  */
+
 #include "kernel/lib/printk.h"
 #include "kernel/lib/string.h"
+#include "kernel/lib/vga_console.h"
 #include <stdarg.h>
 #include <stdbool.h>
-#include "../../../include/kernel/lib/vga_console.h"
 
 
 void printk(const char *fmt, ...) {
