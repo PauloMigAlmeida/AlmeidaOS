@@ -11,4 +11,5 @@ void* memset(void* buf, char value, size_t size);
  * */
 char* itoa(int value, char* buf, int radix);
 
+size_t strlen(const char* buf);
 #endif /* _KERNEL_LIB_PRINTK_H */

@@ -59,6 +59,6 @@ void printk(const char *fmt, ...) {
 	}
 
 	va_end(args);
-	write_console(buffer);
+	write_console(buffer, buf_pointer + 1); // copy nul-terminator too
 }
 

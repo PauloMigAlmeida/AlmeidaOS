@@ -16,7 +16,7 @@
  */
 
 void ringbuffer_init(ringbuffer_t *buf) {
-	buf->head= buf->tail = -1;
+	buf->head = buf->tail = -1;
 }
 
 /* it's expected that char* item is NUL-terminated. */
@@ -25,14 +25,31 @@ void ringbuffer_put(ringbuffer_t *buf, const char *item, size_t size) {
 		//first time
 		buf->head++;
 		buf->tail++;
-	}else if(buf->head == 0 && buf->tail < (int)size) {
+	} else if (buf->head == 0 && buf->tail < ((int)buf->size -1)) { //size_t to int will end ugly at a certain point
 		// until it gets full for the first time
 		buf->tail++;
-	}else {
+	} else {
 		// regular case (assuming no deletions are made)
-		buf->head = (buf->head + 1) % buf-> size;
-		buf->tail = (buf->tail + 1) % buf-> size;
+		buf->head = (buf->head + 1) % buf->size;
+		buf->tail = (buf->tail + 1) % buf->size;
 	}
-	memcpy(buf->data[buf->tail], (void*)item, size);
+	memcpy(buf->data[buf->tail], (void*) item, size);
 }
 
+void ringbuffer_for_each(ringbuffer_t *buf, void (*fn)(const char *item)) {
+	// check whether the ringbuffer is empty
+	if ((buf->head == -1 || buf->tail == -1) || buf->size == 0)
+		return;
+
+	int idx = buf->head;
+	do{
+		idx = idx % buf->size;
+		fn(buf->data[idx]);
+		idx++;
+	}while((buf->tail > buf->head && idx <= buf->tail)
+			|| (buf->tail < buf->head && idx != buf->head));
+	/* scratch pad
+	 * h=1 : t=3 -> until gets to tail
+	 * h=2 : t=1 -> until gets to head;
+	 */
+}

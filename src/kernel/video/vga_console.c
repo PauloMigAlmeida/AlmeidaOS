@@ -28,14 +28,19 @@ static int col = 0;
  * mod
  */
 
-static ringbuffer_t msg_buffer = {.size = VGA_MAX_ROWS };
+static ringbuffer_t msg_buffer = { .size = VGA_MAX_ROWS };
 
+void vga_console_init(){
+	// init ring buffer
+	ringbuffer_init(&msg_buffer);
+	clear_console();
+}
 
 void update_cursor(int row, int col) {
 	// ensures that caret position is always visible even on certain edge cases
-	if(row == VGA_MAX_ROWS)
+	if (row == VGA_MAX_ROWS)
 		row--;
-	else if(row == 0)
+	else if (row == 0)
 		row++;
 
 	uint16_t pos = row * VGA_MAX_COLS + col;
@@ -48,8 +53,8 @@ void update_cursor(int row, int col) {
 
 void clear_console() {
 	int nchars = VGA_MAX_COLS * VGA_MAX_ROWS;
-	volatile char* video_address = (volatile char*) VIDEO_MEM_ADDR;
-	for(int i = 0; i < nchars; i++ ){
+	volatile char *video_address = (volatile char*) VIDEO_MEM_ADDR;
+	for (int i = 0; i < nchars; i++) {
 		video_address[0] = ' ';
 		video_address[1] = 0xf;
 		video_address += 2;
@@ -57,18 +62,14 @@ void clear_console() {
 
 	row = 0;
 	col = 0;
-	update_cursor(row,col);
-
-	// init ring buffer
-	ringbuffer_init(&msg_buffer);
+	update_cursor(row, col);
 }
 
-void write_console(const char *buf) {
-	//TODO implement a way to push the lines up to make space and give the visual effect that the content is scrolling
-	size_t size = 0;
-	char c = *buf;
+void write_line_to_dma(const char *buf) {
+	volatile char *video_address;
+	char c;
 	do {
-		size++;
+
 		if (col == VGA_MAX_COLS || c == '\n') {
 			col = 0;
 			row++;
@@ -84,7 +85,7 @@ void write_console(const char *buf) {
 			continue;
 		}
 
-		volatile char* video_address = (volatile char*) VIDEO_MEM_ADDR;
+		video_address = (volatile char*) VIDEO_MEM_ADDR;
 		video_address += row * VGA_MAX_COLS * 2 + col * 2;
 
 		video_address[0] = *buf;
@@ -93,7 +94,13 @@ void write_console(const char *buf) {
 		col++;
 
 	} while ((c = *(++buf)) != '\0');
+}
 
-	ringbuffer_put(&msg_buffer, buf, size);
+void write_console(const char *buf, size_t buf_size) {
+	ringbuffer_put(&msg_buffer, buf, buf_size);
+
+	clear_console();
+	ringbuffer_for_each(&msg_buffer, &write_line_to_dma);
+
 	update_cursor(row, col);
 }

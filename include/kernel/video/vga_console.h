@@ -8,7 +8,10 @@
 #ifndef _KERNEL_LIB_DISPLAY_CONSOLE_H
 #define _KERNEL_LIB_DISPLAY_CONSOLE_H
 
+#include <stddef.h>
+
+void vga_console_init();
 void clear_console();
-void write_console(const char* buf);
+void write_console(const char* buf, size_t buf_size);
 
 #endif /* _KERNEL_LIB_DISPLAY_CONSOLE_H */

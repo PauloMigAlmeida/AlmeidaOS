@@ -9,9 +9,6 @@
 #define INCLUDE_KERNEL_LIB_RINGBUFFER_H_
 
 #include <stddef.h>
-//TODO: move implementation to this header file - if we want to get functions
-// inlined
-//#include "kernel/compiler/macro.h"
 
 /*
  * I first created that to hold the VGA messages printed by printk..that's why
@@ -33,8 +30,8 @@ typedef struct {
 	char data[25][1024];
 } ringbuffer_t;
 
-/*__force_inline */void ringbuffer_init(ringbuffer_t *buf);
-/*__force_inline */void ringbuffer_put(ringbuffer_t *buf, const char *item,
-		size_t size);
+void ringbuffer_init(ringbuffer_t *buf);
+void ringbuffer_put(ringbuffer_t *buf, const char *item, size_t size);
+void ringbuffer_for_each(ringbuffer_t *buf, void (*fn)(const char* item));
 
 #endif /* INCLUDE_KERNEL_LIB_RINGBUFFER_H_ */

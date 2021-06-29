@@ -120,3 +120,10 @@ char* itoa(int value, char *buf, int radix) {
 	return old_buf;
 }
 
+size_t strlen(const char* buf) {
+	/* like libC strlen, we don't count NUL-terminator */
+	size_t len = 0;
+	for(; *(buf + len) != '\0'; len++);
+	return len;
+}
+

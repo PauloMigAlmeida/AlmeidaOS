@@ -8,7 +8,7 @@ static int force_bss_content;
 static char force_bss_content2;
 
 int kmain(void) {
-  clear_console();
+  vga_console_init();
 
   //force_bss_content
   force_bss_content = 11;
@@ -23,12 +23,13 @@ int kmain(void) {
   printk("Value of b is: %d\n", b);
 
   // test row reset;
-  for(int i=0; i < 23; i++){
+  for(int i=0; i < 24; i++){
 	  printk("i: %d\n", i);
   }
 
   // test soft wrap
-  printk("abcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxz\n");
+  //TODO: change printk's implementation so it can deal with soft-wraps edge cases
+//  printk("abcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxz\n");
 
 //  printk("Test negative numbers: %d", -15);
 
