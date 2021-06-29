@@ -120,7 +120,3 @@ char* itoa(int value, char *buf, int radix) {
 	return old_buf;
 }
 
-char* utoa(unsigned int value, char *buf, int radix) {
-	//TODO implement this
-	return buf;
-}
