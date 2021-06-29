@@ -15,12 +15,12 @@
  * debugging purposes but it doesn't get added to the buffer
  */
 
-void ringbuffer_init(ringbuffer_t *buf) {
+void ringbuffer_init(ringbuffer_tp *buf) {
 	buf->head = buf->tail = -1;
 }
 
 /* it's expected that char* item is NUL-terminated. */
-void ringbuffer_put(ringbuffer_t *buf, const char *item, size_t size) {
+void ringbuffer_put(ringbuffer_tp *buf, const char *item, size_t size) {
 	if (buf->head == buf->tail && buf->head == -1) {
 		//first time
 		buf->head++;
@@ -36,7 +36,7 @@ void ringbuffer_put(ringbuffer_t *buf, const char *item, size_t size) {
 	memcpy(buf->data[buf->tail], (void*) item, size);
 }
 
-void ringbuffer_for_each(ringbuffer_t *buf, void (*fn)(const char *item)) {
+void ringbuffer_for_each(ringbuffer_tp *buf, void (*fn)(const char *item)) {
 	// check whether the ringbuffer is empty
 	if ((buf->head == -1 || buf->tail == -1) || buf->size == 0)
 		return;

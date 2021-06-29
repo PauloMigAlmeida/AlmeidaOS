@@ -23,7 +23,7 @@ int kmain(void) {
   printk("Value of b is: %d\n", b);
 
   // test row reset;
-  for(int i=0; i < 24; i++){
+  for(int i=0; i < 25; i++){
 	  printk("i: %d\n", i);
   }
 

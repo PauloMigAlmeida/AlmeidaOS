@@ -28,10 +28,10 @@ typedef struct {
 	int tail;
 	size_t size;
 	char data[25][1024];
-} ringbuffer_t;
+} ringbuffer_tp;
 
-void ringbuffer_init(ringbuffer_t *buf);
-void ringbuffer_put(ringbuffer_t *buf, const char *item, size_t size);
-void ringbuffer_for_each(ringbuffer_t *buf, void (*fn)(const char* item));
+void ringbuffer_init(ringbuffer_tp *buf);
+void ringbuffer_put(ringbuffer_tp *buf, const char *item, size_t size);
+void ringbuffer_for_each(ringbuffer_tp *buf, void (*fn)(const char* item));
 
 #endif /* INCLUDE_KERNEL_LIB_RINGBUFFER_H_ */

@@ -28,7 +28,7 @@ static int col = 0;
  * mod
  */
 
-static ringbuffer_t msg_buffer = { .size = VGA_MAX_ROWS };
+static ringbuffer_tp msg_buffer = { .size = VGA_MAX_ROWS };
 
 void vga_console_init(){
 	// init ring buffer
@@ -78,13 +78,6 @@ void write_line_to_dma(const char *buf) {
 				continue;
 		}
 
-		if (row == VGA_MAX_ROWS) {
-			col = 0;
-			row = 0;
-			buf--;
-			continue;
-		}
-
 		video_address = (volatile char*) VIDEO_MEM_ADDR;
 		video_address += row * VGA_MAX_COLS * 2 + col * 2;
 
@@ -97,6 +90,7 @@ void write_line_to_dma(const char *buf) {
 }
 
 void write_console(const char *buf, size_t buf_size) {
+	//TODO: estimate how many lines we will need so we can make space and move pointers in the ring buffer accordingly
 	ringbuffer_put(&msg_buffer, buf, buf_size);
 
 	clear_console();

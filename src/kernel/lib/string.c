@@ -102,7 +102,7 @@ char* itoa(int value, char *buf, int radix) {
 //		value = abs(value);
 //	}
 
-	do{
+	do {
 		int digit = (value % radix);
 		if (digit < 10)
 			*p = digit + '0';
@@ -110,7 +110,7 @@ char* itoa(int value, char *buf, int radix) {
 			*p = digit + 'a';
 		p--;
 		value = value / radix;
-	}while (value != 0);
+	} while (value != 0);
 
 	char *old_buf = buf;
 	p++;
@@ -120,10 +120,10 @@ char* itoa(int value, char *buf, int radix) {
 	return old_buf;
 }
 
-size_t strlen(const char* buf) {
+size_t strlen(const char *buf) {
 	/* like libC strlen, we don't count NUL-terminator */
 	size_t len = 0;
-	for(; *(buf + len) != '\0'; len++);
+	for (; *(buf + len) != '\0'; len++);
 	return len;
 }
 
