@@ -16,7 +16,6 @@
 
 /* Controls cursor caret and soft-wrap functionality */
 static int row = 0;
-static int col = 0;
 
 /*
  * Controls ring-buffer structure that holds a copy of recently printed msgs.
@@ -62,31 +61,26 @@ void clear_console() {
 	}
 
 	row = 0;
-	col = 0;
-	update_cursor(row, col);
+	update_cursor(row, 0);
 }
 
 void write_line_to_dma(const char *buf) {
-	volatile char *video_address;
+	volatile char *video_address = (volatile char*) VIDEO_MEM_ADDR;
+	video_address += row * VGA_MAX_COLS * 2;
+
 	char c;
 	do {
-
-		video_address = (volatile char*) VIDEO_MEM_ADDR;
-		video_address += row * VGA_MAX_COLS * 2 + col * 2;
-
 		video_address[0] = *buf;
 		video_address[1] = 0xf;
-
-		col++;
+		video_address += 2;
 
 	} while ((c = *(++buf)) != '\0');
 	row++;
-	col=0;
 }
 
 void write_console(const char *buf, size_t buf_size) {
 	char line[VGA_MAX_COLS+1];
-	line[VGA_MAX_COLS] = '\0';
+	memset(line, '\0', sizeof(line)/sizeof(line[0]));
 	size_t line_p = 0;
 
 	for(size_t i = 0; i < buf_size-1 ; i++){
@@ -102,11 +96,12 @@ void write_console(const char *buf, size_t buf_size) {
 			line_p = 0;
 		}
 	}
+
 	if (line_p > 0)
 		ringbuffer_put(&msg_buffer, line, line_p);
 
 	clear_console();
 	ringbuffer_for_each(&msg_buffer, &write_line_to_dma);
 
-	update_cursor(row, col);
+	update_cursor(row, 0);
 }

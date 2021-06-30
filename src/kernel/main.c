@@ -19,7 +19,7 @@ int kmain(void) {
   int b = 2;
   memcpy(&b, &a, sizeof(int));
 
-  printk("a: %d\n", a);
+  printk("a: %d\nbut a is also: %d\n", a,a);
   printk("Value of b is: %d\n", b);
 
   // test row reset;
@@ -34,7 +34,7 @@ int kmain(void) {
   for(int i=0; i < 5; i++){
   	  printk("i: %d\n", i);
     }
-//  printk("Test negative numbers: %d", -15);
+  printk("Test negative numbers: %d", -2147483647);
 
   return 0;
 }

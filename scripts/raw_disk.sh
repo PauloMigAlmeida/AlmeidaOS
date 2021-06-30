@@ -1,4 +1,17 @@
-#!/bin/bash
+#!/bin/bash -e
+
+#################
+# sanity checks #
+#################
+
+# check if kernel size is bigger then the number of blocks allocated 
+# I will have to use this until I either implement a HD driver and implement a filesystem
+kernel_size=$(stat -c%s /code/build/kernel/kernel)
+if (( kernel_size > 51200 )); then
+    echo "[ERROR] :: raw_disk.sh :: Kernel excceded the blocks allocated. Exiting..."
+    exit 1
+fi
+
 rm -f /code/build/disk.img
 dd if=/code/build/boot/mbr.bin of=/code/build/disk.img bs=512 count=1 conv=notrunc
 dd if=/code/build/boot/loader.bin of=/code/build/disk.img bs=512 count=5 seek=1 conv=notrunc

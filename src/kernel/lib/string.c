@@ -1,5 +1,6 @@
 #include "kernel/lib/string.h"
 #include "kernel/lib/math.h"
+#include <stdbool.h>
 
 /*
  asm ( assembler template
@@ -69,7 +70,7 @@ void* memcpy(void *dst, void *src, size_t size) {
 
 	return dst;
 }
-//TODO: I had the impression (during debugging) that memset isn't doing the right thing (write_console) -> Explore more later
+
 void* memset(void *buf, char value, size_t size) {
 	asm volatile(
 			"rep stosq \n\t"
@@ -96,11 +97,13 @@ char* itoa(int value, char *buf, int radix) {
 	char tmp[buf_size];
 	tmp[buf_size - 1] = '\0';
 	char *p = tmp + buf_size - 2;
+	bool add_sign = false;
 
-//	if(value < 0 && radix == 10){
-//		//TODO implement logic for negative numbers... this is incomplete as of now.
-//		value = abs(value);
-//	}
+	//TODO think about what to do for INT_MIN case (-2147483648) - maybe check how glibc does it.
+	if(value < 0 && radix == 10){
+		value = abs(value);
+		add_sign = true;
+	}
 
 	do {
 		int digit = (value % radix);
@@ -111,6 +114,11 @@ char* itoa(int value, char *buf, int radix) {
 		p--;
 		value = value / radix;
 	} while (value != 0);
+
+	if(add_sign){
+		*p = '-';
+		p--;
+	}
 
 	char *old_buf = buf;
 	p++;
