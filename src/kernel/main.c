@@ -19,6 +19,7 @@ int kmain(void) {
   int b = 2;
   memcpy(&b, &a, sizeof(int));
 
+  printk("a: %d\n", a);
   printk("a: %d\nbut a is also: %d\n", a,a);
   printk("Value of b is: %d\n", b);
 

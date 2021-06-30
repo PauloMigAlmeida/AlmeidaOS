@@ -23,6 +23,8 @@
 
  */
 
+void strrev(char *str, size_t length);
+
 void* memcpy(void *dst, void *src, size_t size) {
 
 	/*
@@ -65,7 +67,7 @@ void* memcpy(void *dst, void *src, size_t size) {
 			"rep movsb \n\t"
 			: "=&c" (d0), "=&D" (d1), "=&S" (d2)
 			: "0" (size >> 3), [remainder] "g" (size & 7), "1" (dst), "2" (src)
-			: "memory" // clobbered registers list
+			: "memory"
 	);
 
 	return dst;
@@ -76,9 +78,9 @@ void* memset(void *buf, char value, size_t size) {
 			"rep stosq \n\t"
 			"movq rcx, %[remainder] \n\t"
 			"rep stosb \n\t"
-			: "=&D" (buf) //output operands
-			: "a" (value), "c"(size >> 3), [remainder] "g" (size & 7)//input operands
-			: "memory"// clobbered registers list
+			: "=&D" (buf)
+			: "a" (value), "c"(size >> 3), [remainder] "g" (size & 7)
+			: "memory"
 	);
 	return buf;
 }
@@ -86,52 +88,62 @@ void* memset(void *buf, char value, size_t size) {
 /**
  * the radix values can be OCTAL, DECIMAL, or HEX
  */
-char* itoa(int value, char *buf, int radix) {
+char* itoa(int value, char *str, int radix) {
 	// Check for supported base.
-	if (radix < 2 || radix > 36) {
-		*buf = '\0';
-		return buf;
+	if (radix != 8 && radix != 10 && radix != 16) {
+		*str = '\0';
+		return str;
 	}
 
-	int buf_size = 16;
-	char tmp[buf_size];
-	tmp[buf_size - 1] = '\0';
-	char *p = tmp + buf_size - 2;
-	bool add_sign = false;
+	int i = 0;
+	bool is_negative = false;
 
-	//TODO think about what to do for INT_MIN case (-2147483648) - maybe check how glibc does it.
-	if(value < 0 && radix == 10){
+	/* handle edge case */
+	if (value == 0) {
+		str[i++] = '0';
+		str[i] = '\0';
+		return str;
+	}
+
+	/* negative numbers are handled only with base 10 */
+	if (value < 0 && radix == 10) {
+		is_negative = true;
 		value = abs(value);
-		add_sign = true;
 	}
 
-	do {
-		int digit = (value % radix);
-		if (digit < 10)
-			*p = digit + '0';
-		else
-			*p = digit + 'a';
-		p--;
+	while (value != 0) {
+		int rem = value % radix;
+		str[i++] = (rem > 9) ? (rem - 10) + 'a' : rem + '0';
 		value = value / radix;
-	} while (value != 0);
-
-	if(add_sign){
-		*p = '-';
-		p--;
 	}
 
-	char *old_buf = buf;
-	p++;
-	while (*p != '\0')
-		*(buf++) = *(p++);
+	if (is_negative)
+		str[i++] = '-';
 
-	return old_buf;
+	str[i] = '\0';
+	strrev(str, i);
+
+	return str;
 }
 
 size_t strlen(const char *buf) {
 	/* like libC strlen, we don't count NUL-terminator */
 	size_t len = 0;
-	for (; *(buf + len) != '\0'; len++);
+	for (; *(buf + len) != '\0'; len++)
+		;
 	return len;
+}
+
+void strrev(char *str, size_t length) {
+	/* str is expected to be NUL-terminated */
+	if (length < 2)
+		return;
+
+	for (size_t start = 0, end = length - 1; start < length / 2;
+			start++, end--) {
+		char tmp = *(str + start);
+		*(str + start) = *(str + end);
+		*(str + end) = tmp;
+	}
 }
 

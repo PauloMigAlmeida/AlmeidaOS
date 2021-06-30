@@ -11,12 +11,13 @@
 #include <limits.h>
 #include "kernel/compiler/macro.h"
 
-__force_inline unsigned int abs(int value) {
-	//TODO think about what to do for INT_MIN case (-2147483648) - maybe check how glibc does it.
-	unsigned int r;
+__force_inline int abs(int value) {
+	/*
+	 * C99 abs:"if the result cannot be represented, the behavior is undefined."
+	 * So I decided not to handle 2-complement's edge case such as -2147483648
+	 */
 	int const mask = value >> (sizeof(int) * CHAR_BIT - 1);
-	r = (value + mask) ^ mask;
-	return r;
+	return (value + mask) ^ mask;
 }
 
 #endif /* _KERNEL_LIB_MATH_H */
