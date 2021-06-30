@@ -8,6 +8,7 @@
 #include "kernel/video/vga_console.h"
 #include "kernel/asm/generic.h"
 #include "kernel/lib/ringbuffer.h"
+#include "kernel/lib/string.h"
 
 #define VIDEO_MEM_ADDR 	0xb8000
 #define VGA_MAX_COLS 	80
@@ -70,14 +71,6 @@ void write_line_to_dma(const char *buf) {
 	char c;
 	do {
 
-		if (col == VGA_MAX_COLS || c == '\n') {
-			col = 0;
-			row++;
-
-			if (c == '\n')
-				continue;
-		}
-
 		video_address = (volatile char*) VIDEO_MEM_ADDR;
 		video_address += row * VGA_MAX_COLS * 2 + col * 2;
 
@@ -87,11 +80,30 @@ void write_line_to_dma(const char *buf) {
 		col++;
 
 	} while ((c = *(++buf)) != '\0');
+	row++;
+	col=0;
 }
 
 void write_console(const char *buf, size_t buf_size) {
-	//TODO: estimate how many lines we will need so we can make space and move pointers in the ring buffer accordingly
-	ringbuffer_put(&msg_buffer, buf, buf_size);
+	char line[VGA_MAX_COLS+1];
+	line[VGA_MAX_COLS] = '\0';
+	size_t line_p = 0;
+
+	for(size_t i = 0; i < buf_size-1 ; i++){
+		char c = *(buf + i);
+
+		if (c != '\n')
+			line[line_p++] = c;
+
+		if (c == '\n' || line_p == VGA_MAX_COLS - 1){
+			line[++line_p] = '\0';
+			ringbuffer_put(&msg_buffer, line, line_p);
+			memset(line, '\0', line_p);
+			line_p = 0;
+		}
+	}
+	if (line_p > 0)
+		ringbuffer_put(&msg_buffer, line, line_p);
 
 	clear_console();
 	ringbuffer_for_each(&msg_buffer, &write_line_to_dma);

@@ -28,9 +28,12 @@ int kmain(void) {
   }
 
   // test soft wrap
-  //TODO: change printk's implementation so it can deal with soft-wraps edge cases
-//  printk("abcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxz\n");
+  printk("abcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxz\n");
 
+
+  for(int i=0; i < 5; i++){
+  	  printk("i: %d\n", i);
+    }
 //  printk("Test negative numbers: %d", -15);
 
   return 0;

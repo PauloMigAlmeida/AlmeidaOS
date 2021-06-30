@@ -69,7 +69,7 @@ void* memcpy(void *dst, void *src, size_t size) {
 
 	return dst;
 }
-
+//TODO: I had the impression (during debugging) that memset isn't doing the right thing (write_console) -> Explore more later
 void* memset(void *buf, char value, size_t size) {
 	asm volatile(
 			"rep stosq \n\t"
