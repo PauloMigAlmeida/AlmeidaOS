@@ -26,7 +26,7 @@
 typedef struct {
 	int head;
 	int tail;
-	size_t size;
+	int size;
 	char data[25][1024];
 } ringbuffer_tp;
 

@@ -25,7 +25,7 @@
 
 void strrev(char *str, size_t length);
 
-void* memcpy(void *dst, void *src, size_t size) {
+void* memcpy(void *dst, const void *src, size_t size) {
 
 	/*
 	 objdump -D -M intel  build/kernel/lib/string.o | awk -v RS= '/^[[:xdigit:]]+ <memcpy>/'
@@ -124,6 +124,35 @@ char* itoa(int value, char *str, int radix) {
 	strrev(str, i);
 
 	return str;
+}
+
+char* utoa(unsigned int value, char *str, int radix) {
+	// Check for supported base.
+	if (radix != 8 && radix != 10 && radix != 16) {
+		*str = '\0';
+		return str;
+	}
+
+	int i = 0;
+
+	/* handle edge case */
+	if (value == 0) {
+		str[i++] = '0';
+		str[i] = '\0';
+		return str;
+	}
+
+	while (value != 0) {
+		int rem = value % radix;
+		str[i++] = (rem > 9) ? (rem - 10) + 'a' : rem + '0';
+		value = value / radix;
+	}
+
+	str[i] = '\0';
+	strrev(str, i);
+
+	return str;
+
 }
 
 size_t strlen(const char *buf) {

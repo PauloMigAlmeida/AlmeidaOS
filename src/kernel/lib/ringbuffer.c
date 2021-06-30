@@ -10,9 +10,6 @@
 /*
  * this ringbuffer implementation is used by printk, which means that we can't
  * make use of printk here due to the circular dependency.
- *
- * TODO: Maybe I can think of an implementation that can push that to VGA DMA for
- * debugging purposes but it doesn't get added to the buffer
  */
 
 void ringbuffer_init(ringbuffer_tp *buf) {
@@ -25,7 +22,7 @@ void ringbuffer_put(ringbuffer_tp *buf, const char *item, size_t size) {
 		//first time
 		buf->head++;
 		buf->tail++;
-	} else if (buf->head == 0 && buf->tail < ((int)buf->size -1)) { //size_t to int will end ugly at a certain point
+	} else if (buf->head == 0 && buf->tail < (buf->size -1)) {
 		// until it gets full for the first time
 		buf->tail++;
 	} else {
@@ -33,7 +30,7 @@ void ringbuffer_put(ringbuffer_tp *buf, const char *item, size_t size) {
 		buf->head = (buf->head + 1) % buf->size;
 		buf->tail = (buf->tail + 1) % buf->size;
 	}
-	memcpy(buf->data[buf->tail], (void*) item, size);
+	memcpy(buf->data[buf->tail], item, size);
 }
 
 void ringbuffer_for_each(ringbuffer_tp *buf, void (*fn)(const char *item)) {

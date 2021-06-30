@@ -36,18 +36,37 @@ void printk(const char *fmt, ...) {
 		}
 
 		if (format_toggle){
-			int value = 0;
+			int v_int;
+			unsigned int v_uint;
+			const char* v_carr;
+
 			switch(c){
 				case 'd':
-					value = va_arg(args, int);
-					itoa(value, buffer+buf_pointer, 10);
+				case 'i':
+					v_int = va_arg(args, int);
+					itoa(v_int, buffer+buf_pointer, 10);
 					break;
-				//TODO test hex format
+				case 'u':
+					v_uint = va_arg(args, unsigned int);
+					utoa(v_uint, buffer+buf_pointer, 10);
+					break;
 				case 'x':
-					value = va_arg(args, int);
-					itoa(value, buffer+buf_pointer, 16);
+					v_uint = va_arg(args, unsigned int);
+					utoa(v_uint, buffer+buf_pointer, 16);
 					break;
-				//TODO implement other string format options
+				case 'o':
+					v_uint = va_arg(args, unsigned int);
+					utoa(v_uint, buffer+buf_pointer, 8);
+					break;
+				case 'c':
+					v_int = va_arg(args, int);
+					/* 'char' is promoted to 'int' when passed through '...' */
+					buffer[buf_pointer] = (char)v_int;
+					break;
+				case 's':
+					v_carr = va_arg(args, const char*);
+					memcpy(buffer+buf_pointer, v_carr, strlen(v_carr)+1);
+					break;
 			}
 			format_toggle = false;
 		}else {
