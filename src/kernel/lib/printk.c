@@ -8,8 +8,6 @@
 #include "kernel/lib/printk.h"
 #include "kernel/lib/string.h"
 #include "kernel/video/vga_console.h"
-#include <stdarg.h>
-#include <stdbool.h>
 
 
 void printk(const char *fmt, ...) {

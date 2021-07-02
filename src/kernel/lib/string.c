@@ -1,6 +1,5 @@
 #include "kernel/lib/string.h"
 #include "kernel/lib/math.h"
-#include <stdbool.h>
 
 /*
  asm ( assembler template
@@ -30,11 +29,11 @@ void* memcpy(void *dst, const void *src, size_t size) {
 	/*
 	 objdump -D -M intel  build/kernel/lib/string.o | awk -v RS= '/^[[:xdigit:]]+ <memcpy>/'
 	 0000000000000000 <memcpy>:
-	 0:	55                   	push   rbp
-	 1:	48 89 e5             	mov    rbp,rsp
-	 4:	48 83 ec 38          	sub    rsp,0x38
-	 8:	48 89 7d d8          	mov    QWORD PTR [rbp-0x28],rdi
-	 c:	48 89 75 d0          	mov    QWORD PTR [rbp-0x30],rsi
+	 0:		55                   	push   rbp
+	 1:		48 89 e5             	mov    rbp,rsp
+	 4:		48 83 ec 38          	sub    rsp,0x38
+	 8:		48 89 7d d8          	mov    QWORD PTR [rbp-0x28],rdi
+	 c:		48 89 75 d0          	mov    QWORD PTR [rbp-0x30],rsi
 	 10:	48 89 55 c8          	mov    QWORD PTR [rbp-0x38],rdx
 	 14:	48 8b 45 c8          	mov    rax,QWORD PTR [rbp-0x38]
 	 18:	48 c1 e8 03          	shr    rax,0x3

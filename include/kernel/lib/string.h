@@ -8,7 +8,7 @@
 #ifndef _KERNEL_LIB_STRING_H
 #define _KERNEL_LIB_STRING_H
 
-#include <stddef.h>
+#include "kernel/compiler/freestanding.h"
 
 /* C standard functions */
 void* memcpy(void* dst, const void* src, size_t size);

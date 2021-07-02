@@ -1,5 +1,4 @@
-#include <stddef.h>
-
+#include "kernel/compiler/freestanding.h"
 #include "kernel/video/vga_console.h"
 #include "kernel/lib/string.h"
 #include "kernel/lib/printk.h"

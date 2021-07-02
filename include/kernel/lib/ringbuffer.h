@@ -8,7 +8,7 @@
 #ifndef INCLUDE_KERNEL_LIB_RINGBUFFER_H_
 #define INCLUDE_KERNEL_LIB_RINGBUFFER_H_
 
-#include <stddef.h>
+#include "kernel/compiler/freestanding.h"
 
 /*
  * I first created that to hold the VGA messages printed by printk..that's why

@@ -8,7 +8,7 @@
 #ifndef _KERNEL_LIB_DISPLAY_CONSOLE_H
 #define _KERNEL_LIB_DISPLAY_CONSOLE_H
 
-#include <stddef.h>
+#include "kernel/compiler/freestanding.h"
 
 void vga_console_init();
 void clear_console();

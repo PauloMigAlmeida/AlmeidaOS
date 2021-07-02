@@ -8,7 +8,7 @@
 #ifndef _KERNEL_LIB_MATH_H
 #define _KERNEL_LIB_MATH_H
 
-#include <limits.h>
+#include "kernel/compiler/freestanding.h"
 #include "kernel/compiler/macro.h"
 
 __force_inline int abs(int value) {
