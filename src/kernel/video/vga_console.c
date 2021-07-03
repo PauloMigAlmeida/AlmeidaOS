@@ -9,6 +9,7 @@
 #include "kernel/asm/generic.h"
 #include "kernel/lib/ringbuffer.h"
 #include "kernel/lib/string.h"
+#include "kernel/compiler/macro.h"
 
 #define VIDEO_MEM_ADDR 	0xb8000
 #define VGA_MAX_COLS 	80
@@ -80,7 +81,7 @@ void write_line_to_dma(const char *buf) {
 
 void write_console(const char *buf, size_t buf_size) {
 	char line[VGA_MAX_COLS+1];
-	memset(line, '\0', sizeof(line)/sizeof(line[0]));
+	memset(line, '\0', ARR_SIZE(line));
 	size_t line_p = 0;
 
 	for(size_t i = 0; i < buf_size-1 ; i++){
