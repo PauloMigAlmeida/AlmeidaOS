@@ -69,8 +69,7 @@ size_t vsnprintf(char *buf, size_t buf_size, const char *fmt, va_list args) {
      * 	%.15d -> Precision/Width with multiple numbers
      * 	%x -> base must be inferred
      *
-     * 	I have to be careful when it comes to not exceed the buf size for sec
-     * 	reasons
+     * 	I have to be careful when it comes to not exceeding the buf size for security reasons
      */
 
     size_t read_chars = 0;

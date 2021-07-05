@@ -26,6 +26,5 @@
 
 /* Min value routine - widely used to truncate memcpy op for security reasons */
 #define MIN(a, b)           ((a) < (b) ? (a) : (b))
-#define MAX(a, b)           ((a) > (b) ? (a) : (b))
 
 #endif /* INCLUDE_KERNEL_COMPILER_MACRO_H_ */

@@ -1,27 +1,6 @@
 #include "kernel/lib/string.h"
 #include "kernel/lib/math.h"
 
-/*
- asm ( assembler template
- : output operands                   (optional)
- : input operands                    (optional)
- : clobbered registers list          (optional)
- );
-
- Notes for myself:
-
- movsq in linux uses the fast-string:
- - https://gist.github.com/sheepdestroyer/5f439475ad8c660cb455982cba1222c4
- - Intel 64 Manual 1: Section 7.3.9.3 Fast-String Operation
-
- TODO: enable that via C...I will do it via assembly for now
-
- The MOVS, MOVSB, MOVSW, and MOVSD instructions can be preceded by the REP prefix (see “REP/REPE/REPZ
- /REPNE/REPNZ—Repeat String Operation Prefix” for a description of the REP prefix) for block moves of ECX bytes,
- words, or doublewords.
-
- */
-
 void strrev(char *str, size_t length);
 
 void* memcpy(void *dst, const void *src, size_t size) {
