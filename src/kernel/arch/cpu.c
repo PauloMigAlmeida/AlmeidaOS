@@ -19,17 +19,18 @@ struct cpu_version_info {
     uint8_t model_id :4;
     uint8_t family_id :4;
     uint8_t extended_model_id :4;
-    uint8_t extended_family_id :8;
+    uint8_t extended_family_id;
 
     /* calculated dynamically */
-    uint16_t display_family :16;
-    uint8_t display_model :8;
+    uint16_t display_family;
+    uint8_t display_model;
 
 } __packed;
 typedef struct cpu_version_info cpu_version_info;
 
 static cpu_version_info cpu_ver_info = { 0 };
 
+//TODO Notes for myself: you should fiddle with qemu cpu options. I'm still not convinced that you got this logic right
 void cpu_init() {
     /* CPUID.01H:EAX -> Returns Model, Family, Stepping Information */
     uint32_t eax = 0x1, ebx = 0, ecx = 0, edx = 0;
@@ -48,7 +49,7 @@ void cpu_init() {
 
     if (cpu_ver_info.family_id == 0x6 || cpu_ver_info.family_id == 0xf) {
         cpu_ver_info.extended_model_id = extract_bit_chunk(16, 19, eax);
-        cpu_ver_info.display_model = ((uint16_t) cpu_ver_info.extended_model_id << 4) + cpu_ver_info.model_id;
+        cpu_ver_info.display_model = (((uint16_t) cpu_ver_info.extended_model_id) << 4) + cpu_ver_info.model_id;
     } else {
         cpu_ver_info.display_model = cpu_ver_info.model_id;
     }

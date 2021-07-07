@@ -6,6 +6,27 @@ section .data
 %include "../../include/boot/global/const.asm"
 %include "../../include/boot/global/mem.asm"
 
+;=============================================================================
+; Interrupt Descriptor Table used  in 64-bit (long mode)
+;=============================================================================
+  global  idt64_table
+  global  idt64_table_pointer
+
+idt64_table:
+; Making space for the structure and configuring the pointer to the right value
+; this struct is exported/accessible by C where it gets populated with the right
+; stuff
+%rep 256
+    dq 0x0
+    dq 0x0
+%endrep
+
+idt64_table_size  equ  ($ - idt64_table)
+
+idt64_table_pointer:
+  dw idt64_table_size - 1
+  dq idt64_table
+
 ; create elf section that is always placed first when linking asm and c files
 section .head.text
 
