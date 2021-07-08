@@ -36,4 +36,9 @@ __force_inline void disable_interrupts() {
     asm volatile ("cli");
 }
 
+__force_inline void halt() {
+    disable_interrupts();
+    asm volatile ("hlt");
+}
+
 #endif /* INCLUDE_KERNEL_ASM_GENERIC_H_ */

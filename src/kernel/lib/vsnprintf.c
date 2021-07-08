@@ -100,6 +100,11 @@ size_t vsnprintf(char *buf, size_t buf_size, const char *fmt, va_list args) {
             // check if this isn't time to go home - truncate content if needed
             if (read_chars == buf_size)
                 break;
+        } else if (c == '\t') {
+            // yes, tab is 4 spaces... if you don't like you can write your own OS ;)
+            for(size_t i =0; i < 4; i++){
+                buf[read_chars++] = ' ';
+            }
         } else {
             buf[read_chars++] = c;
         }
