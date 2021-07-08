@@ -25,7 +25,9 @@
  * Tells GCC to use IRET instead of RET. GCC needs to get -mgeneral-regs-only
  * in order not to complain it this.
  */
-#define __interrupt          __attribute__ ((interrupt))
+#define __interrupt         __attribute__ ((interrupt))
+
+#define __aligned(x)        __attribute__((aligned(x)))
 
 /* calculate the length of the array - and avoid tendinitis ;) */
 #define ARR_SIZE(arr)		sizeof(arr)/sizeof(arr[0])

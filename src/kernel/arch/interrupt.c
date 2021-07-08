@@ -11,8 +11,33 @@
 #include "kernel/asm/generic.h"
 #include "kernel/lib/printk.h"
 #include "kernel/lib/bit.h"
+#include "kernel/debug/coredump.h"
 
-struct idt_entry {
+/*
+ * Notes to myself:
+ *
+ * Next I will have to implement interrupts. My main goal is to grasp the concept properly this time but as an PoC, I
+ * would like to get the timer interrupt working so I can add that to printk for funzzies
+ *
+ * Relevant notes:
+ *  -> Interrupt Description Table:
+ *      -> The long-mode interrupt-descriptor table (IDT) must contain 64-bit mode interrupt-gate or trap-gate
+ *          descriptors for all interrupts or exceptions that can occur while the processor is running in long mode.
+ *          Task gates cannot be used in the long-mode IDT, because control transfers through task gates are not
+ *          supported in long mode. In long mode, the IDT index is formed by scaling the interrupt vector by 16.
+ *
+ *      -> An interrupt handler is privileged software designed to identify and respond to the cause of an
+ *          interrupt or exception, and return control back to the interrupted software
+ *
+ *      -> IDT entries are selected using the interrupt vector number rather than a selector value.
+ *
+ *      -> Vectors 0 through 8, 10 through 14, and 16 through 19 are the predefined interrupts and exceptions;
+ *         vectors 32 through 255 are for software-defined interrupts, which are for either software interrupts or
+ *         maskable hardware interrupts.
+ *
+ */
+
+typedef struct idt_entry {
     uint16_t low_offset;            // offset bits 0..15
     uint16_t target_selector;       // a code segment selector in GDT or LDT
     uint8_t ist_ign_res;            // IST, Reserver, IGN
@@ -20,60 +45,29 @@ struct idt_entry {
     uint16_t mid_offset;            // offset bits 16..31
     uint32_t high_offset;           // offset bits 32..63
     uint32_t reserved;              //reserved / unused
-} __packed;
-typedef struct idt_entry idt_entry_t;
+} __packed idt_entry_t;
 
-struct idt_pointer {
+typedef struct idt_pointer {
     uint16_t limit;
-    uint64_t addr;
-} __packed;
-typedef struct idt_pointer idt_pointer_t;
+    uintptr_t addr;
+} __packed idt_pointer_t;
 
 typedef unsigned long long int uword_t;
 
-struct interrupt_frame
-{
+typedef struct {
     uword_t ip;
     uword_t cs;
     uword_t flags;
     uword_t sp;
     uword_t ss;
-};
+} interrupt_frame;
 
-
-// external references (from the start.asm file)
-extern idt_entry_t idt64_table[256];
-extern idt_pointer_t idt64_table_pointer;
+__aligned(0x10)
+static idt_entry_t idt64_table[256];
+static idt_pointer_t idt64_table_pointer;
 
 // function declarations
-static void load_idt(idt_pointer_t *idt_ptr);
-static void config_idt_vector(uint8_t vector_id, void(*fn)(struct interrupt_frame *frame));
-__interrupt static void divide_by_zero_handler(struct interrupt_frame *frame);
-
-void idt_init(void) {
-    config_idt_vector(0, &divide_by_zero_handler);
-    printk("Loading IDT");
-    load_idt(&idt64_table_pointer);
-    printk("Enabling interruptions");
-}
-
-static void config_idt_vector(uint8_t vector_id, void(*fn)(struct interrupt_frame *frame)) {
-    idt_entry_t entry = {
-          .low_offset = extract_bit_chunk(0, 15, (uint64_t)fn),
-          .target_selector = 8, // 0000100
-          .ist_ign_res = 0,
-          .attr = 0x8e , // attributes ( P=1, DPL=00b, S=0, type=1110b )
-          .mid_offset = extract_bit_chunk(16, 31, (uint64_t)fn),
-          .high_offset = extract_bit_chunk(32, 63, (uint64_t)fn),
-          .reserved = 0
-    };
-    idt64_table[vector_id] = entry;
-}
-
-__interrupt static void divide_by_zero_handler(struct interrupt_frame *frame)  {
-    printk("Really? Divide by zero bruh?");
-    frame->ip+=4;
-}
+__interrupt static void divide_by_zero_handler(interrupt_frame *frame);
 
 __force_inline static void load_idt(idt_pointer_t *idt_ptr) {
     asm volatile (
@@ -83,3 +77,41 @@ __force_inline static void load_idt(idt_pointer_t *idt_ptr) {
             : "memory"
     );
 }
+
+static void config_idt_vector(uint8_t vector_id, uintptr_t fn) {
+//  @formatter:off
+    idt_entry_t entry = {
+          .low_offset = extract_bit_chunk(0, 15, fn),
+          .target_selector = 8  ,                         // 0000100 -> GDT Code Segment -> 0x08
+          .ist_ign_res = 0,
+          .attr = 0x8e ,                                // attributes ( P=1, DPL=00b, S=0, type=1110b )
+          .mid_offset = extract_bit_chunk(16, 31, fn),
+          .high_offset = extract_bit_chunk(32, 63, fn),
+          .reserved = 0
+    };
+
+//  @formatter:on
+    idt64_table[vector_id] = entry;
+}
+
+
+__interrupt static void divide_by_zero_handler(interrupt_frame *frame) {
+    //TODO figure out a way to print a CPU dump with register and backtrace info for debugging purposes
+
+//    frame->ip += 4;
+    coredump(10);
+    printk("Really? Divide by zero bruh?");
+    halt();
+
+}
+
+void idt_init(void) {
+    idt64_table_pointer.addr = (uintptr_t) &idt64_table;
+    idt64_table_pointer.limit = ARR_SIZE(idt64_table) - 1;
+
+    config_idt_vector(0, (uintptr_t) &divide_by_zero_handler);
+    printk("Loading IDT");
+    load_idt(&idt64_table_pointer);
+    printk("Enabling interruptions");
+}
+
