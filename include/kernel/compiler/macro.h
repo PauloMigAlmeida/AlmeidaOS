@@ -21,12 +21,12 @@
  */
 #define __packed            __attribute__((__packed__))
 
-/*
- * Tells GCC to use IRET instead of RET. GCC needs to get -mgeneral-regs-only
- * in order not to complain it this.
- */
-#define __interrupt         __attribute__ ((interrupt))
 
+/*
+ * This attribute specifies a minimum alignment (in bytes) for variables of
+ * the specified type.
+ * More: https://gcc.gnu.org/onlinedocs/gcc-3.3/gcc/Type-Attributes.html
+ */
 #define __aligned(x)        __attribute__((aligned(x)))
 
 /* calculate the length of the array - and avoid tendinitis ;) */

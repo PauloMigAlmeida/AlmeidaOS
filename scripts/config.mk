@@ -21,9 +21,7 @@ CC				:= $(TARGET)-gcc
 
 # Notes:
 # 	- gnu99 is used instead of c99 so we can use the GCC inline assembly extensions
-#		- -mgeneral-regs-only is recommended when using GCC's attribute((interrupt))
 CCFLAGS		:= -std=gnu99 -I$(DIR_INCLUDE) -Qn -g \
-		   				-mgeneral-regs-only \
 		   				-m64 -mno-red-zone -mno-mmx -masm=intel \
 		   				-ffreestanding -fno-asynchronous-unwind-tables \
 		   				-Wall -Wextra -Wpedantic -mcmodel=large -fno-builtin

@@ -15,7 +15,9 @@ struct stackframe {
 } __packed;
 
 void coredump(registers_64_t *regs, size_t max_frames) {
-    //todo you should definitely blog about it...
+    //TODO is it possible at this stage to core dump all cores? Or is it unnecessary?
+    //TODO you should definitely blog about it...
+    //TODO write user-space utility to parse these entries. Take a look at crash dump
 
     //#0  divide_by_zero_handler (frame=0x1013000000000008) at interrupt.c:111
     //#1  0x000000000020107d in kmain () at main.c:16

@@ -33,6 +33,8 @@
  *         vectors 32 through 255 are for software-defined interrupts, which are for either software interrupts or
  *         maskable hardware interrupts.
  *
+ *  TODO: Add default x86-64 vectors (up to 31) -> Watch out for the reserved ones
+ *  TODO: study about PIC and APIC -> So we can get the timer working
  */
 
 typedef struct idt_entry {
