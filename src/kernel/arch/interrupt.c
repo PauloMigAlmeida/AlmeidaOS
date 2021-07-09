@@ -6,8 +6,6 @@
  */
 
 #include "kernel/arch/interrupt.h"
-#include "kernel/compiler/freestanding.h"
-#include "kernel/compiler/macro.h"
 #include "kernel/asm/generic.h"
 #include "kernel/lib/printk.h"
 #include "kernel/lib/bit.h"
@@ -52,22 +50,12 @@ typedef struct idt_pointer {
     uintptr_t addr;
 } __packed idt_pointer_t;
 
-typedef unsigned long long int uword_t;
-
-typedef struct {
-    uword_t ip;
-    uword_t cs;
-    uword_t flags;
-    uword_t sp;
-    uword_t ss;
-} interrupt_frame;
-
 __aligned(0x10)
 static idt_entry_t idt64_table[256];
 static idt_pointer_t idt64_table_pointer;
 
-// function declarations
-__interrupt static void divide_by_zero_handler(interrupt_frame *frame);
+// extern functions
+extern void divide_by_zero_isr(void);
 
 __force_inline static void load_idt(idt_pointer_t *idt_ptr) {
     asm volatile (
@@ -94,24 +82,19 @@ static void config_idt_vector(uint8_t vector_id, uintptr_t fn) {
     idt64_table[vector_id] = entry;
 }
 
-
-__interrupt static void divide_by_zero_handler(interrupt_frame *frame) {
-    //TODO figure out a way to print a CPU dump with register and backtrace info for debugging purposes
-
-//    frame->ip += 4;
-    coredump(10);
-    printk("Really? Divide by zero bruh?");
-    halt();
-
-}
-
 void idt_init(void) {
     idt64_table_pointer.addr = (uintptr_t) &idt64_table;
     idt64_table_pointer.limit = ARR_SIZE(idt64_table) - 1;
 
-    config_idt_vector(0, (uintptr_t) &divide_by_zero_handler);
+    config_idt_vector(0, (uintptr_t) &divide_by_zero_isr);
     printk("Loading IDT");
     load_idt(&idt64_table_pointer);
     printk("Enabling interruptions");
+}
+
+void interrupt_handler(registers_64_t *regs) {
+    printk("Really? Divide by zero bruh?");
+    coredump(regs, 10);
+    halt();
 }
 

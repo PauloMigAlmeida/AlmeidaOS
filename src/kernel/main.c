@@ -50,29 +50,6 @@ int kmain(void) {
     return 0;
 }
 
-/*
- * Notes to myself:
- *
- * Next I will have to implement interrupts. My main goal is to grasp the concept properly this time but as an PoC, I
- * would like to get the timer interrupt working so I can add that to printk for funzzies
- *
- * Relevant notes:
- *  -> Interrupt Description Table:
- *      -> The long-mode interrupt-descriptor table (IDT) must contain 64-bit mode interrupt-gate or trap-gate
- *          descriptors for all interrupts or exceptions that can occur while the processor is running in long mode.
- *          Task gates cannot be used in the long-mode IDT, because control transfers through task gates are not
- *          supported in long mode. In long mode, the IDT index is formed by scaling the interrupt vector by 16.
- *
- *      -> An interrupt handler is privileged software designed to identify and respond to the cause of an
- *          interrupt or exception, and return control back to the interrupted software
- *
- *      -> IDT entries are selected using the interrupt vector number rather than a selector value.
- *
- *      -> Vectors 0 through 8, 10 through 14, and 16 through 19 are the predefined interrupts and exceptions;
- *         vectors 32 through 255 are for software-defined interrupts, which are for either software interrupts or
- *         maskable hardware interrupts.
- *
- */
 
 /*
  System V AMD64 Calling Convention
