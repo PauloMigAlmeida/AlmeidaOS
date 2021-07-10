@@ -26,7 +26,6 @@ void coredump(registers_64_t *regs, size_t max_frames) {
     struct stackframe *stack;
     asm volatile("movq %0, rbp" :"=r"(stack)::);
     printk("===============================================================================");
-    //TODO add regs in the stack frame
     printk("Registers:");
     printk("\tRAX: 0x%.16x, RBX: 0x%.16x, RCX: 0x%.16x", regs->rax, regs->rbx, regs->rcx);
     printk("\tRDX: 0x%.16x, RSP: 0x%.16x, RSI: 0x%.16x", regs->rdx, regs->rsp, regs->rsi);

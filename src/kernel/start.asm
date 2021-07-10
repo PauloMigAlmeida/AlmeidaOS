@@ -5,18 +5,20 @@ section .data
 ; Include useful functions, constants and macros
 %include "../../include/boot/global/const.asm"
 %include "../../include/boot/global/mem.asm"
-%include "../../include/boot/global/macro.asm"
 
 ; create elf section that is always placed first when linking asm and c files
 section .head.text
 
+  ; C-defined functions that this code relies on
   extern memset
 	extern kmain
-	extern interrupt_handler;
+
+	; Linker-generated symbols
+	extern _BSS_START
+  extern _BSS_SIZE
+
+	; Export references to C
 	global kernel_start
-	global divide_by_zero_isr;
-	extern _BSS_START   ; Linker-generated symbol
-	extern _BSS_SIZE    ; Linker-generated symbol
 
 kernel_start:
   ; The System V ABI requires the direction flag to be clear on function entry.
@@ -56,21 +58,3 @@ kernel_start:
     cli
     hlt
     jmp .endless_loop
-
-
-divide_by_zero_isr:
-  pushaq
-  ; push trap number
-  push 0
-  ;push errono (not all interrupts have an error code but this ensures I can use a
-  ; single struct to wrap all the values)
-  push 0
-
-  mov rdi, rsp
-  call interrupt_handler
-
-  popaq
-  add rsp, 16
-  iretq
-
-

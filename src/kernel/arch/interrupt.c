@@ -57,7 +57,43 @@ static idt_entry_t idt64_table[256];
 static idt_pointer_t idt64_table_pointer;
 
 // extern functions
-extern void divide_by_zero_isr(void);
+extern void vector0(void);
+extern void vector1(void);
+extern void vector2(void);
+extern void vector3(void);
+extern void vector4(void);
+extern void vector5(void);
+extern void vector6(void);
+extern void vector7(void);
+extern void vector8(void);
+
+//  @formatter:off
+static const char *exception_strs[] = {
+    //  Intel 64 Manual Volume 2 - Table 6-1 -> Exceptions and Interrupts
+    "#DE: Integer Divide-by-Zero Exception",
+    "#DB: Debug exception",
+    "Non-maskable interrupt",
+    "#BP: Breakpoint Exception (INT 3)",
+    "#OF: Overflow Exception (INTO instruction)",
+    "#BR: Bound-Range Exception (BOUND instruction)",
+    "#UD: Invalid opcode exception",
+    "#NM: Device-Not-Available Exception",
+    "#DF: Device-Not-Available Exception",
+    "Coprocessor segment overrun (reserved in AMD64)",
+    "#TS: Invalid-TSS Exception",
+    "#NP: Segment-Not-Present Exception",
+    "#SS: Stack exception",
+    "#GP: General-Protection exception",
+    "#PF: Page-Fault exception",
+    "(Reserved)",
+    "#MF: x87 FPU Floating-Point error",
+    "#AC: Alignment-Check exception",
+    "#MC: Machine-Check exception",
+    "#XM: SIMD Floating-Point exception",
+    "#VE: Virtualisation Exception",
+    "#CP: Control-Protection Exception",
+};
+//  @formatter:on
 
 __force_inline static void load_idt(idt_pointer_t *idt_ptr) {
     asm volatile (
@@ -79,7 +115,6 @@ static void config_idt_vector(uint8_t vector_id, uintptr_t fn) {
           .high_offset = extract_bit_chunk(32, 63, fn),
           .reserved = 0
     };
-
 //  @formatter:on
     idt64_table[vector_id] = entry;
 }
@@ -88,14 +123,22 @@ void idt_init(void) {
     idt64_table_pointer.addr = (uintptr_t) &idt64_table;
     idt64_table_pointer.limit = ARR_SIZE(idt64_table) - 1;
 
-    config_idt_vector(0, (uintptr_t) &divide_by_zero_isr);
+    config_idt_vector(0, (uintptr_t) &vector0);
+    config_idt_vector(1, (uintptr_t) &vector1);
+    config_idt_vector(2, (uintptr_t) &vector2);
+    config_idt_vector(3, (uintptr_t) &vector3);
+    config_idt_vector(4, (uintptr_t) &vector4);
+    config_idt_vector(5, (uintptr_t) &vector5);
+    config_idt_vector(6, (uintptr_t) &vector6);
+    config_idt_vector(7, (uintptr_t) &vector7);
+    config_idt_vector(8, (uintptr_t) &vector8);
     printk("Loading IDT");
     load_idt(&idt64_table_pointer);
     printk("Enabling interruptions");
 }
 
 void interrupt_handler(registers_64_t *regs) {
-    printk("Really? Divide by zero bruh?");
+    printk("Error: %s", exception_strs[regs->trap_number]);
     coredump(regs, 10);
     halt();
 }
