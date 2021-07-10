@@ -10,6 +10,7 @@ section .data
 ; create elf section that is always placed first when linking asm and c files
 section .head.text
 
+  extern memset
 	extern kmain
 	extern interrupt_handler;
 	global kernel_start
@@ -36,8 +37,9 @@ kernel_start:
   ;
   ; https://refspecs.linuxfoundation.org/elf/elf.pdf - Page 29
   mov rdi, _BSS_START
-  mov rcx, _BSS_SIZE
-  call memzero
+  mov rsi, 0x0
+  mov rdx, _BSS_SIZE
+  call memset
 
   ; Set %ebp to NULL. This sets a stopping point for coredump functionality when
   ; we try to unwind the call trace to printk the info in the processor at the
@@ -72,25 +74,3 @@ divide_by_zero_isr:
   iretq
 
 
-
-
-;===============================================================================
-; memzero
-;
-; Zero out memory that starts at address RDI with size RCX
-;
-; Killed registers:
-;   rdi, rcx
-;===============================================================================
-memzero:
-  cld
-
-	.iter:
-		mov byte[rdi], 0x0
-		inc rdi
-		loop .iter;
-
-  ret
-
-; Paulo, if you want to change that to stob, you can get the speed boost when you
-; enable fast-string in the processor
