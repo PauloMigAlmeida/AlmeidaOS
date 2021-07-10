@@ -11,14 +11,14 @@ section .head.text
 
   ; C-defined functions that this code relies on
   extern memset
-	extern kmain
+  extern kmain
 
 	; Linker-generated symbols
-	extern _BSS_START
+  extern _BSS_START
   extern _BSS_SIZE
 
 	; Export references to C
-	global kernel_start
+  global kernel_start
 
 kernel_start:
   ; The System V ABI requires the direction flag to be clear on function entry.
@@ -27,8 +27,8 @@ kernel_start:
   xor ax,ax
   mov ss, ax
 
-	; prepare stack for the env
-	mov rsp, Kernel.New.Start.Address + Kernel.New.ELFTextHeader.Offset
+  ; prepare stack for the env
+  mov rsp, Kernel.New.Start.Address + Kernel.New.ELFTextHeader.Offset
 
   ; ELF specification dictates that we must clean BSS area before init
   ;
@@ -47,7 +47,7 @@ kernel_start:
   ; we try to unwind the call trace to printk the info in the processor at the
   ; time everything went to custard.
   xor rbp, rbp
-	; enter the kernel 
+  ; enter the kernel
   call kmain
 
   ; we should never ever come back from kmain function, but if it does for any
