@@ -13,8 +13,56 @@ global vector5
 global vector6
 global vector7
 global vector8
+global vector10
+global vector11
+global vector12
+global vector13
+global vector14
+global vector16
+global vector17
+global vector18
+global vector19
+global vector20
+global vector21
+
+
+%macro  vector_interrupt_save_state 2
+  ; save general purpose registers
+  pushaq
+  ; trap number
+  push %1
+  ; errono
+  push %2
+%endmacro
+
+%macro  vector_interrupt_restore_state 0
+  ; restore general purpose registers
+  popaq
+  ; pop trap number and errono off the stack
+  add rsp, 16
+%endmacro
+
+%macro  vector_interrupt_body_generator 2
+  ; save general purpose registers
+  vector_interrupt_save_state %1,%2
+
+  ; default interrupt handling
+  jmp common_trap
+
+  ; restore general purpose registers
+  vector_interrupt_restore_state
+  ; special return instruction for interrupts
+  iretq
+%endmacro
 
 section .text
+
+common_trap:
+  ; RDI is the first parameter according to the System V AMD64 Calling Convention
+  mov rdi, rsp
+  ; call C interrupt_handler function
+  call interrupt_handler
+
 ;===============================================================================
 ; Pre-defined vectors used in the x86-64 IDT (Long mode)
 ;
@@ -27,181 +75,62 @@ section .text
 ;   None
 ;===============================================================================
 vector0:
-  ; save general purpose registers
-  pushaq
-  ; trap number
-  push 0
-  ; errono
-  push 0
-
-  ; RDI is the first parameter according to the System V AMD64 Calling Convention
-  mov rdi, rsp
-  ; call C interrupt_handler function
-  call interrupt_handler
-
-  ; restore general purpose registers
-  popaq
-  ; pop trap number and errono off the stack
-  add rsp, 16
-  ; special return instruction for interrupts
-  iretq
+  vector_interrupt_body_generator 0,0
 
 vector1:
-  ; save general purpose registers
-  pushaq
-  ; trap number
-  push 1
-  ; errono
-  push 0
-
-  ; RDI is the first parameter according to the System V AMD64 Calling Convention
-  mov rdi, rsp
-  ; call C interrupt_handler function
-  call interrupt_handler
-
-  ; restore general purpose registers
-  popaq
-  ; pop trap number and errono off the stack
-  add rsp, 16
-  ; special return instruction for interrupts
-  iretq
+  vector_interrupt_body_generator 1,0
 
 vector2:
-  ; save general purpose registers
-  pushaq
-  ; trap number
-  push 2
-  ; errono
-  push 0
-
-  ; RDI is the first parameter according to the System V AMD64 Calling Convention
-  mov rdi, rsp
-  ; call C interrupt_handler function
-  call interrupt_handler
-
-  ; restore general purpose registers
-  popaq
-  ; pop trap number and errono off the stack
-  add rsp, 16
-  ; special return instruction for interrupts
-  iretq
+  vector_interrupt_body_generator 2,0
 
 vector3:
-  ; save general purpose registers
-  pushaq
-  ; trap number
-  push 3
-  ; errono
-  push 0
-
-  ; RDI is the first parameter according to the System V AMD64 Calling Convention
-  mov rdi, rsp
-  ; call C interrupt_handler function
-  call interrupt_handler
-
-  ; restore general purpose registers
-  popaq
-  ; pop trap number and errono off the stack
-  add rsp, 16
-  ; special return instruction for interrupts
-  iretq
+  vector_interrupt_body_generator 3,0
 
 vector4:
-  ; save general purpose registers
-  pushaq
-  ; trap number
-  push 4
-  ; errono
-  push 0
-
-  ; RDI is the first parameter according to the System V AMD64 Calling Convention
-  mov rdi, rsp
-  ; call C interrupt_handler function
-  call interrupt_handler
-
-  ; restore general purpose registers
-  popaq
-  ; pop trap number and errono off the stack
-  add rsp, 16
-  ; special return instruction for interrupts
+  vector_interrupt_body_generator 4,0
   iretq
 
 vector5:
-  ; save general purpose registers
-  pushaq
-  ; trap number
-  push 5
-  ; errono
-  push 0
-
-  ; RDI is the first parameter according to the System V AMD64 Calling Convention
-  mov rdi, rsp
-  ; call C interrupt_handler function
-  call interrupt_handler
-
-  ; restore general purpose registers
-  popaq
-  ; pop trap number and errono off the stack
-  add rsp, 16
-  ; special return instruction for interrupts
-  iretq
+  vector_interrupt_body_generator 5,0
 
 vector6:
-  ; save general purpose registers
-  pushaq
-  ; trap number
-  push 6
-  ; errono
-  push 0
-
-  ; RDI is the first parameter according to the System V AMD64 Calling Convention
-  mov rdi, rsp
-  ; call C interrupt_handler function
-  call interrupt_handler
-
-  ; restore general purpose registers
-  popaq
-  ; pop trap number and errono off the stack
-  add rsp, 16
-  ; special return instruction for interrupts
-  iretq
+  vector_interrupt_body_generator 6,0
 
 vector7:
-  ; save general purpose registers
-  pushaq
-  ; trap number
-  push 7
-  ; errono
-  push 0
-
-  ; RDI is the first parameter according to the System V AMD64 Calling Convention
-  mov rdi, rsp
-  ; call C interrupt_handler function
-  call interrupt_handler
-
-  ; restore general purpose registers
-  popaq
-  ; pop trap number and errono off the stack
-  add rsp, 16
-  ; special return instruction for interrupts
-  iretq
+  vector_interrupt_body_generator 7,0
 
 vector8:
-  ; save general purpose registers
-  pushaq
-  ; trap number
-  push 8
-  ; errono
-  push 0
+  vector_interrupt_body_generator 8,0
 
-  ; RDI is the first parameter according to the System V AMD64 Calling Convention
-  mov rdi, rsp
-  ; call C interrupt_handler function
-  call interrupt_handler
+vector10:
+  vector_interrupt_body_generator 10,0
 
-  ; restore general purpose registers
-  popaq
-  ; pop trap number and errono off the stack
-  add rsp, 16
-  ; special return instruction for interrupts
-  iretq
+vector11:
+  vector_interrupt_body_generator 11,0
+
+vector12:
+  vector_interrupt_body_generator 12,0
+
+vector13:
+  vector_interrupt_body_generator 13,0
+
+vector14:
+  vector_interrupt_body_generator 14,0
+
+vector16:
+  vector_interrupt_body_generator 16,0
+
+vector17:
+  vector_interrupt_body_generator 17,0
+
+vector18:
+  vector_interrupt_body_generator 18,0
+
+vector19:
+  vector_interrupt_body_generator 19,0
+
+vector20:
+  vector_interrupt_body_generator 20,0
+
+vector21:
+  vector_interrupt_body_generator 21,0

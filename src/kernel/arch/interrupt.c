@@ -33,7 +33,6 @@
  *         vectors 32 through 255 are for software-defined interrupts, which are for either software interrupts or
  *         maskable hardware interrupts.
  *
- *  TODO: Add default x86-64 vectors (up to 31) -> Watch out for the reserved ones
  *  TODO: study about PIC and APIC -> So we can get the timer working
  */
 
@@ -66,6 +65,17 @@ extern void vector5(void);
 extern void vector6(void);
 extern void vector7(void);
 extern void vector8(void);
+extern void vector10(void);
+extern void vector11(void);
+extern void vector12(void);
+extern void vector13(void);
+extern void vector14(void);
+extern void vector16(void);
+extern void vector17(void);
+extern void vector18(void);
+extern void vector19(void);
+extern void vector20(void);
+extern void vector21(void);
 
 //  @formatter:off
 static const char *exception_strs[] = {
@@ -132,6 +142,17 @@ void idt_init(void) {
     config_idt_vector(6, (uintptr_t) &vector6);
     config_idt_vector(7, (uintptr_t) &vector7);
     config_idt_vector(8, (uintptr_t) &vector8);
+    config_idt_vector(10, (uintptr_t) &vector10);
+    config_idt_vector(11, (uintptr_t) &vector11);
+    config_idt_vector(12, (uintptr_t) &vector12);
+    config_idt_vector(13, (uintptr_t) &vector13);
+    config_idt_vector(14, (uintptr_t) &vector14);
+    config_idt_vector(16, (uintptr_t) &vector16);
+    config_idt_vector(17, (uintptr_t) &vector17);
+    config_idt_vector(18, (uintptr_t) &vector18);
+    config_idt_vector(19, (uintptr_t) &vector19);
+    config_idt_vector(20, (uintptr_t) &vector20);
+    config_idt_vector(21, (uintptr_t) &vector21);
     printk("Loading IDT");
     load_idt(&idt64_table_pointer);
     printk("Enabling interruptions");
