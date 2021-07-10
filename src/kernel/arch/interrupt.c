@@ -77,33 +77,31 @@ extern void vector19(void);
 extern void vector20(void);
 extern void vector21(void);
 
-//  @formatter:off
 static const char *exception_strs[] = {
-    //  Intel 64 Manual Volume 2 - Table 6-1 -> Exceptions and Interrupts
-    "#DE: Integer Divide-by-Zero Exception",
-    "#DB: Debug exception",
-    "Non-maskable interrupt",
-    "#BP: Breakpoint Exception (INT 3)",
-    "#OF: Overflow Exception (INTO instruction)",
-    "#BR: Bound-Range Exception (BOUND instruction)",
-    "#UD: Invalid opcode exception",
-    "#NM: Device-Not-Available Exception",
-    "#DF: Device-Not-Available Exception",
-    "Coprocessor segment overrun (reserved in AMD64)",
-    "#TS: Invalid-TSS Exception",
-    "#NP: Segment-Not-Present Exception",
-    "#SS: Stack exception",
-    "#GP: General-Protection exception",
-    "#PF: Page-Fault exception",
-    "(Reserved)",
-    "#MF: x87 FPU Floating-Point error",
-    "#AC: Alignment-Check exception",
-    "#MC: Machine-Check exception",
-    "#XM: SIMD Floating-Point exception",
-    "#VE: Virtualisation Exception",
-    "#CP: Control-Protection Exception",
+        //  Intel 64 Manual Volume 2 - Table 6-1 -> Exceptions and Interrupts
+        "#DE: Integer Divide-by-Zero Exception",
+        "#DB: Debug exception",
+        "Non-maskable interrupt",
+        "#BP: Breakpoint Exception (INT 3)",
+        "#OF: Overflow Exception (INTO instruction)",
+        "#BR: Bound-Range Exception (BOUND instruction)",
+        "#UD: Invalid opcode exception",
+        "#NM: Device-Not-Available Exception",
+        "#DF: Device-Not-Available Exception",
+        "Coprocessor segment overrun (reserved in AMD64)",
+        "#TS: Invalid-TSS Exception",
+        "#NP: Segment-Not-Present Exception",
+        "#SS: Stack exception",
+        "#GP: General-Protection exception",
+        "#PF: Page-Fault exception",
+        "(Reserved)",
+        "#MF: x87 FPU Floating-Point error",
+        "#AC: Alignment-Check exception",
+        "#MC: Machine-Check exception",
+        "#XM: SIMD Floating-Point exception",
+        "#VE: Virtualisation Exception",
+        "#CP: Control-Protection Exception",
 };
-//  @formatter:on
 
 __force_inline static void load_idt(idt_pointer_t *idt_ptr) {
     asm volatile (
@@ -115,17 +113,15 @@ __force_inline static void load_idt(idt_pointer_t *idt_ptr) {
 }
 
 static void config_idt_vector(uint8_t vector_id, uintptr_t fn) {
-//  @formatter:off
     idt_entry_t entry = {
-          .low_offset = extract_bit_chunk(0, 15, fn),
-          .target_selector = 8  ,                         // 0000100 -> GDT Code Segment -> 0x08
-          .ist_ign_res = 0,
-          .attr = 0x8e ,                                // attributes ( P=1, DPL=00b, S=0, type=1110b )
-          .mid_offset = extract_bit_chunk(16, 31, fn),
-          .high_offset = extract_bit_chunk(32, 63, fn),
-          .reserved = 0
+            .low_offset = extract_bit_chunk(0, 15, fn),
+            .target_selector = 8,                         // 0000100 -> GDT Code Segment -> 0x08
+            .ist_ign_res = 0,
+            .attr = 0x8e,                                // attributes ( P=1, DPL=00b, S=0, type=1110b )
+            .mid_offset = extract_bit_chunk(16, 31, fn),
+            .high_offset = extract_bit_chunk(32, 63, fn),
+            .reserved = 0
     };
-//  @formatter:on
     idt64_table[vector_id] = entry;
 }
 

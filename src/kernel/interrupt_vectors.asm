@@ -57,6 +57,12 @@ global vector21
 
 section .text
 
+;===============================================================================
+; Common interrupt handler
+;
+; Killed registers:
+;   rdi
+;===============================================================================
 common_trap:
   ; RDI is the first parameter according to the System V AMD64 Calling Convention
   mov rdi, rsp
