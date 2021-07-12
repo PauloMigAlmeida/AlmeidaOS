@@ -24,6 +24,8 @@ global vector18
 global vector19
 global vector20
 global vector21
+global vector32
+global vector33
 
 
 %macro  vector_interrupt_save_state 2
@@ -46,8 +48,12 @@ global vector21
   ; save general purpose registers
   vector_interrupt_save_state %1,%2
 
-  ; default interrupt handling
-  jmp common_trap
+  ; SystemV ABI requires DF to be clear on function entry
+  cld
+  ; RDI is the first parameter according to the System V AMD64 Calling Convention
+  mov rdi, rsp
+  ; call C interrupt_handler function
+  call interrupt_handler
 
   ; restore general purpose registers
   vector_interrupt_restore_state
@@ -56,18 +62,6 @@ global vector21
 %endmacro
 
 section .text
-
-;===============================================================================
-; Common interrupt handler
-;
-; Killed registers:
-;   rdi
-;===============================================================================
-common_trap:
-  ; RDI is the first parameter according to the System V AMD64 Calling Convention
-  mov rdi, rsp
-  ; call C interrupt_handler function
-  call interrupt_handler
 
 ;===============================================================================
 ; Pre-defined vectors used in the x86-64 IDT (Long mode)
@@ -94,7 +88,6 @@ vector3:
 
 vector4:
   vector_interrupt_body_generator 4,0
-  iretq
 
 vector5:
   vector_interrupt_body_generator 5,0
@@ -140,3 +133,9 @@ vector20:
 
 vector21:
   vector_interrupt_body_generator 21,0
+
+vector32:
+  vector_interrupt_body_generator 32,0
+
+vector33:
+  vector_interrupt_body_generator 33,0

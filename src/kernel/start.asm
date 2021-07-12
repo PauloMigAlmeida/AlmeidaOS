@@ -24,12 +24,6 @@ kernel_start:
   ; The System V ABI requires the direction flag to be clear on function entry.
   cld
 
-  xor ax,ax
-  mov ss, ax
-
-  ; prepare stack for the env
-  mov rsp, Kernel.New.Start.Address + Kernel.New.ELFTextHeader.Offset
-
   ; ELF specification dictates that we must clean BSS area before init
   ;
   ; .bss: This section holds uninitialized data that contribute to the program's

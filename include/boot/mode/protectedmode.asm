@@ -404,9 +404,6 @@ pm_enter_long_mode:
   ; Disable interruptions
   cli
 
-  ; Load the 64-bit GDT.
-  lgdt    [GDT64.Table.Pointer]
-
   ; Enable PAE paging.
   mov     eax,    cr4
   or      eax,    (1 << 5)    ; CR4.PAE
@@ -428,6 +425,8 @@ pm_enter_long_mode:
   or      eax,    (1 << 31)    ; CR0.PG
   mov     cr0,    eax
 
+  ; Load the 64-bit GDT.
+  lgdt    [GDT64.Table.Pointer]
 
   ; Do a long jump using the new GDT, which forces the switch to 64-bit
   ; mode.
