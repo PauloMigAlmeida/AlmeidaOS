@@ -161,6 +161,10 @@ void idt_init(void) {
     load_idt(&idt64_table_pointer);
     printk("Enabling interruptions");
 }
+/*
+ * Things To Do:
+ * - TODO Take a look a the registers_64_t in case of GPE since it's not returning the right stuff
+ */
 
 void interrupt_handler(registers_64_t *regs) {
     if (regs->trap_number == 33) {

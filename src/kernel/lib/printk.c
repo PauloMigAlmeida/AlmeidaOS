@@ -11,6 +11,12 @@
 #include "kernel/lib/string.h"
 #include "kernel/lib/vsnprintf.h"
 
+/*
+ * Things To Do:
+ * - TODO Implement multiple debugging levels. Be able to specify the debug level at boot
+ * - TODO tweak screen so the last line is reserved for keyboard to type
+ */
+
 void printk(const char *fmt, ...) {
     char buffer[1024];
     size_t buffer_size = ARR_SIZE(buffer);

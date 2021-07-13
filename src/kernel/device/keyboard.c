@@ -10,6 +10,12 @@
 #include "kernel/lib/printk.h"
 #include "kernel/asm/generic.h"
 
+/*
+ * Things To Do:
+ * - TODO Implement a better handling for keypressed and key released events
+ * - TODO Implement ability to write on the screen (as if it was a bash / tty)
+ */
+
 void keyboard_init(void) {
     pic_unmask_irq(PIC_KEYBOARD_INTERRUPT);
     printk("Keyboard IRQ enabled");
@@ -17,6 +23,7 @@ void keyboard_init(void) {
 
 void keyboard_handle_irq(void) {
     /*
+     *
      everything leads me to believe that bit 7 is high when key is released
      >>> bin(50)
      '0b110010'
