@@ -297,7 +297,7 @@ static size_t read_length(const char *fmt, print_fmt_spec *spec) {
         }
 
         read_chars++;
-    } while (is_length((c = *(fmt + read_chars + 1))));
+    } while (is_length((c = *(fmt + read_chars))));
 
     return read_chars;
 }
@@ -331,7 +331,7 @@ static size_t read_type(const char *fmt, print_fmt_spec *spec) {
         }
 
         read_chars++;
-    } while (is_type((c = *(fmt + read_chars + 1))));
+    } while (is_type((c = *(fmt + read_chars))));
 
     return read_chars;
 }
