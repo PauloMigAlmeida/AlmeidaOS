@@ -10,6 +10,7 @@
 
 void pit_init(void) {
     outb(0x43, (uint8_t) ((1 << 2) | (3 << 4)));
+    //TODO parameterise this frequency
     outb(0x40, 0x9b);
     outb(0x40, 0x2e);
     printk("PIT enabled");

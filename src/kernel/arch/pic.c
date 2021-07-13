@@ -6,8 +6,10 @@
  */
 
 #include "kernel/arch/pic.h"
+#include "kernel/compiler/freestanding.h"
 #include "kernel/arch/pit.h"
 #include "kernel/asm/generic.h"
+#include "kernel/lib/bit.h"
 #include "kernel/lib/printk.h"
 
 /*
@@ -30,8 +32,8 @@
  *
  */
 
-#define PIC1            0x20        /* IO base address for master PIC */
-#define PIC2            0xA0        /* IO base address for slave PIC */
+#define PIC1            0x20        /* IO base address for Active PIC */
+#define PIC2            0xA0        /* IO base address for Passive PIC */
 #define PIC1_COMMAND    PIC1
 #define PIC1_DATA       (PIC1+1)
 #define PIC2_COMMAND    PIC2
@@ -42,6 +44,8 @@
 #define ICW1_CALLADDR_4         1 << 2
 
 void pic_init(void) {
+    /* enable timer */
+    //TODO maybe move this somewhere else ?
     pit_init();
 
     /* Send ICW1 to both PIC chips */
@@ -65,5 +69,18 @@ void pic_init(void) {
     outb(PIC2_DATA,0xff);
 
     printk("PIC initialised");
+}
+
+void enable_keyboard_irq(void) {
+    /* keyboard IRQ is on the active PIC */
+    uint8_t value = inb(PIC1_DATA);
+    printk("PIC1 mask state: %u\n", value);
+    /* Keyboard is IRQ 1 according to Standard ISA IRQs */
+    if(test_bit(1, value)){
+        value = clear_bit(1, value);
+        printk("PIC1 new mask State: %u\n", value);
+        outb(PIC1_DATA, value);
+        printk("Keyboard IRQ enabled");
+    }
 }
 

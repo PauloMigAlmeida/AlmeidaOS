@@ -12,16 +12,15 @@
 #include "kernel/lib/vsnprintf.h"
 
 void printk(const char *fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-
     char buffer[1024];
     size_t buffer_size = ARR_SIZE(buffer);
     memset(buffer, '\0', buffer_size);
 
+    va_list args;
+    va_start(args, fmt);
     size_t buf_pointer = vsnprintf(buffer, buffer_size - 1, fmt, args);
-
     va_end(args);
+
     write_console(buffer, buf_pointer + 1); // copy nul-terminator too
 }
 
