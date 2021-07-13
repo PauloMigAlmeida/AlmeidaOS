@@ -198,3 +198,70 @@ telnet localhost 4444
 {"execute":"dump-guest-memory","arguments":{"paging":false,"protocol":"file:/tmp/vmcore.img"}}
 ```
 
+### QEMU finding offending instruction - (10/07/2021)
+
+After I wrote the crash dump / coredump (whatever way it's supposed to be called). I needed to
+find out which instructions brought the system down. QEMU can log the $pc value (which is basically 
+the RIP content) like shown below
+
+```Shell
+check_exception old: 0xffffffff new 0xd
+     1: v=0d e=0082 i=0 cpl=0 IP=0008:0000000000201074 pc=0000000000201074 SP=0000:0000000000200ff0 env->regs[R_EAX]=0000000000000001
+RAX=0000000000000001 RBX=0000000000000000 RCX=0000000000000019 RDX=00000000000003d5
+RSI=0000000000000000 RDI=0000000000000006 RBP=0000000000200ff0 RSP=0000000000200ff0
+R8 =0000000000000006 R9 =0000000000000000 R10=0000000000202e6c R11=0000000000000000
+R12=0000000000000000 R13=0000000000000000 R14=0000000000000000 R15=0000000000000000
+RIP=0000000000201074 RFL=00000203 [------C] CPL=0 II=0 A20=1 SMM=0 HLT=0
+ES =0010 0000000000000000 00000000 00009300 DPL=0 DS   [-WA]
+CS =0008 0000000000000000 00000000 00209800 DPL=0 CS64 [---]
+SS =0000 0000000000000000 00000000 00000000
+DS =0010 0000000000000000 00000000 00009300 DPL=0 DS   [-WA]
+FS =0010 0000000000000000 00000000 00009300 DPL=0 DS   [-WA]
+GS =0010 0000000000000000 00000000 00009300 DPL=0 DS   [-WA]
+LDT=0000 0000000000000000 0000ffff 00008200 DPL=0 LDT
+TR =0000 0000000000000000 0000ffff 00008b00 DPL=0 TSS64-busy
+GDT=     0000000000007e31 00000017
+IDT=     0000000000205010 000000ff
+CR0=80000011 CR2=0000000000000000 CR3=0000000000010000 CR4=00000020
+DR0=0000000000000000 DR1=0000000000000000 DR2=0000000000000000 DR3=0000000000000000 
+DR6=00000000ffff0ff0 DR7=0000000000000400
+CCS=0000000000000001 CCD=0000000000000001 CCO=EFLAGS  
+EFER=0000000000000500
+
+```
+Now I know that whatever is at line `pc=0000000000201074` is what ultimately caused that to panic.
+
+With that info I can execute:
+
+```Shell
+objdump -S --start-address=0x201074 build/kernel/kernel | awk '{print $0} $3~/retq?/{exit}'
+```
+
+Return looks like this:
+
+```Shell
+build/kernel/kernel:     file format elf64-x86-64
+
+Disassembly of section .text:
+
+0000000000201074 <kmain+0x34>:
+  201074:	eb fe                	jmp    201074 <kmain+0x34>
+
+0000000000201076 <vga_console_init>:
+  201076:	55                   	push   %rbp
+  201077:	48 89 e5             	mov    %rsp,%rbp
+  20107a:	48 bf a0 37 20 00 00 	movabs $0x2037a0,%rdi
+  201081:	00 00 00 
+  201084:	48 b8 7c 2f 20 00 00 	movabs $0x202f7c,%rax
+  20108b:	00 00 00 
+  20108e:	ff d0                	callq  *%rax
+  201090:	b8 00 00 00 00       	mov    $0x0,%eax
+  201095:	48 ba 45 11 20 00 00 	movabs $0x201145,%rdx
+  20109c:	00 00 00 
+  20109f:	ff d2                	callq  *%rdx
+  2010a1:	90                   	nop
+  2010a2:	5d                   	pop    %rbp
+  2010a3:	c3                   	retq   
+
+```
+
