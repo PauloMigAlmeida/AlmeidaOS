@@ -12,8 +12,11 @@
 #include "kernel/compiler/macro.h"
 
 typedef struct {
+    /* custom values pushed onto stack to help kernel identify
+     * from which isr vector this cam from */
     uint64_t error_code;
     uint64_t trap_number;
+    /* 64-bits general purpose regiters*/
     uint64_t r15;
     uint64_t r14;
     uint64_t r13;
@@ -29,13 +32,15 @@ typedef struct {
     uint64_t rcx;
     uint64_t rbx;
     uint64_t rax;
-    uint64_t rip;
-    uint64_t cs;
-    uint64_t rflags;
-    uint64_t rsp;
-    uint64_t ss;
+    /*Saved by the processor so it would know where to come back */
+    uint64_t rip; // Getting Flags
+    uint64_t cs; // Getting RIP
+    uint64_t rflags; // Getting CS
+    uint64_t rsp; // Getting FLAGS again? WTF?
+    uint64_t ss; // Getting RSP
 
 } __packed registers_64_t;
+//TODO split this struct... I can't have this all under "registers_64_t".. I need additional structs for that.
 
 void idt_init(void);
 

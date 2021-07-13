@@ -60,7 +60,7 @@ clean:
 .PHONY: build
 build:
 	@echo "[build] Building AlmeidaOS"
-	@$(DOCKER) run --rm -it -v `pwd`:/code $(IMAGE_NAME):$(IMAGE_TAG) \
+	@$(DOCKER) run --rm -v `pwd`:/code $(IMAGE_NAME):$(IMAGE_TAG) \
 		/bin/bash -c "cd /code &&  make all"
 	@# Help: Build the OS using a docker container
 

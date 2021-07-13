@@ -10,6 +10,7 @@
 #include "kernel/lib/printk.h"
 #include "kernel/lib/bit.h"
 #include "kernel/debug/coredump.h"
+#include "kernel/device/keyboard.h"
 
 /*
  * Notes to myself:
@@ -32,8 +33,6 @@
  *      -> Vectors 0 through 8, 10 through 14, and 16 through 19 are the predefined interrupts and exceptions;
  *         vectors 32 through 255 are for software-defined interrupts, which are for either software interrupts or
  *         maskable hardware interrupts.
- *
- *  TODO: study about PIC and APIC -> So we can get the timer working
  */
 
 typedef struct idt_entry {
@@ -76,6 +75,10 @@ extern void vector18(void);
 extern void vector19(void);
 extern void vector20(void);
 extern void vector21(void);
+/* PIT interrupt */
+extern void vector32(void);
+/* keyboard interrupt */
+extern void vector33(void);
 
 static const char *exception_strs[] = {
         //  Intel 64 Manual Volume 2 - Table 6-1 -> Exceptions and Interrupts
@@ -87,7 +90,7 @@ static const char *exception_strs[] = {
         "#BR: Bound-Range Exception (BOUND instruction)",
         "#UD: Invalid opcode exception",
         "#NM: Device-Not-Available Exception",
-        "#DF: Device-Not-Available Exception",
+        "#DF: Double-Fault Exception",
         "Coprocessor segment overrun (reserved in AMD64)",
         "#TS: Invalid-TSS Exception",
         "#NP: Segment-Not-Present Exception",
@@ -127,7 +130,7 @@ static void config_idt_vector(uint8_t vector_id, uintptr_t fn) {
 
 void idt_init(void) {
     idt64_table_pointer.addr = (uintptr_t) &idt64_table;
-    idt64_table_pointer.limit = ARR_SIZE(idt64_table) - 1;
+    idt64_table_pointer.limit = sizeof(idt_entry_t) * ARR_SIZE(idt64_table) - 1;
 
     config_idt_vector(0, (uintptr_t) &vector0);
     config_idt_vector(1, (uintptr_t) &vector1);
@@ -149,14 +152,30 @@ void idt_init(void) {
     config_idt_vector(19, (uintptr_t) &vector19);
     config_idt_vector(20, (uintptr_t) &vector20);
     config_idt_vector(21, (uintptr_t) &vector21);
+    // timer
+    config_idt_vector(32, (uintptr_t) &vector32);
+    // keyboard
+    config_idt_vector(33, (uintptr_t) &vector33);
+
     printk("Loading IDT");
     load_idt(&idt64_table_pointer);
     printk("Enabling interruptions");
 }
 
 void interrupt_handler(registers_64_t *regs) {
-    printk("Error: %s", exception_strs[regs->trap_number]);
-    coredump(regs, 10);
-    halt();
+    if (regs->trap_number == 33) {
+        /* keyboard is expected to send EOI */
+        keyboard_handle_irq();
+    } else {
+        printk("Error: %s", exception_strs[regs->trap_number]);
+        coredump(regs, 10);
+
+        /* disable interrupts and hang the system */
+        disable_interrupts();
+        for (;;) {
+            halt();
+        }
+    }
+
 }
 

@@ -47,8 +47,11 @@ __force_inline void disable_interrupts() {
 }
 
 __force_inline void halt() {
-    disable_interrupts();
     asm volatile ("hlt");
+}
+
+__force_inline void fatal() {
+    asm volatile ("int 0xff");
 }
 
 #endif /* INCLUDE_KERNEL_ASM_GENERIC_H_ */

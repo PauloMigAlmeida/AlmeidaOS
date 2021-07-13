@@ -156,7 +156,7 @@ long_mode_boot:
     mov fs, ax
     mov gs, ax
     mov ss, ax
-    mov rsp, Loader.Mem.Stack.Top
+    mov rsp, Kernel.New.Start.Address + Kernel.New.ELFTextHeader.Offset
 
     ; display status message
     mov rax, LongMode.SecondStage.Booting.Msg
@@ -164,9 +164,6 @@ long_mode_boot:
 
     ; jump to memory address in which the kernel should be (fingers crossed)
     jmp Kernel.New.Start.Address + Kernel.New.ELFTextHeader.Offset
-
-    ; enter a endless loop. This instruction should never be reached
-    jmp lm_endless_loop
 
     ; TODO: lm_display_string -> Try to make use of 64 bit registers where possible
     ; TODO: lm_set_cursor -> Try to make use of 64 bit registers where possible
