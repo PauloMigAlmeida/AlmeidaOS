@@ -38,6 +38,7 @@
 #define PIC1_DATA       (PIC1+1)
 #define PIC2_COMMAND    PIC2
 #define PIC2_DATA       (PIC2+1)
+#define PIC_EOI         0x20        /* End-of-interrupt command code */
 
 #define ICW1_INIT               (0 << 8) | (1 << 4)
 #define ICW1_ICW4_NEEDED        1
@@ -65,22 +66,55 @@ void pic_init(void) {
     outb(PIC2_DATA, 1);
 
     /* mask (disable) all PIC interrupts */
-    outb(PIC1_DATA,0xff);
-    outb(PIC2_DATA,0xff);
+    outb(PIC1_DATA, 0xff);
+    outb(PIC2_DATA, 0xff);
 
     printk("PIC initialised");
 }
 
-void enable_keyboard_irq(void) {
-    /* keyboard IRQ is on the active PIC */
-    uint8_t value = inb(PIC1_DATA);
-    printk("PIC1 mask state: %u\n", value);
-    /* Keyboard is IRQ 1 according to Standard ISA IRQs */
-    if(test_bit(1, value)){
-        value = clear_bit(1, value);
-        printk("PIC1 new mask State: %u\n", value);
-        outb(PIC1_DATA, value);
-        printk("Keyboard IRQ enabled");
+void pic_send_eoi(uint8_t isa_irq) {
+    if (isa_irq >= 8)
+        /* Passive PIC */
+        outb(PIC2_COMMAND, PIC_EOI);
+
+    /* Active PIC */
+    outb(PIC1_COMMAND, PIC_EOI);
+}
+
+void pic_unmask_irq(uint8_t isa_irq) {
+    uint8_t pic_selector;
+    if (isa_irq < 8)
+        pic_selector = PIC1_DATA;
+    else {
+        pic_selector = PIC2_DATA;
+        isa_irq -= 8;
+    }
+
+    uint8_t value = inb(pic_selector);
+    printk("PIC Addr: 0x%x mask state: %u\n", pic_selector, value);
+    if (test_bit(isa_irq, value)) {
+        value = clear_bit(isa_irq, value);
+        printk("PIC Addr: 0x%x new mask State: %u\n", pic_selector, value);
+        outb(pic_selector, value);
+        printk("IRQ %u unmasked\n", isa_irq);
     }
 }
 
+void pic_mask_irq(uint8_t isa_irq) {
+    uint8_t pic_selector;
+    if (isa_irq < 8)
+        pic_selector = PIC1_DATA;
+    else {
+        pic_selector = PIC2_DATA;
+        isa_irq -= 8;
+    }
+
+    uint8_t value = inb(pic_selector);
+    printk("PIC Addr: 0x%x mask state: %u\n", pic_selector, value);
+    if (!test_bit(isa_irq, value)) {
+        value = set_bit(isa_irq, value);
+        printk("PIC Addr: 0x%x new mask State: %u\n", pic_selector, value);
+        outb(pic_selector, value);
+        printk("IRQ %u unmasked\n", isa_irq);
+    }
+}
