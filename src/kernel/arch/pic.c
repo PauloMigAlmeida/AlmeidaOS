@@ -7,7 +7,6 @@
 
 #include "kernel/arch/pic.h"
 #include "kernel/compiler/freestanding.h"
-#include "kernel/arch/pit.h"
 #include "kernel/asm/generic.h"
 #include "kernel/lib/bit.h"
 #include "kernel/lib/printk.h"
@@ -45,10 +44,6 @@
 #define ICW1_CALLADDR_4         1 << 2
 
 void pic_init(void) {
-    /* enable timer */
-    //TODO maybe move this somewhere else ?
-    pit_init();
-
     /* Send ICW1 to both PIC chips */
     outb(PIC1, ICW1_INIT | ICW1_CALLADDR_4 | ICW1_ICW4_NEEDED);
     outb(PIC2, ICW1_INIT | ICW1_CALLADDR_4 | ICW1_ICW4_NEEDED);

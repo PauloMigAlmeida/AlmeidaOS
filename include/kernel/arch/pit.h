@@ -8,6 +8,9 @@
 #ifndef INCLUDE_KERNEL_ARCH_PIT_H_
 #define INCLUDE_KERNEL_ARCH_PIT_H_
 
-void pit_init(void);
+#include "kernel/compiler/freestanding.h"
+
+void pit_init(uint16_t freq_hz);
+void pit_timer_handle_irq(void);
 
 #endif /* INCLUDE_KERNEL_ARCH_PIT_H_ */

@@ -11,6 +11,7 @@
 #include "kernel/lib/bit.h"
 #include "kernel/debug/coredump.h"
 #include "kernel/device/keyboard.h"
+#include "kernel/arch/pit.h"
 
 /*
  * Notes to myself:
@@ -167,7 +168,10 @@ void idt_init(void) {
  */
 
 void interrupt_handler(registers_64_t *regs) {
-    if (regs->trap_number == 33) {
+    if (regs->trap_number == 32) {
+        /* PIT is expected to send EOI */
+        pit_timer_handle_irq();
+    } else if (regs->trap_number == 33) {
         /* keyboard is expected to send EOI */
         keyboard_handle_irq();
     } else {

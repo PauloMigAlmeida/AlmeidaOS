@@ -6,6 +6,7 @@
 #include "kernel/arch/cpu.h"
 #include "kernel/arch/interrupt.h"
 #include "kernel/arch/pic.h"
+#include "kernel/arch/pit.h"
 #include "kernel/device/keyboard.h"
 
 void kmain(void) {
@@ -16,7 +17,10 @@ void kmain(void) {
     idt_init();
 
     enable_interrupts();
+
     keyboard_init();
+    /* enable timer */
+    pit_init(20);
 
     // doing something stupid for testing
 //    int x = 1 / 0;
@@ -56,8 +60,8 @@ void kmain(void) {
 //    printk("0x%.16llx and %llu and %o %.15s %.5d %.75c", ia32_misc_enable, ia32_misc_enable, 9, "Paulo", x, 'a');
 
     /* do let kmain finish. Among other things, this ensure that interrupts have to to occur */
-    for(;;) {
-       asm("hlt");
+    for (;;) {
+        asm("hlt");
     }
 }
 
