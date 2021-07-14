@@ -98,8 +98,11 @@ void write_console(const char *buf, size_t buf_size) {
 		}
 	}
 
-	if (line_p > 0)
-		ringbuffer_put(&msg_buffer, line, line_p);
+	if (line_p > 0){
+	    line[++line_p] = '\0';
+	    ringbuffer_put(&msg_buffer, line, line_p);
+	}
+
 
 	clear_console();
 	ringbuffer_for_each(&msg_buffer, &write_line_to_dma);
