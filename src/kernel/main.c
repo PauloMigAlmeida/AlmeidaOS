@@ -15,12 +15,13 @@ void kmain(void) {
 
     pic_init();
     idt_init();
+    pit_init(20);
 
     enable_interrupts();
 
-    keyboard_init();
-    /* enable timer */
-    pit_init(20);
+    /* enabled IRQs */
+    keyboard_enable();
+    pit_enable();
 
     // doing something stupid for testing
 //    int x = 1 / 0;

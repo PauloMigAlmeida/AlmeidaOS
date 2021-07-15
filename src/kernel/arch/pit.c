@@ -28,8 +28,11 @@
  *              1 hz      1 second    1 cycle/sec
  *              2 hz    0.5 seconds  2 cycles/sec
  *              ...
+ * -> From the book Understanding the linux kernel, 3rd edition; Chapter 6:
+ *      The local APIC timer sends an interrupt only to its processor, while the PIT raises a global interrupt, which
+ *          may be handled by any CPU in the system.
  *
- *      PIT Mode/Command register details
+ * -> PIT Mode/Command register details
  *      Bits         Usage
  *      6 and 7      Select channel :
  *                      0 0 = Channel 0
@@ -64,18 +67,36 @@
 #define PIT_ACCESS_MODE_LO_HI   3 << 4      /* Access mode: lobyte/hibyte */
 
 void pit_init(uint16_t freq_hz) {
+
     outb(PIT_MODE_CMD_REG, (uint8_t) (PIT_ACCESS_MODE_LO_HI | PIT_OP_MODE_2 | PIT_BINARY_MODE));
     //TODO calculate desired freq to obtain divider value
-    outb(PIT_CHANNEL_0_DATA_PORT, 0x9b);
-    outb(PIT_CHANNEL_0_DATA_PORT, 0x2e);
-    printk("PIT enabled");
-
-    /* unmask timer interrupt so we can start processing it */
-    pic_unmask_irq(PIC_PROG_INT_TIMER_INTERRUPT);
-
+    // freq = 1193182 / 18
+    outb(PIT_CHANNEL_0_DATA_PORT, 0xf);
+    outb(PIT_CHANNEL_0_DATA_PORT, 0x0);
+//    outb(PIT_CHANNEL_0_DATA_PORT, 0x9b);
+//    outb(PIT_CHANNEL_0_DATA_PORT, 0x2e);
+    printk("PIT initiated");
 }
 
+void pit_enable(void){
+	/* 
+	 * PIC unmask is a critical path, interrupts must be disabled to avoid stack pointer 
+	 * data corruption. This becomes more evident when using smaller freq divider such as
+	 *  	outb(PIT_CHANNEL_0_DATA_PORT, 0xf);
+    */
+
+    disable_interrupts();
+    /* unmask timer interrupt so we can start processing it */
+    pic_unmask_irq(PIC_PROG_INT_TIMER_INTERRUPT);
+    enable_interrupts();
+    printk("PIT IRQ enabled");
+}
+
+static uint64_t counter;
 void pit_timer_handle_irq(void) {
+    counter++;
+    if(counter % 65535 == 0)
+        printk("pit_timer_handle_irq: %llu", counter);
     //TODO do something useful with that.. I could only write part of this impl - Lunch time at work =S
     pic_send_eoi(PIC_PROG_INT_TIMER_INTERRUPT);
 }

@@ -16,8 +16,11 @@
  * - TODO Implement ability to write on the screen (as if it was a bash / tty)
  */
 
-void keyboard_init(void) {
+void keyboard_enable(void) {
+    /* PIC unmask is a critical path, interrupts must be disabled to avoid stack pointer data corruption */
+    disable_interrupts();
     pic_unmask_irq(PIC_KEYBOARD_INTERRUPT);
+    enable_interrupts();
     printk("Keyboard IRQ enabled");
 }
 

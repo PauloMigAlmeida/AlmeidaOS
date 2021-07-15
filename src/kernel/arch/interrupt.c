@@ -165,6 +165,7 @@ void idt_init(void) {
 /*
  * Things To Do:
  * - TODO Take a look a the registers_64_t in case of GPE since it's not returning the right stuff
+ * - TODO: I'm still in doubt whether I need to cli() to avoid nested interrupts... Take a look at the linux source code
  */
 
 void interrupt_handler(registers_64_t *regs) {

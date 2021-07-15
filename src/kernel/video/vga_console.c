@@ -80,6 +80,11 @@ void write_line_to_dma(const char *buf) {
 }
 
 void write_console(const char *buf, size_t buf_size) {
+    /*
+     * Notes for myself:
+     *  I'm pretty sure that once we start dealing with SMP, the ringbuffer will before a source of problems..
+     *  I need to come up with some sorting of spinlock or other locking mechanisms to avoid chaos.
+     */
 	char line[VGA_MAX_COLS+1];
 	memset(line, '\0', ARR_SIZE(line));
 	size_t line_p = 0;
