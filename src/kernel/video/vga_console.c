@@ -31,52 +31,61 @@ static int row = 0;
 
 static ringbuffer_tp msg_buffer = { .size = VGA_MAX_ROWS };
 
-void vga_console_init(){
-	// init ring buffer
-	ringbuffer_init(&msg_buffer);
-	clear_console();
+void vga_console_init() {
+    // init ring buffer
+    ringbuffer_init(&msg_buffer);
+    clear_console();
 }
 
 void update_cursor(int row, int col) {
-	// ensures that caret position is always visible even on certain edge cases
-	if (row == VGA_MAX_ROWS)
-		row--;
-	else if (row == 0)
-		row++;
+    // ensures that caret position is always visible even on certain edge cases
+    if (row == VGA_MAX_ROWS)
+        row--;
+    else if (row == 0)
+        row++;
 
-	uint16_t pos = row * VGA_MAX_COLS + col;
+    uint16_t pos = row * VGA_MAX_COLS + col;
 
-	outb(0x3D4, 0x0F);
-	outb(0x3D5, (uint8_t) (pos & 0xFF));
-	outb(0x3D4, 0x0E);
-	outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+    outb(0x3D4, 0x0F);
+    outb(0x3D5, (uint8_t) (pos & 0xFF));
+    outb(0x3D4, 0x0E);
+    outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
 }
 
 void clear_console() {
-	int nchars = VGA_MAX_COLS * VGA_MAX_ROWS;
-	volatile char *video_address = (volatile char*) VIDEO_MEM_ADDR;
-	for (int i = 0; i < nchars; i++) {
-		video_address[0] = ' ';
-		video_address[1] = 0xf;
-		video_address += 2;
-	}
+    int nchars = VGA_MAX_COLS * VGA_MAX_ROWS;
+    volatile char *video_address = (volatile char*) VIDEO_MEM_ADDR;
+    for (int i = 0; i < nchars; i++) {
+        video_address[0] = ' ';
+        video_address[1] = 0xf;
+        video_address += 2;
+    }
 
-	row = 0;
-	update_cursor(row, 0);
+    row = 0;
+    update_cursor(row, 0);
 }
 
 void write_line_to_dma(const char *buf) {
-	volatile char *video_address = (volatile char*) VIDEO_MEM_ADDR;
-	video_address += row * VGA_MAX_COLS * 2;
+    volatile char *video_address = (volatile char*) VIDEO_MEM_ADDR;
+    video_address += row * VGA_MAX_COLS * 2;
 
-	char c;
+    uint8_t idx = 0;
+    char c = *buf;
+    /* write new content */
 	do {
-		video_address[0] = *buf;
+		video_address[0] = c;
 		video_address[1] = 0xf;
 		video_address += 2;
-
+		idx++;
 	} while ((c = *(++buf)) != '\0');
-	row++;
+
+    /* previous content could've been bigger so clean up the rest of the line */
+    for(; idx < VGA_MAX_COLS - 1; idx++) {
+        video_address[0] = ' ';
+        video_address[1] = 0xf;
+        video_address += 2;
+    }
+    row++;
 }
 
 void write_console(const char *buf, size_t buf_size) {
@@ -85,32 +94,29 @@ void write_console(const char *buf, size_t buf_size) {
      *  I'm pretty sure that once we start dealing with SMP, the ringbuffer will before a source of problems..
      *  I need to come up with some sorting of spinlock or other locking mechanisms to avoid chaos.
      */
-	char line[VGA_MAX_COLS+1];
-	memset(line, '\0', ARR_SIZE(line));
-	size_t line_p = 0;
+    char line[VGA_MAX_COLS + 1];
+    size_t line_p = 0;
 
-	for(size_t i = 0; i < buf_size-1 ; i++){
-		char c = *(buf + i);
+    for (size_t i = 0; i < buf_size - 1; i++) {
+        char c = *(buf + i);
 
-		if (c != '\n')
-			line[line_p++] = c;
+        if (c != '\n')
+            line[line_p++] = c;
 
-		if (c == '\n' || line_p == VGA_MAX_COLS - 1){
-			line[++line_p] = '\0';
-			ringbuffer_put(&msg_buffer, line, line_p);
-			memset(line, '\0', line_p);
-			line_p = 0;
-		}
-	}
+        if (c == '\n' || line_p == VGA_MAX_COLS - 1) {
+            line[line_p++] = '\0';
+            ringbuffer_put(&msg_buffer, line, line_p);
+            memset(line, '\0', line_p);
+            line_p = 0;
+        }
+    }
 
-	if (line_p > 0){
-	    line[++line_p] = '\0';
-	    ringbuffer_put(&msg_buffer, line, line_p);
-	}
+    if (line_p > 0) {
+        line[line_p++] = '\0';
+        ringbuffer_put(&msg_buffer, line, line_p);
+    }
 
-
-	clear_console();
-	ringbuffer_for_each(&msg_buffer, &write_line_to_dma);
-
-	update_cursor(row, 0);
+    row = 0;
+    ringbuffer_for_each(&msg_buffer, &write_line_to_dma);
+    update_cursor(row, 0);
 }
