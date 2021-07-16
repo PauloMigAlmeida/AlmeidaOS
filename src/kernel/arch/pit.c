@@ -60,21 +60,27 @@
 #define PIT_CHANNEL_1_DATA_PORT 0x41        /* read/write */
 #define PIT_CHANNEL_2_DATA_PORT 0x42        /* read/write */
 #define PIT_MODE_CMD_REG        0x43        /* write only / read is ignored */
-#define PIT_CHIP_FREQ           1_193_182   /* Hz (+-) */
+#define PIT_CHIP_FREQ           1193182   /* Hz (+-) */
 
 #define PIT_BINARY_MODE         0           /* 16-bit binary */
 #define PIT_OP_MODE_2           1 << 2      /* Mode 2 (rate generator) */
 #define PIT_ACCESS_MODE_LO_HI   3 << 4      /* Access mode: lobyte/hibyte */
 
 void pit_init(uint16_t freq_hz) {
-
+    /* configure PIT chip */
     outb(PIT_MODE_CMD_REG, (uint8_t) (PIT_ACCESS_MODE_LO_HI | PIT_OP_MODE_2 | PIT_BINARY_MODE));
-    //TODO calculate desired freq to obtain divider value
-    // freq = 1193182 / 18
-    outb(PIT_CHANNEL_0_DATA_PORT, 0xf);
-    outb(PIT_CHANNEL_0_DATA_PORT, 0x0);
-//    outb(PIT_CHANNEL_0_DATA_PORT, 0x9b);
-//    outb(PIT_CHANNEL_0_DATA_PORT, 0x2e);
+
+    /* calculate divider value to achieve desired frequency in Hz */
+    uint16_t divider = PIT_CHIP_FREQ  / freq_hz;
+    //TODO implement logic to alert about edge cases
+    //TODO Can we read the oscilator frequency? I don't think that the PIC_CHIP_FREQ is right here for some reason
+
+//    outb(PIT_CHANNEL_0_DATA_PORT, 0xf);
+//    outb(PIT_CHANNEL_0_DATA_PORT, 0x0);
+
+    /* values but put passed one byte at the time */
+    outb(PIT_CHANNEL_0_DATA_PORT, (uint8_t)divider);
+    outb(PIT_CHANNEL_0_DATA_PORT, (uint8_t)((divider >> 8) & 0xff));
     printk("PIT initiated");
 }
 

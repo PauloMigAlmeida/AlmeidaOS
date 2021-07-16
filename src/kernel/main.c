@@ -15,13 +15,18 @@ void kmain(void) {
 
     pic_init();
     idt_init();
-    pit_init(20);
+    pit_init(100);
 
     enable_interrupts();
 
     /* enabled IRQs */
     keyboard_enable();
     pit_enable();
+
+//    disable_interrupts();
+//    /* unmask timer interrupt so we can start processing it */
+//    pic_unmask_irq(PIC_PROG_INT_TIMER_INTERRUPT);
+//    enable_interrupts();
 
     // doing something stupid for testing
 //    int x = 1 / 0;
