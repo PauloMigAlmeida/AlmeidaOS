@@ -60,48 +60,56 @@
 #define PIT_CHANNEL_1_DATA_PORT 0x41        /* read/write */
 #define PIT_CHANNEL_2_DATA_PORT 0x42        /* read/write */
 #define PIT_MODE_CMD_REG        0x43        /* write only / read is ignored */
-#define PIT_CHIP_FREQ           1193182   /* Hz (+-) */
+#define PIT_CHIP_FREQ           1193182     /* Hz (+-) */
 
 #define PIT_BINARY_MODE         0           /* 16-bit binary */
 #define PIT_OP_MODE_2           1 << 2      /* Mode 2 (rate generator) */
 #define PIT_ACCESS_MODE_LO_HI   3 << 4      /* Access mode: lobyte/hibyte */
+#define PIT_ACCESS_MODE_LO      2 << 4      /* Access mode: lobyte */
 
-void pit_init(uint16_t freq_hz) {
+void pit_init(uint32_t freq_hz) {
     /* configure PIT chip */
     outb(PIT_MODE_CMD_REG, (uint8_t) (PIT_ACCESS_MODE_LO_HI | PIT_OP_MODE_2 | PIT_BINARY_MODE));
 
     /* calculate divider value to achieve desired frequency in Hz */
-    uint16_t divider = PIT_CHIP_FREQ  / freq_hz;
-    //TODO implement logic to alert about edge cases
-    //TODO Can we read the oscilator frequency? I don't think that the PIC_CHIP_FREQ is right here for some reason
+    uint16_t divider;
 
-//    outb(PIT_CHANNEL_0_DATA_PORT, 0xf);
-//    outb(PIT_CHANNEL_0_DATA_PORT, 0x0);
+    /* sanity checks */
+    if (freq_hz < 19) {
+        printk("PIT desired frequency can't smaller then 19 Hz, using %lu instead", 19);
+        freq_hz = 19;
+    } else if (freq_hz > PIT_CHIP_FREQ) {
+        printk("PIT desired frequency %lu is too high, using %lu instead", freq_hz, PIT_CHIP_FREQ);
+        freq_hz = PIT_CHIP_FREQ;
+    }
 
-    /* values but put passed one byte at the time */
-    outb(PIT_CHANNEL_0_DATA_PORT, (uint8_t)divider);
-    outb(PIT_CHANNEL_0_DATA_PORT, (uint8_t)((divider >> 8) & 0xff));
+    divider = (uint16_t)((uint32_t)PIT_CHIP_FREQ / freq_hz);
+
+    /* values but put passed one byte at the time - interrupts must be disabled*/
+    outb(PIT_CHANNEL_0_DATA_PORT, (uint8_t) (divider & 0xFF));
+    outb(PIT_CHANNEL_0_DATA_PORT, (uint8_t) ((divider & 0xFF00) >> 8));
     printk("PIT initiated");
 }
 
-void pit_enable(void){
-	/* 
-	 * PIC unmask is a critical path, interrupts must be disabled to avoid stack pointer 
-	 * data corruption. This becomes more evident when using smaller freq divider such as
-	 *  	outb(PIT_CHANNEL_0_DATA_PORT, 0xf);
-    */
+void pit_enable(void) {
+    /*
+     * PIC unmask is a critical path, interrupts must be disabled to avoid stack pointer
+     * data corruption. This becomes more evident when using smaller freq divider such as
+     *  	outb(PIT_CHANNEL_0_DATA_PORT, 0xf);
+     */
 
     disable_interrupts();
     /* unmask timer interrupt so we can start processing it */
     pic_unmask_irq(PIC_PROG_INT_TIMER_INTERRUPT);
-    enable_interrupts();
     printk("PIT IRQ enabled");
+    enable_interrupts();
+
 }
 
 static uint64_t counter;
 void pit_timer_handle_irq(void) {
     counter++;
-    if(counter % 65535 == 0)
+    if (counter % 65536 == 0)
         printk("pit_timer_handle_irq: %llu", counter);
     //TODO do something useful with that.. I could only write part of this impl - Lunch time at work =S
     pic_send_eoi(PIC_PROG_INT_TIMER_INTERRUPT);

@@ -10,7 +10,7 @@
 
 #include "kernel/compiler/freestanding.h"
 
-void pit_init(uint16_t freq_hz);
+void pit_init(uint32_t freq_hz);
 void pit_enable(void);
 void pit_timer_handle_irq(void);
 

@@ -176,11 +176,12 @@ void interrupt_handler(registers_64_t *regs) {
         /* keyboard is expected to send EOI */
         keyboard_handle_irq();
     } else {
+        /* disable interrupts and hang the system */
+        disable_interrupts();
+
         printk("Error: %s", exception_strs[regs->trap_number]);
         coredump(regs, 10);
 
-        /* disable interrupts and hang the system */
-        disable_interrupts();
         for (;;) {
             halt();
         }

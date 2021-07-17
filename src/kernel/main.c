@@ -15,6 +15,7 @@ void kmain(void) {
 
     pic_init();
     idt_init();
+
     pit_init(100);
 
     enable_interrupts();
@@ -41,12 +42,12 @@ void kmain(void) {
 //    printk("Value of b is: %d\n", b);
 
 // test row reset;
-//  for(int i=0; i < 25; i++){
+//  for(int i=0; i < 12; i++){
 //	  printk("i: %d\n", i);
 //  }
 
 //    test soft wrap
-//    printk("abcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxz\n");
+//    printk("abcde/fghijklmnopqrstuvxzabcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxz\n");
 //
 //    for (int i = 0; i < 5; i++) {
 //        printk("i: %d\n", i);

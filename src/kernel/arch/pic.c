@@ -28,6 +28,7 @@
  *      -> ICW3
  *          -> Active PIC -> Each bit represents which IRQ will be used to cascade that to Passive PIC
  *          -> Passive PIC -> There is a table on page 12 of the datasheet
+ *      -> PIC is sufficient for single processor machines. APIC is recommended to SMP
  *
  */
 
@@ -68,8 +69,8 @@ void pic_init(void) {
 }
 
 void pic_send_eoi(uint8_t isa_irq) {
+    /* Passive PIC */
     if (isa_irq >= 8)
-        /* Passive PIC */
         outb(PIC2_COMMAND, PIC_EOI);
 
     /* Active PIC */
