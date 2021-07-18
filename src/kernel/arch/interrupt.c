@@ -158,16 +158,34 @@ void idt_init(void) {
     // keyboard
     config_idt_vector(33, (uintptr_t) &vector33);
 
-    printk("Loading IDT");
+    printk_info("Loading IDT");
     load_idt(&idt64_table_pointer);
-    printk("Enabling interruptions");
+    printk_info("Enabling interruptions");
 }
 /*
  * Things To Do:
  * - TODO Take a look a the registers_64_t in case of GPE since it's not returning the right stuff
- * - TODO: I'm still in doubt whether I need to cli() to avoid nested interrupts... Take a look at the linux source code
  */
 
+/*
+ * Notes to myself:
+ *
+ *  -> I had doubt whether I should disable interrupts to avoid nested interrupts and I found this relic statement on
+ *      the Understanding the Linux kernel v3.0 book;
+ *
+ *      -> The activities that the kernel needs to perform in response to an interrupt are thus divided into a critical
+ *          urgent part that the kernel executes right away and a deferrable part that is left for later.
+ *
+ *      -> Because interrupts can come anytime, the kernel might be handling one of them while another one (of a
+ *          different type) occurs. This should be allowed as much as possible, because it keeps the I/O devices busy
+ *
+ *      -> The activities that the kernel needs to perform in response to an interrupt are thus divided into a critical
+ *          urgent part that the kernel executes right away and a deferrable part that is left for later.
+ *
+ *      -> Because interrupts can come anytime, the kernel might be handling one of them while another one (of a
+ *          different type) occurs. This should be allowed as much as possible, because it keeps the I/O devices busy
+ *
+ */
 void interrupt_handler(registers_64_t *regs) {
     if (regs->trap_number == 32) {
         /* PIT is expected to send EOI */
@@ -179,7 +197,7 @@ void interrupt_handler(registers_64_t *regs) {
         /* disable interrupts and hang the system */
         disable_interrupts();
 
-        printk("Error: %s", exception_strs[regs->trap_number]);
+        printk_error("Error: %s", exception_strs[regs->trap_number]);
         coredump(regs, 10);
 
         for (;;) {

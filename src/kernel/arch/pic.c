@@ -65,7 +65,7 @@ void pic_init(void) {
     outb(PIC1_DATA, 0xff);
     outb(PIC2_DATA, 0xff);
 
-    printk("PIC initialised");
+    printk_info("PIC initialised");
 }
 
 void pic_send_eoi(uint8_t isa_irq) {
@@ -87,12 +87,12 @@ void pic_unmask_irq(uint8_t isa_irq) {
     }
 
     uint8_t value = inb(pic_selector);
-    printk("PIC Addr: 0x%x mask state: %u\n", pic_selector, value);
+    printk_debug("PIC Addr: 0x%x mask state: %u\n", pic_selector, value);
     if (test_bit(isa_irq, value)) {
         value = clear_bit(isa_irq, value);
-        printk("PIC Addr: 0x%x new mask State: %u\n", pic_selector, value);
+        printk_debug("PIC Addr: 0x%x new mask State: %u\n", pic_selector, value);
         outb(pic_selector, value);
-        printk("IRQ %u unmasked\n", isa_irq);
+        printk_debug("IRQ %u unmasked\n", isa_irq);
     }
 }
 
@@ -106,11 +106,11 @@ void pic_mask_irq(uint8_t isa_irq) {
     }
 
     uint8_t value = inb(pic_selector);
-    printk("PIC Addr: 0x%x mask state: %u\n", pic_selector, value);
+    printk_debug("PIC Addr: 0x%x mask state: %u\n", pic_selector, value);
     if (!test_bit(isa_irq, value)) {
         value = set_bit(isa_irq, value);
-        printk("PIC Addr: 0x%x new mask State: %u\n", pic_selector, value);
+        printk_debug("PIC Addr: 0x%x new mask State: %u\n", pic_selector, value);
         outb(pic_selector, value);
-        printk("IRQ %u unmasked\n", isa_irq);
+        printk_debug("IRQ %u unmasked\n", isa_irq);
     }
 }

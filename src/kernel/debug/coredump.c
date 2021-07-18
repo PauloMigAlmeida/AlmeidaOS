@@ -25,22 +25,22 @@ void coredump(registers_64_t *regs, size_t max_frames) {
 
     struct stackframe *stack;
     asm volatile("movq %0, rbp" :"=r"(stack)::);
-    printk("===============================================================================");
-    printk("Registers:");
-    printk("\tRAX: 0x%.16x, RBX: 0x%.16x, RCX: 0x%.16x", regs->rax, regs->rbx, regs->rcx);
-    printk("\tRDX: 0x%.16x, RSP: 0x%.16x, RSI: 0x%.16x", regs->rdx, regs->rsp, regs->rsi);
-    printk("\tRDI: 0x%.16x, R8:  0x%.16x, R9:  0x%.16x", regs->rdi, regs->r8, regs->r9);
-    printk("\tR10: 0x%.16x, R11: 0x%.16x, R12: 0x%.16x", regs->r10, regs->r11, regs->r12);
-    printk("\tR13: 0x%.16x, R14: 0x%.16x, R15: 0x%.16x", regs->r13, regs->r14, regs->r15);
+    printk_error("===============================================================================");
+    printk_error("Registers:");
+    printk_error("\tRAX: 0x%.16x, RBX: 0x%.16x, RCX: 0x%.16x", regs->rax, regs->rbx, regs->rcx);
+    printk_error("\tRDX: 0x%.16x, RSP: 0x%.16x, RSI: 0x%.16x", regs->rdx, regs->rsp, regs->rsi);
+    printk_error("\tRDI: 0x%.16x, R8:  0x%.16x, R9:  0x%.16x", regs->rdi, regs->r8, regs->r9);
+    printk_error("\tR10: 0x%.16x, R11: 0x%.16x, R12: 0x%.16x", regs->r10, regs->r11, regs->r12);
+    printk_error("\tR13: 0x%.16x, R14: 0x%.16x, R15: 0x%.16x", regs->r13, regs->r14, regs->r15);
 
-    printk("Segments:");
-    printk("\tRIP: 0x%.16x, RFLAGS: 0x%.16x", regs->rip, regs->rflags);
-    printk("\tSS:  0x%.16x, CS:     0x%.16x", regs->ss, regs->cs);
+    printk_error("Segments:");
+    printk_error("\tRIP: 0x%.16x, RFLAGS: 0x%.16x", regs->rip, regs->rflags);
+    printk_error("\tSS:  0x%.16x, CS:     0x%.16x", regs->ss, regs->cs);
 
-    printk("Call stack:");
+    printk_error("Call stack:");
     for (size_t i = 0; stack && i < max_frames; i++) {
-        printk("\t#%llu:  0x%.16x", i, stack->rip);
+        printk_error("\t#%llu:  0x%.16x", i, stack->rip);
         stack = stack->ebp;
     }
-    printk("===============================================================================");
+    printk_error("===============================================================================");
 }

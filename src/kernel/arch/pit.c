@@ -76,10 +76,10 @@ void pit_init(uint32_t freq_hz) {
 
     /* sanity checks */
     if (freq_hz < 19) {
-        printk("PIT desired frequency can't smaller then 19 Hz, using %lu instead", 19);
+        printk_error("PIT desired frequency can't smaller then 19 Hz, using %lu instead", 19);
         freq_hz = 19;
     } else if (freq_hz > PIT_CHIP_FREQ) {
-        printk("PIT desired frequency %lu is too high, using %lu instead", freq_hz, PIT_CHIP_FREQ);
+        printk_error("PIT desired frequency %lu is too high, using %lu instead", freq_hz, PIT_CHIP_FREQ);
         freq_hz = PIT_CHIP_FREQ;
     }
 
@@ -88,7 +88,7 @@ void pit_init(uint32_t freq_hz) {
     /* values but put passed one byte at the time - interrupts must be disabled*/
     outb(PIT_CHANNEL_0_DATA_PORT, (uint8_t) (divider & 0xFF));
     outb(PIT_CHANNEL_0_DATA_PORT, (uint8_t) ((divider & 0xFF00) >> 8));
-    printk("PIT initiated");
+    printk_info("PIT initiated");
 }
 
 void pit_enable(void) {
@@ -101,7 +101,7 @@ void pit_enable(void) {
     disable_interrupts();
     /* unmask timer interrupt so we can start processing it */
     pic_unmask_irq(PIC_PROG_INT_TIMER_INTERRUPT);
-    printk("PIT IRQ enabled");
+    printk_info("PIT IRQ enabled");
     enable_interrupts();
 
 }
@@ -109,8 +109,8 @@ void pit_enable(void) {
 static uint64_t counter;
 void pit_timer_handle_irq(void) {
     counter++;
-    if (counter % 65536 == 0)
-        printk("pit_timer_handle_irq: %llu", counter);
+    if (counter % 50 == 0)
+        printk_info("pit_timer_handle_irq: %llu", counter);
     //TODO do something useful with that.. I could only write part of this impl - Lunch time at work =S
     pic_send_eoi(PIC_PROG_INT_TIMER_INTERRUPT);
 }

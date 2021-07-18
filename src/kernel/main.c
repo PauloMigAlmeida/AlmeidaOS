@@ -10,12 +10,13 @@
 #include "kernel/device/keyboard.h"
 
 void kmain(void) {
+    printk_init(PRINTK_INFO_LEVEL);
     vga_console_init();
     cpu_init();
 
-    pic_init();
     idt_init();
 
+    pic_init();
     pit_init(100);
 
     enable_interrupts();
@@ -23,11 +24,6 @@ void kmain(void) {
     /* enabled IRQs */
     keyboard_enable();
     pit_enable();
-
-//    disable_interrupts();
-//    /* unmask timer interrupt so we can start processing it */
-//    pic_unmask_irq(PIC_PROG_INT_TIMER_INTERRUPT);
-//    enable_interrupts();
 
     // doing something stupid for testing
 //    int x = 1 / 0;

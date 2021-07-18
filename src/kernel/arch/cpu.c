@@ -54,7 +54,7 @@ void cpu_init() {
         cpu_ver_info.display_model = cpu_ver_info.model_id;
     }
 
-    printk("cpu_version_info :: stepping_id: 0x%.4x, model_id: 0x%.4x, family_id: 0x%.4x, extended_model_id: 0x%.4x, "
+    printk_debug("cpu_version_info :: stepping_id: 0x%.4x, model_id: 0x%.4x, family_id: 0x%.4x, extended_model_id: 0x%.4x, "
             "extended_family_id: 0x%.8x, display_family: 0x%.8x, display_model: 0x%.8x", cpu_ver_info.stepping_id,
             cpu_ver_info.model_id, cpu_ver_info.family_id, cpu_ver_info.extended_model_id,
             cpu_ver_info.extended_family_id, cpu_ver_info.display_family, cpu_ver_info.display_model);
@@ -77,7 +77,7 @@ void enable_intel_faststring() {
     if (is_msr_supported()) {
         if (cpu_ver_info.display_family == 0xf && cpu_ver_info.display_model == 0x0) {
             unsigned long long ia32_misc_enable = rdmsr(MSR_IA32_MISC_ENABLE);
-            printk("IA32_MISC_ENABLE is: 0x%.16llx", ia32_misc_enable);
+            printk_debug("IA32_MISC_ENABLE is: 0x%.16llx", ia32_misc_enable);
             if(!test_bit(0, ia32_misc_enable)){
                 // enable fast-string ourselves
                 ia32_misc_enable |= MSR_IA32_MISC_ENABLE_FAST_STRING_BIT;
@@ -86,15 +86,15 @@ void enable_intel_faststring() {
                 // check if it stuck (QEMU is the king of ignoring CPU bits sometimes)
                 ia32_misc_enable = rdmsr(MSR_IA32_MISC_ENABLE);
                 if(!test_bit(0, ia32_misc_enable)){
-                    printk("IA32_MISC_ENABLE (fast-string) couldn't be enabled");
+                    printk_debug("IA32_MISC_ENABLE (fast-string) couldn't be enabled");
                 }else{
-                    printk("IA32_MISC_ENABLE (fast-string) enabled manually");
+                    printk_debug("IA32_MISC_ENABLE (fast-string) enabled manually");
                 }
             }else {
-                printk("IA32_MISC_ENABLE (fast-string) was enabled by the BIOS");
+                printk_debug("IA32_MISC_ENABLE (fast-string) was enabled by the BIOS");
             }
         } else {
-            printk("CPU doesn't support fast-string");
+            printk_debug("CPU doesn't support fast-string");
         }
 
     }

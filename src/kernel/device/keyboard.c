@@ -21,7 +21,7 @@ void keyboard_enable(void) {
     disable_interrupts();
     pic_unmask_irq(PIC_KEYBOARD_INTERRUPT);
     enable_interrupts();
-    printk("Keyboard IRQ enabled");
+    printk_info("Keyboard IRQ enabled");
 }
 
 void keyboard_handle_irq(void) {
@@ -40,7 +40,7 @@ void keyboard_handle_irq(void) {
      */
 
     unsigned char scan_code = inb(0x60);
-    printk("Keyboard pressed %u\n", (unsigned int) scan_code);
+    printk_info("Keyboard pressed %u\n", (unsigned int) scan_code);
 
     /* Acknowledge that we've received the interrupt */
     pic_send_eoi(PIC_KEYBOARD_INTERRUPT);
