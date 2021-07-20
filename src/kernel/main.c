@@ -10,7 +10,7 @@
 #include "kernel/device/keyboard.h"
 
 void kmain(void) {
-    printk_init(PRINTK_INFO_LEVEL);
+    printk_init(PRINTK_DEBUG_LEVEL);
     vga_console_init();
     cpu_init();
 

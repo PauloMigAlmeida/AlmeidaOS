@@ -17,33 +17,32 @@
  * - TODO tweak screen so the last line is reserved for keyboard to type
  */
 
-static char *logging_level;
+static uint8_t logging_level = PRINTK_INFO_LEVEL;
 static char buffer[1024];
 
-void printk_init(char *level) {
-    //TODO add sanity checks
-    logging_level = level;
-}
-
-static bool should_print(const char *fmt) {
-    //TODO find a way to abort in case printk is used in its raw format
-    return strlen(fmt) > 0 && fmt[0] >= logging_level[0];
-}
-
-void printk(const char *fmt, ...) {
-    if (should_print(fmt)) {
-        /* move beyond logging level */
-        fmt++;
-
-        size_t buffer_size = ARR_SIZE(buffer);
-        memset(buffer, '\0', buffer_size);
-
-        va_list args;
-        va_start(args, fmt);
-        size_t buf_pointer = vsnprintf(buffer, buffer_size - 1, fmt, args);
-        va_end(args);
-
-        write_console(buffer, buf_pointer + 1); // copy nul-terminator too
+void printk_init(const uint8_t level) {
+    /* sanity checks */
+    if (level > PRINTK_DEBUG_LEVEL) {
+        printk_error("Debug level doesn't exist, setting PRINTK_INFO_LEVEL");
+        logging_level = PRINTK_INFO_LEVEL;
+    } else {
+        logging_level = level;
     }
+}
+
+void printk(const uint8_t level, const char *fmt, ...) {
+    /* check the configured logging level */
+    if (level > logging_level)
+        return;
+
+    size_t buffer_size = ARR_SIZE(buffer);
+    memset(buffer, '\0', buffer_size);
+
+    va_list args;
+    va_start(args, fmt);
+    size_t buf_pointer = vsnprintf(buffer, buffer_size - 1, fmt, args);
+    va_end(args);
+
+    write_console(buffer, buf_pointer + 1); // copy nul-terminator too
 }
 
