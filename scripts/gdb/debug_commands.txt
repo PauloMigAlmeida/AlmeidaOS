@@ -3,5 +3,3 @@ target remote localhost:8864
 layout asm
 layout regs
 symbol-file build/kernel/kernel.debug
-
-
