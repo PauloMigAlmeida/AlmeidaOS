@@ -110,7 +110,7 @@ static uint64_t counter;
 void pit_timer_handle_irq(void) {
     counter++;
     if (counter % 50 == 0)
-        printk_info("pit_timer_handle_irq: %llu", counter);
+        printk_debug("pit_timer_handle_irq: %llu", counter);
     //TODO do something useful with that.. I could only write part of this impl - Lunch time at work =S
     pic_send_eoi(PIC_PROG_INT_TIMER_INTERRUPT);
 }

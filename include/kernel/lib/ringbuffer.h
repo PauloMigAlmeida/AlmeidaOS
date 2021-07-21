@@ -27,7 +27,7 @@ typedef struct {
 	int head;
 	int tail;
 	int size;
-	char data[25][81]; //VGA DMA Max Columns + NUL-terminator
+	char data[24][81]; //VGA DMA Max Columns - 1 + NUL-terminator
 } ringbuffer_tp;
 
 void ringbuffer_init(ringbuffer_tp *buf);

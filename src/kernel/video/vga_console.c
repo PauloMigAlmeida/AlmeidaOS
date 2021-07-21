@@ -29,7 +29,10 @@ static int row = 0;
  * mod
  */
 
-static ringbuffer_tp msg_buffer = { .size = VGA_MAX_ROWS };
+static ringbuffer_tp msg_buffer = { 
+	/* leave the last the row empty for typing */
+	.size = VGA_MAX_ROWS - 1  
+};
 
 void vga_console_init() {
     // init ring buffer
