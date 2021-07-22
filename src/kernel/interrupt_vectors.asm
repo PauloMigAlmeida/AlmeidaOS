@@ -27,27 +27,32 @@ global vector21
 global vector32
 global vector33
 
-
-%macro  vector_interrupt_save_state 2
-  ; save general purpose registers
-  pushaq
+; Error code is pushed onto the stacka already
+%macro  vector_interrupt_errorcode_present_save_state 1
   ; trap number
   push %1
+  ; save general purpose registers
+  pushaq
+%endmacro
+
+; No error code is returned from this vector, so we fake one to ensure we can use a single C struct for simplicity
+%macro  vector_interrupt_plain_save_state 2
   ; errono
   push %2
+  ; trap number
+  push %1
+  ; save general purpose registers
+  pushaq
 %endmacro
 
 %macro  vector_interrupt_restore_state 0
-  ; restore general purpose registers
-  popaq
   ; pop trap number and errono off the stack
   add rsp, 16
+  ; restore general purpose registers
+  popaq
 %endmacro
 
-%macro  vector_interrupt_body_generator 2
-  ; save general purpose registers
-  vector_interrupt_save_state %1,%2
-
+%macro  vector_interrupt_body_generator 0
   ; SystemV ABI requires DF to be clear on function entry
   cld
   ; RDI is the first parameter according to the System V AMD64 Calling Convention
@@ -69,73 +74,95 @@ section .text
 ; Stack state:
 ;   -> push all general purpose registers
 ;   -> push trap number
-;   -> push error number - not interrupts have one but this ensure I can use a
-;         single C struct for that :)
+;   -> push error number - not all interrupts have one but this ensure I can use
+;         a single C struct for that :)
 ; Killed registers:
 ;   None
 ;===============================================================================
 vector0:
-  vector_interrupt_body_generator 0,0
+  vector_interrupt_plain_save_state 0,0
+  vector_interrupt_body_generator
 
 vector1:
-  vector_interrupt_body_generator 1,0
+  vector_interrupt_plain_save_state 1,0
+  vector_interrupt_body_generator
 
 vector2:
-  vector_interrupt_body_generator 2,0
+  vector_interrupt_plain_save_state 2,0
+  vector_interrupt_body_generator
 
 vector3:
-  vector_interrupt_body_generator 3,0
+  vector_interrupt_plain_save_state 3,0
+  vector_interrupt_body_generator
 
 vector4:
-  vector_interrupt_body_generator 4,0
+  vector_interrupt_plain_save_state 4,0
+  vector_interrupt_body_generator
 
 vector5:
-  vector_interrupt_body_generator 5,0
+  vector_interrupt_plain_save_state 5,0
+  vector_interrupt_body_generator
 
 vector6:
-  vector_interrupt_body_generator 6,0
+  vector_interrupt_plain_save_state 6,0
+  vector_interrupt_body_generator
 
 vector7:
-  vector_interrupt_body_generator 7,0
+  vector_interrupt_plain_save_state 7,0
+  vector_interrupt_body_generator
 
 vector8:
-  vector_interrupt_body_generator 8,0
+  vector_interrupt_errorcode_present_save_state 8
+  vector_interrupt_body_generator
 
 vector10:
-  vector_interrupt_body_generator 10,0
+  vector_interrupt_errorcode_present_save_state 10
+  vector_interrupt_body_generator
 
 vector11:
-  vector_interrupt_body_generator 11,0
+  vector_interrupt_errorcode_present_save_state 11
+  vector_interrupt_body_generator
 
 vector12:
-  vector_interrupt_body_generator 12,0
+  vector_interrupt_errorcode_present_save_state 12
+  vector_interrupt_body_generator
 
 vector13:
-  vector_interrupt_body_generator 13,0
+  vector_interrupt_errorcode_present_save_state 13
+  vector_interrupt_body_generator
 
 vector14:
-  vector_interrupt_body_generator 14,0
+  vector_interrupt_errorcode_present_save_state 14
+  vector_interrupt_body_generator
 
 vector16:
-  vector_interrupt_body_generator 16,0
+  vector_interrupt_plain_save_state 16,0
+  vector_interrupt_body_generator
 
 vector17:
-  vector_interrupt_body_generator 17,0
+  vector_interrupt_errorcode_present_save_state 17
+  vector_interrupt_body_generator
 
 vector18:
-  vector_interrupt_body_generator 18,0
+  vector_interrupt_plain_save_state 18,0
+  vector_interrupt_body_generator
 
 vector19:
-  vector_interrupt_body_generator 19,0
+  vector_interrupt_plain_save_state 19,0
+  vector_interrupt_body_generator
 
 vector20:
-  vector_interrupt_body_generator 20,0
+  vector_interrupt_plain_save_state 20,0
+  vector_interrupt_body_generator
 
 vector21:
-  vector_interrupt_body_generator 21,0
+  vector_interrupt_errorcode_present_save_state 21
+  vector_interrupt_body_generator
 
 vector32:
-  vector_interrupt_body_generator 32,0
+  vector_interrupt_plain_save_state 32,0
+  vector_interrupt_body_generator
 
 vector33:
-  vector_interrupt_body_generator 33,0
+  vector_interrupt_plain_save_state 33,0
+  vector_interrupt_body_generator

@@ -162,10 +162,6 @@ void idt_init(void) {
     load_idt(&idt64_table_pointer);
     printk_info("Enabling interruptions");
 }
-/*
- * Things To Do:
- * - TODO Take a look a the registers_64_t in case of GPE since it's not returning the right stuff
- */
 
 /*
  * Notes to myself:
@@ -186,19 +182,19 @@ void idt_init(void) {
  *          different type) occurs. This should be allowed as much as possible, because it keeps the I/O devices busy
  *
  */
-void interrupt_handler(registers_64_t *regs) {
-    if (regs->trap_number == 32) {
+void interrupt_handler(interrupt_stack_frame_t *int_frame) {
+    if (int_frame->trap_number == 32) {
         /* PIT is expected to send EOI */
         pit_timer_handle_irq();
-    } else if (regs->trap_number == 33) {
+    } else if (int_frame->trap_number == 33) {
         /* keyboard is expected to send EOI */
         keyboard_handle_irq();
     } else {
         /* disable interrupts and hang the system */
         disable_interrupts();
 
-        printk_error("Error: %s", exception_strs[regs->trap_number]);
-        coredump(regs, 10);
+        printk_error("Error: %s, Error Code: 0x%x", exception_strs[int_frame->trap_number], int_frame->error_code);
+        coredump(int_frame, 10);
 
         for (;;) {
             halt();

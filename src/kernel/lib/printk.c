@@ -12,11 +12,6 @@
 #include "kernel/lib/string.h"
 #include "kernel/lib/vsnprintf.h"
 
-/*
- * Things To Do:
- * - TODO tweak screen so the last line is reserved for keyboard to type
- */
-
 static uint8_t logging_level = PRINTK_INFO_LEVEL;
 static char buffer[1024];
 
