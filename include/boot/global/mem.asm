@@ -31,12 +31,12 @@ Loader.Mem.Stack.Top        equ   0x00007e00
 
 ; Rationale:
 ; Second stage loader can grow up from 0x00007e00 to 0x00009fff (+- 8.5 Kb)
-Paging.Start.Address  equ   0x00010000
-Mem.PML4.Address      equ   0x00010000  ; PML4
-Mem.PDPE.Address      equ   0x00011000 ; 0x10000 + PML4 (512 entries of 64 bits)
-Mem.PDE.Address       equ   0x00012000 ; 0x11000 + PDPE (512 entries of 64 bits)
-Mem.PTE.Address       equ   0x00013000 ; 0x12000 + PDE (512 entries of 64 bits)
-Paging.End.Address    equ   0x00018000 ; 0x13000 + 5 PT tables (512 entries of 64 bits)
+Paging.Start.Address  equ   0x00020000
+Mem.PML4.Address      equ   0x00020000  ; PML4
+Mem.PDPE.Address      equ   0x00021000 ; 0x20000 + PML4 (512 entries of 64 bits)
+Mem.PDE.Address       equ   0x00022000 ; 0x21000 + PDPE (512 entries of 64 bits)
+Mem.PTE.Address       equ   0x00023000 ; 0x22000 + PDE (512 entries of 64 bits)
+Paging.End.Address    equ   0x00028000 ; 0x23000 + 5 PT tables (512 entries of 64 bits)
 
 ; Kernel code:
 Loader.Kernel.Start.Address       equ (Loader.Mem.Stack.Top + Loader.File.NumberOfBlocks * 512)

@@ -347,8 +347,6 @@ pm_setup_page_tables:
 
     mov edi, Mem.PML4.Address
     mov ecx, (Paging.End.Address - Paging.Start.Address) >> 2
-    ; mov ecx, 0x10000/4
-    ; mov edi, 0x80000
 
     rep stosd
 
