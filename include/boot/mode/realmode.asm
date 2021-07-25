@@ -63,14 +63,23 @@ bios_check_extensions_present:
     popa
     ret
 
+;===============================================================================
+; bios_extended_read_sectors_from_drive
+;
+; Read IO blocks from disk and place them into the desired memory destination
+; current row (cur_row) coordinate
+;
+; Input:
+;   EAX -> Destination in which blocks will be loaded in memory
+;   EBX -> Number of blocks to be read from disk
+;   ECX -> Absolute block number from which the reading procedure will start
+;
+; Killed registers:
+;   None
+;===============================================================================
 bios_extended_read_sectors_from_drive:
   ; push values into the stack to preserve them once we are done with this fnc
   pusha
-
-  ; 42h = function number for extended read
-  mov ah, 0x42
-  ; drive index (e.g. 1st HDD = 80h)
-  mov dl, [BIOS.Drive.Id] ; (realmode.inc)
 
   ; Setting the DAP: Disk Address Packet
   ;
@@ -82,19 +91,23 @@ bios_extended_read_sectors_from_drive:
   mov byte[si+1], 0
   ; offset: 02h..03h  | range size: 2 byte | number of sectors to be read
   ;  (some Phoenix BIOSes are limited to a maximum of 127 sectors)
-  mov word[si+2], Loader.File.NumberOfBlocks + Kernel.File.NumberOfBlocks
+  mov word[si+2], bx
   ; offset: 04h..07h  | range size: 4 byte | segment:offset pointer to the memory
   ;   buffer to which sectors will be transferred (note that x86 is
   ;   little-endian: if declaring the segment and offset separately,
   ;   the offset must be declared before the segment)
-  mov word[si+4], Loader.Mem.Stack.Top
-  mov word[si+6], 0
+  mov dword[si+4], eax
   ; offset: 08h..0Fh  | range size: 8 byte | absolute number of the start of the
   ;    sectors to be read (1st sector of drive has number 0) using logical block
   ;    addressing (note that the lower half comes before the upper half)
   ; PS: Since we are using dd and the block 0 is the MBR, then we set it to 1
-  mov dword[si+8], 1
+  mov dword[si+8], ecx
   mov dword[si+12], 0
+
+  ; 42h = function number for extended read
+  mov ah, 0x42
+  ; drive index (e.g. 1st HDD = 80h)
+  mov dl, [BIOS.Drive.Id] ; (realmode.inc)
 
   ; call INT 13h AH=42h: Extended Read Sectors From Drive
   ; Ref: https://en.wikipedia.org/wiki/INT_13H#INT_13h_AH=42h:_Extended_Read_Sectors_From_Drive

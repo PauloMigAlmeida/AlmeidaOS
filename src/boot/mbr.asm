@@ -67,8 +67,21 @@ boot:
     ; If it doesn't it hangs the system, otherwise it returns from the function
     call bios_check_extensions_present
 
+    ; Clean up registers that will be passed as parameters
+    xor eax, eax
+    xor ebx, ebx
+    xor ecx, ecx
+
     ; Read the second-stage loader from the disk.
-    ; If it can't read it the system will hang, otherwise it returns from the fnc
+    mov eax, (0 << 4) + Loader.Mem.Stack.Top
+    mov bx, Loader.File.NumberOfBlocks
+    mov ecx, 1
+    call bios_extended_read_sectors_from_drive
+
+    ; Read the kernel file from the disk.
+    mov eax, (0 << 4) + (Loader.Mem.Stack.Top + (Loader.File.NumberOfBlocks * 512))
+    mov ebx, Kernel.File.NumberOfBlocks
+    mov ecx, 6
     call bios_extended_read_sectors_from_drive
 
     ; Save DriveId to dl to be retrieved on second stage loader -> TBC
