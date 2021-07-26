@@ -312,7 +312,7 @@ pm_move_kernel:
   xor esi, esi
 
   mov edi, Kernel.New.Start.Address
-  mov esi, Loader.Kernel.Start.Address ; 0x8800
+  mov esi, Loader.Kernel.Start.Address ; 0x8c00
   mov ecx, (512 * Kernel.File.NumberOfBlocks) / 4 ; ; 512*100/4 = 12800 DWORDs
   rep movsd
 

@@ -19,6 +19,7 @@ Realmode.SecondStage.64BitNotSupported.Msg  db '64-bit mode is not available. Ab
 Realmode.SecondStage.64BitSupported.Msg     db '64-bit mode is available',CR,LF,0
 Realmode.SecondStage.LoadingGDT.Msg         db 'Loading 32-bit Global Table Descriptor',CR,LF,0
 Realmode.SecondStage.EnteringPMode.Msg      db 'Enabling Protected Mode in the CPU',CR,LF,0
+Realmode.SecondStage.e820LoadingError.Msg   db 'BIOS e820 failed',CR,LF,0
 ProtectedMode.SecondStage.Booting.Msg       db 'Protected Mode (32-bit) was enabled',CR,LF,0
 
 
@@ -216,6 +217,66 @@ test_A20:
 
         ret
 
+
+;===============================================================================
+; bios_e820_memory_map
+;
+; Read (free) memory available on this machine
+;
+; Input:
+;   EDI -> Buffer Pointer : Pointer to an  Address Range Descriptor
+;                             structure which the BIOS is to fill in.
+;
+; Killed registers:
+;   None
+;===============================================================================
+
+bios_e820_memory_map:
+  ; preserve all registers
+  pusha
+
+  ; apparently if not done this way, BIOS gets stuck at int 0x15
+  add di, 4
+
+  ; first memory entry
+  mov eax, 0xe820
+  mov ebx, 0
+  mov edx, 'SMAP'
+  mov ecx, 24
+  int 0x15
+  jnc .error
+
+  .loop:
+
+    ; ebx is set to 0 if we hit the end of the list
+    test ebx, ebx
+    jz .done
+
+    mov eax, 0xe820
+    mov edx, 'SMAP'
+    mov ecx, 24
+    add di, cx
+    int 0x15
+
+    jnc .error
+
+    ; test if BIOS signature is the one we expect
+    cmp eax, 'SMAP'
+    jne .error
+
+    jmp .loop
+
+  .error:
+    ; print error message if there is space in the mbr file
+    mov si, Realmode.SecondStage.e820LoadingError.Msg
+    call display_string
+    ; halt the machine as there is no other way to continue booting the os
+    jmp endless_loop
+
+  .done:
+  ; restore registers
+  popa
+  ret
 
 ;=============================================================================
 ; HasCPUID

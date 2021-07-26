@@ -14,7 +14,6 @@ Realmode.FirstStage.Booting.Msg             db 'Booting BIOS First Stage Loader'
 Realmode.BIOSDiskExtensionPresent.Msg       db 'BIOS Disk Extension is present',CR,LF,0
 Realmode.BIOSDiskExtensionNotPresent.Msg    db 'BIOS Disk Extension is not present... aborting',CR,LF,0
 Realmode.BIOSDiskExtensionLoadingError.Msg  db 'BIOS Disk Extension failed to read loader aborting',CR,LF,0
-
 ;=============================================================================
 ; Global variables
 ;=============================================================================
@@ -67,7 +66,6 @@ bios_check_extensions_present:
 ; bios_extended_read_sectors_from_drive
 ;
 ; Read IO blocks from disk and place them into the desired memory destination
-; current row (cur_row) coordinate
 ;
 ; Input:
 ;   EAX -> Destination in which blocks will be loaded in memory
@@ -77,6 +75,7 @@ bios_check_extensions_present:
 ; Killed registers:
 ;   None
 ;===============================================================================
+
 bios_extended_read_sectors_from_drive:
   ; push values into the stack to preserve them once we are done with this fnc
   pusha
