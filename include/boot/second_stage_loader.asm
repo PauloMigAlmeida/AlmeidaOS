@@ -20,7 +20,7 @@ Realmode.SecondStage.64BitSupported.Msg     db '64-bit mode is available',CR,LF,
 Realmode.SecondStage.LoadingGDT.Msg         db 'Loading 32-bit Global Table Descriptor',CR,LF,0
 Realmode.SecondStage.EnteringPMode.Msg      db 'Enabling Protected Mode in the CPU',CR,LF,0
 Realmode.SecondStage.e820NotSupported.Msg   db 'BIOS E820 is not supported ',CR,LF,0
-Realmode.SecondStage.e820LoadingError.Msg   db 'BIOS E820 failed',CR,LF,0
+Realmode.SecondStage.e820LoadingError.Msg   db 'BIOS E820 failed to read next memory entry',CR,LF,0
 ProtectedMode.SecondStage.Booting.Msg       db 'Protected Mode (32-bit) was enabled',CR,LF,0
 
 
@@ -220,6 +220,36 @@ test_A20:
 
 
 ;===============================================================================
+; memzero
+;
+; Fill memory region with zero
+;
+; Inputs:
+;   EDI ->  Buffer address
+;   ECX ->  Amount of bytes to fill
+;
+; Killed registers:
+;   None
+;===============================================================================
+
+memzero:
+  ; preserve all registers
+  pusha
+
+  ; clear direction flag
+  cld
+
+  ; Define vale to be stored
+  xor   eax,   eax
+
+  ; repeat until ecx is 0
+  rep stosb
+
+  ; restore registers
+  popa
+  ret
+
+;===============================================================================
 ; bios_e820_memory_map
 ;
 ; Read (free) memory available on this machine
@@ -232,8 +262,10 @@ bios_e820_memory_map:
   ; preserve all registers
   pusha
 
-  ; apparently if not done this way, BIOS gets stuck at int 0x15
-  ;add   di,   4
+  ; never assume destination memory is zero'ed
+  mov   edi,    e820.Mem.Start.Address
+  mov   ecx,    (e820.Mem.End.Address - e820.Mem.Start.Address)
+  call  memzero
 
   .first_memory_entry:
     ; BIOS Query System Address Map identifier

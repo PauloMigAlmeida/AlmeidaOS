@@ -44,7 +44,7 @@ Kernel.New.Start.Address          equ 0x00200000 ; TODO: to be defined yet...
 Kernel.New.ELFTextHeader.Offset   equ 0x00001000 ; .text starts <p> + 0x1000
 
 ; Rationale:
-; Second stage loader (+kernel) can grow up from 0x00007e00 to 0x00009fff (+- 8.5 Kb)
+; Second stage loader, e820 mem map and kernel can grow up from 0x00007e00 to 0x00019fff (+- 72.5 Kb)
 Paging.Start.Address  equ   0x00020000
 Mem.PML4.Address      equ   0x00020000  ; PML4
 Mem.PDPE.Address      equ   0x00021000 ; 0x20000 + PML4 (512 entries of 64 bits)
