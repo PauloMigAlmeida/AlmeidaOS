@@ -19,7 +19,8 @@ Realmode.SecondStage.64BitNotSupported.Msg  db '64-bit mode is not available. Ab
 Realmode.SecondStage.64BitSupported.Msg     db '64-bit mode is available',CR,LF,0
 Realmode.SecondStage.LoadingGDT.Msg         db 'Loading 32-bit Global Table Descriptor',CR,LF,0
 Realmode.SecondStage.EnteringPMode.Msg      db 'Enabling Protected Mode in the CPU',CR,LF,0
-Realmode.SecondStage.e820LoadingError.Msg   db 'BIOS e820 failed',CR,LF,0
+Realmode.SecondStage.e820NotSupported.Msg   db 'BIOS E820 is not supported ',CR,LF,0
+Realmode.SecondStage.e820LoadingError.Msg   db 'BIOS E820 failed',CR,LF,0
 ProtectedMode.SecondStage.Booting.Msg       db 'Protected Mode (32-bit) was enabled',CR,LF,0
 
 
@@ -223,10 +224,6 @@ test_A20:
 ;
 ; Read (free) memory available on this machine
 ;
-; Input:
-;   EDI -> Buffer Pointer : Pointer to an  Address Range Descriptor
-;                             structure which the BIOS is to fill in.
-;
 ; Killed registers:
 ;   None
 ;===============================================================================
@@ -236,47 +233,75 @@ bios_e820_memory_map:
   pusha
 
   ; apparently if not done this way, BIOS gets stuck at int 0x15
-  add di, 4
+  ;add   di,   4
 
-  ; first memory entry
-  mov eax, 0xe820
-  mov ebx, 0
-  mov edx, 'SMAP'
-  mov ecx, 24
-  int 0x15
-  jnc .error
+  .first_memory_entry:
+    ; BIOS Query System Address Map identifier
+    mov   eax,  0xe820
+    ; During first call, there is no continuation value to be passed
+    xor   ebx,  ebx
+    ; system map magic number 'SMAP'
+    mov   edx,  0x534d4150
+    ; Memory location where this should storead
+    mov   edi,  e820.Mem.Start.Address
+    ; The length in bytes of the structure passed to the BIOS.
+    mov   ecx,  20
+    ; call BIOS fuction
+    int   0x15
+
+    ; Carry flag set during first call to BIOS means this isn't supported
+    jc    .not_supported
 
   .loop:
 
     ; ebx is set to 0 if we hit the end of the list
-    test ebx, ebx
-    jz .done
+    test  ebx,  ebx
+    jz  .done
 
-    mov eax, 0xe820
-    mov edx, 'SMAP'
-    mov ecx, 24
-    add di, cx
-    int 0x15
+    ; BIOS Query System Address Map identifier
+    mov   eax,  0xe820
+    ; system map magic number 'SMAP'
+    mov   edx,  0x534d4150
+    ; The length in bytes of the structure passed to the BIOS.
+    mov   ecx,  20
+    ; buffer pointer isn't moved automatically, so we do it manually
+    add   di,   cx
+    ; call BIOS fuction
+    int   0x15
 
-    jnc .error
+    ; Carry Flag set means that we had problems
+    jc  .error
 
     ; test if BIOS signature is the one we expect
-    cmp eax, 'SMAP'
-    jne .error
+    cmp   eax,  0x534d4150
+    jne   .error
 
-    jmp .loop
+    ; get next entry of the list
+    jmp   .loop
+
+  .not_supported:
+
+    ; print error message if there is space in the mbr file
+    mov   si,   Realmode.SecondStage.e820NotSupported.Msg
+    call  display_string
+
+    ; halt the machine as there is no other way to continue booting the os
+    jmp   endless_loop
 
   .error:
+
     ; print error message if there is space in the mbr file
-    mov si, Realmode.SecondStage.e820LoadingError.Msg
-    call display_string
+    mov   si,   Realmode.SecondStage.e820LoadingError.Msg
+    call  display_string
+
     ; halt the machine as there is no other way to continue booting the os
-    jmp endless_loop
+    jmp   endless_loop
 
   .done:
-  ; restore registers
-  popa
-  ret
+    ; restore registers
+    clc
+    popa
+    ret
 
 ;=============================================================================
 ; HasCPUID

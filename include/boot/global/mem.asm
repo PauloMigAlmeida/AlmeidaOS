@@ -29,8 +29,22 @@
 MBR.Mem.Stack.Top           equ   0x00007c00
 Loader.Mem.Stack.Top        equ   0x00007e00
 
+; Scratchpad:
+;   Second Loader   = 0x7e00 -> 0x8800 (assuming 5 IO blocks)
+;   E820 memory map = 0x8800 -> 0x8c00 (assuming 512 bytes which is enough space for 128 entries)
+;   Kernel          = 0x8c00 -> 0x15400 (assuming 100 IO blocks)
+
+; BIOS e820 memory map
+e820.Mem.Start.Address     equ (Loader.Mem.Stack.Top + Loader.File.NumberOfBlocks * 512) ; this should be 0x8800
+e820.Mem.End.Address       equ (e820.Mem.Start.Address + 2 * 512) ; enough for 128 entries
+
+; Kernel code:
+Loader.Kernel.Start.Address       equ e820.Mem.End.Address
+Kernel.New.Start.Address          equ 0x00200000 ; TODO: to be defined yet...
+Kernel.New.ELFTextHeader.Offset   equ 0x00001000 ; .text starts <p> + 0x1000
+
 ; Rationale:
-; Second stage loader can grow up from 0x00007e00 to 0x00009fff (+- 8.5 Kb)
+; Second stage loader (+kernel) can grow up from 0x00007e00 to 0x00009fff (+- 8.5 Kb)
 Paging.Start.Address  equ   0x00020000
 Mem.PML4.Address      equ   0x00020000  ; PML4
 Mem.PDPE.Address      equ   0x00021000 ; 0x20000 + PML4 (512 entries of 64 bits)
@@ -38,9 +52,5 @@ Mem.PDE.Address       equ   0x00022000 ; 0x21000 + PDPE (512 entries of 64 bits)
 Mem.PTE.Address       equ   0x00023000 ; 0x22000 + PDE (512 entries of 64 bits)
 Paging.End.Address    equ   0x00028000 ; 0x23000 + 5 PT tables (512 entries of 64 bits)
 
-; Kernel code:
-Loader.Kernel.Start.Address       equ (Loader.Mem.Stack.Top + Loader.File.NumberOfBlocks * 512)
-Kernel.New.Start.Address          equ 0x00200000 ; TODO: to be defined yet...
-Kernel.New.ELFTextHeader.Offset   equ 0x00001000 ; .text starts <p> + 0x1000
 
 %endif ; __ALMEIDAOS_GLOBALMEM_INC__
