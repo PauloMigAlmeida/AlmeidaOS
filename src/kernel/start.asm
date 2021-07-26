@@ -6,6 +6,14 @@ section .data
 %include "../../include/boot/global/const.asm"
 %include "../../include/boot/global/mem.asm"
 
+  ; Export references to C
+  global e820_mem_start
+  global e820_mem_end
+
+  ; variables
+  e820_mem_start:  dd  e820.Mem.Start.Address
+  e820_mem_end:    dd  e820.Mem.End.Address
+
 ; create elf section that is always placed first when linking asm and c files
 section .head.text
 

@@ -174,9 +174,6 @@ long_mode_boot:
     ; jump to memory address in which the kernel should be (fingers crossed)
     jmp Kernel.New.Start.Address + Kernel.New.ELFTextHeader.Offset
 
-    ; TODO: lm_display_string -> Try to make use of 64 bit registers where possible
-    ; TODO: lm_set_cursor -> Try to make use of 64 bit registers where possible
-    ; TODO: set up base functions to be accessible in C (memseet, memoryinfo)
     ; TODO: learn about which elf sections must be aligned... I'm still not convinced
 
 
