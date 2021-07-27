@@ -276,6 +276,8 @@ bios_e820_memory_map:
     mov   edx,  0x534d4150
     ; Memory location where this should storead
     mov   edi,  e820.Mem.Start.Address
+    ; reserve 8 bytes for the counter
+    add   edi,    8
     ; The length in bytes of the structure passed to the BIOS.
     mov   ecx,  20
     ; call BIOS fuction
@@ -285,6 +287,9 @@ bios_e820_memory_map:
     jc    .not_supported
 
   .loop:
+
+    ; increment counter
+    inc DWORD[e820.Mem.Start.Address]
 
     ; ebx is set to 0 if we hit the end of the list
     test  ebx,  ebx

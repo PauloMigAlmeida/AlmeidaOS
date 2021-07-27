@@ -11,48 +11,49 @@
 #include "kernel/compiler/freestanding.h"
 #include "kernel/compiler/macro.h"
 
-extern uint32_t e820_mem_start;
-extern uint32_t e820_mem_end;
+extern uintptr_t e820_mem_start;
+extern uintptr_t e820_mem_end;
+
+/*
+ *  Address Range Descriptor Structure
+ *
+ *  Offset in Bytes     Name        Description
+ *  0                   BaseAddrLow     Low 32 Bits of Base Address
+ *  4                   BaseAddrHigh    High 32 Bits of Base Address
+ *  8                   LengthLow       Low 32 Bits of Length in Bytes
+ *  12                  LengthHigh      High 32 Bits of Length in Bytes
+ *  16                  Type        Address type of  this range.
+ *
+ */
 
 typedef struct {
     uint64_t base_addr;
     uint64_t length;
     uint32_t type;
-} __packed sys_addr_map_t;
+} __packed mem_map_region_t;
 
-static sys_addr_map_t mem_entries[128];
-static size_t entry_amount;
+typedef struct {
+    uint64_t num_entries;
+    mem_map_region_t mem_region[];
+} __packed mem_map_block_t;
 
-static void read_bios_mem_map(void) {
-    size_t max_pos = ARR_SIZE(mem_entries);
-    sys_addr_map_t *reserved_mem_space = (sys_addr_map_t*) e820_mem_start;
-
-    for (size_t cur_pos = 0; cur_pos < max_pos; cur_pos++) {
-        memcpy(mem_entries + cur_pos, reserved_mem_space, sizeof(sys_addr_map_t));
-
-        /* check if we've read all entries as they are zero'ed out during the initialization */
-        if (reserved_mem_space->type == 0) {
-            entry_amount = cur_pos;
-            printk_info("read_bios_mem_map routine read %u entries", entry_amount);
-            break;
-        }
-        reserved_mem_space++;
-    }
-}
+static volatile mem_map_block_t *sys_addr_mem_regions;
 
 static void print_mem_regions(void) {
-    for (size_t cur_pos = 0; cur_pos < entry_amount; cur_pos++) {
-        printk_info("Addr: 0x%.16llx - 0x%.16llx, Length (KB): %u, Type:%u", mem_entries[cur_pos].base_addr,
-                mem_entries[cur_pos].base_addr + mem_entries[cur_pos].length - 1, mem_entries[cur_pos].length / 1024,
-                mem_entries[cur_pos].type);
+    for (size_t cur_pos = 0; cur_pos < sys_addr_mem_regions->num_entries; cur_pos++) {
+        mem_map_region_t mem_region = sys_addr_mem_regions->mem_region[cur_pos];
+
+        printk_info("Addr: 0x%.16llx - 0x%.16llx, Length (KB): %u, Type:%u", mem_region.base_addr,
+                mem_region.base_addr + mem_region.length - 1,
+                mem_region.length / 1024,
+                mem_region.type);
     }
 }
 
 void mem_init(void) {
-    printk_info("e820_mem_start: 0x%.8x e820_mem_end: 0x%.8x", e820_mem_start, e820_mem_end);
-
-    /* read the memory map generated in real mode */
-    read_bios_mem_map();
+    printk_info("e820_mem_start: 0x%.8lx e820_mem_end: 0x%.8lx", e820_mem_start, e820_mem_end);
+    sys_addr_mem_regions = (volatile mem_map_block_t*) e820_mem_start;
+    printk_info("read_bios_mem_map routine read %llu entries", sys_addr_mem_regions->num_entries);
 
     /* print memory map */
     print_mem_regions();

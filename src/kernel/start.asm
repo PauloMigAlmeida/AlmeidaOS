@@ -11,8 +11,8 @@ section .data
   global e820_mem_end
 
   ; variables
-  e820_mem_start:  dd  e820.Mem.Start.Address
-  e820_mem_end:    dd  e820.Mem.End.Address
+  e820_mem_start:  dq  e820.Mem.Start.Address
+  e820_mem_end:    dq  e820.Mem.End.Address
 
 ; create elf section that is always placed first when linking asm and c files
 section .head.text
