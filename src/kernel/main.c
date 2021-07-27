@@ -8,13 +8,15 @@
 #include "kernel/arch/pic.h"
 #include "kernel/arch/pit.h"
 #include "kernel/device/keyboard.h"
-
-extern uint32_t e820_mem_start, e820_mem_end;
+//temp
+#include "kernel/arch/mem.h"
 
 void kmain(void) {
     printk_init(PRINTK_INFO_LEVEL);
     vga_console_init();
     cpu_init();
+    //tmp
+    mem_init();
 
     idt_init();
 
@@ -26,8 +28,6 @@ void kmain(void) {
     /* enabled IRQs */
     keyboard_enable();
     pit_enable();
-
-    printk_info("e820_mem_start: 0x%.8x e820_mem_end: 0x%.8x",e820_mem_start, e820_mem_end);
 
     // doing something stupid for testing
 //    int x = 1 / 0;
