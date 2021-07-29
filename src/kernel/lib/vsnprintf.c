@@ -42,6 +42,7 @@ enum printf_type {
     UNSIGNED_INT_OCT_TYPE,
     CHAR_TYPE,
     STRING_TYPE,
+    POINTER_TYPE,
     ERROR_TYPE
 };
 
@@ -102,7 +103,7 @@ size_t vsnprintf(char *buf, size_t buf_size, const char *fmt, va_list args) {
                 break;
         } else if (c == '\t') {
             // yes, tab is 4 spaces... if you don't like you can write your own OS ;)
-            for(size_t i =0; i < 4; i++){
+            for (size_t i = 0; i < 4; i++) {
                 buf[read_chars++] = ' ';
             }
         } else {
@@ -192,7 +193,7 @@ static size_t process_format(char *buf, size_t buf_size, print_fmt_spec *spec, v
     } else if (spec->type == UNSIGNED_INT_DEC_TYPE || spec->type == UNSIGNED_INT_OCT_TYPE
             || spec->type == UNSIGNED_INT_HEX_TYPE) {
 
-        // this can be %u, %o or %x
+        /* this can be %u, %o or %x */
         unsigned long long num;
         if (spec->length == UNKNOWN_LENGTH) {
             num = va_arg(args, unsigned int);
@@ -220,6 +221,17 @@ static size_t process_format(char *buf, size_t buf_size, print_fmt_spec *spec, v
         lltoa(num, tmp_buf, spec->base);
         tmp_buf_idx = strlen(tmp_buf);
 
+    } else if (spec->type == POINTER_TYPE) {
+
+        /* pointer types must be prefixed with 0x */
+        tmp_buf[0] = '0';
+        tmp_buf[1] = 'x';
+
+        /* this highly dependent on the architecture bit width.. This OS is meant to be 64-bit only so ULL */
+        unsigned long long num = va_arg(args, unsigned long long);
+        ulltoa(num, tmp_buf + 2, spec->base);
+        tmp_buf_idx = strlen(tmp_buf);
+
     } else {
 
         // this is an error
@@ -232,10 +244,8 @@ static size_t process_format(char *buf, size_t buf_size, print_fmt_spec *spec, v
     if (spec->precision > 0) {
         size_t left_pointer;
         switch (spec->type) {
-        case UNSIGNED_INT_DEC_TYPE:
-        case UNSIGNED_INT_HEX_TYPE:
-        case UNSIGNED_INT_OCT_TYPE:
-        case SIGNED_INT_TYPE:
+
+        case UNSIGNED_INT_DEC_TYPE || UNSIGNED_INT_HEX_TYPE || UNSIGNED_INT_OCT_TYPE || SIGNED_INT_TYPE:
             if (spec->precision > tmp_buf_idx) {
 
                 left_pointer = spec->precision - tmp_buf_idx;
@@ -262,6 +272,7 @@ static size_t process_format(char *buf, size_t buf_size, print_fmt_spec *spec, v
 
             break;
         }
+        /* POINTER_TYPE ignores precision specifiers as it doesn't make much sense to have them */
     }
 
     memcpy(buf, tmp_buf, MIN(buf_size, tmp_buf_idx));
@@ -328,6 +339,9 @@ static size_t read_type(const char *fmt, print_fmt_spec *spec) {
         } else if (c == 's') {
             spec->type = STRING_TYPE;
             spec->base = 0;
+        } else if (c == 'p') {
+            spec->type = POINTER_TYPE;
+            spec->base = 16;
         }
 
         read_chars++;
@@ -341,6 +355,6 @@ static bool is_length(const char c) {
 }
 
 static bool is_type(const char c) {
-    return c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o' || c == 'c' || c == 's';
+    return c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o' || c == 'c' || c == 's' || c == 'p';
 }
 
