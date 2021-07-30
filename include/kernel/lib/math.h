@@ -20,4 +20,8 @@ __force_inline int abs(int value) {
 	return (value + mask) ^ mask;
 }
 
+void rand_init_seed(uint32_t new_seed);
+int rand(void);
+int rand_r(uint32_t seed);
+
 #endif /* _KERNEL_LIB_MATH_H */
