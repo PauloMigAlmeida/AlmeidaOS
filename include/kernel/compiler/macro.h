@@ -35,4 +35,18 @@
 /* Min value routine - widely used to truncate memcpy op for security reasons */
 #define MIN(a, b)           ((a) < (b) ? (a) : (b))
 
+/* Byte-wise swap two items of size SIZE. Credits: GNU libC*/
+#define EXCH(a, b, size)                                                      \
+  do                                                                          \
+    {                                                                         \
+      register size_t __size = (size);                                        \
+      register char *__a = (a), *__b = (b);                                   \
+      do                                                                      \
+        {                                                                     \
+          char __tmp = *__a;                                                  \
+          *__a++ = *__b;                                                      \
+          *__b++ = __tmp;                                                     \
+        } while (--__size > 0);                                               \
+    } while (0)
+
 #endif /* INCLUDE_KERNEL_COMPILER_MACRO_H_ */

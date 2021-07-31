@@ -12,20 +12,6 @@
 #include "kernel/lib/printk.h"
 #include "kernel/lib/string.h"
 
-static void exch(void *a, void *b, size_t item_width) {
-    /* sanity checks for the edge cases */
-    if (a == b) return;
-
-    char *a_cst = (char*) a;
-    char *b_cst = (char*) b;
-
-    char tmp;
-    do {
-        tmp = *a_cst;
-        *a_cst++ = *b_cst;
-        *b_cst++ = tmp;
-    } while (--item_width);
-}
 
 static size_t partition(void *base, size_t item_width, qsort_cmp_fun cmp, size_t lo, size_t hi) {
     /* repeat until i and j pointer cross */
@@ -43,11 +29,11 @@ static size_t partition(void *base, size_t item_width, qsort_cmp_fun cmp, size_t
             if (j == lo) break;
 
         if (i >= j) break;
-        exch(base_ch + i * item_width, base_ch + j * item_width, item_width);
+        EXCH(base_ch + i * item_width, base_ch + j * item_width, item_width);
     }
 
     /* when pointers cross -> exchange a[lo] with a[j] */
-    exch(base_ch + lo * item_width, base_ch + j * item_width, item_width);
+    EXCH(base_ch + lo * item_width, base_ch + j * item_width, item_width);
     return j;
 }
 
