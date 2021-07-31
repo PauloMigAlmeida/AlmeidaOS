@@ -103,7 +103,7 @@ char* lltoa(long long int value, char *str, int radix) {
 }
 
 char* ulltoa(unsigned long long value, char *str, int radix) {
-    // Check for supported base.
+    // check for supported base.
     if (radix != 8 && radix != 10 && radix != 16) {
         *str = '\0';
         return str;
