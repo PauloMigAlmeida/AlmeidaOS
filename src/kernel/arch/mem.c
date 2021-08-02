@@ -12,6 +12,9 @@
 #include "kernel/compiler/macro.h"
 #include "kernel/lib/qsort.h"
 
+#define E820_MEM_TYPE_USABLE    1
+#define E820_MEM_TYPE_RESERVED  2
+
 extern uintptr_t e820_mem_start;
 extern uintptr_t e820_mem_end;
 
@@ -45,7 +48,7 @@ static void print_mem_regions(void) {
         mem_map_region_t mem_region = mem_blocks->mem_region[cur_pos];
 
         printk_info("Addr: 0x%.16llx - 0x%.16llx, Length (KB): %u, Type:%u", mem_region.base_addr,
-                mem_region.base_addr + mem_region.length - 1,
+                mem_region.base_addr + mem_region.length /*- 1*/,
                 mem_region.length / 1024,
                 mem_region.type);
     }
@@ -54,12 +57,87 @@ static void print_mem_regions(void) {
 static int qsort_cmp_mem_region(const void *a, const void *b) {
     mem_map_region_t *a_cst = (mem_map_region_t*) a;
     mem_map_region_t *b_cst = (mem_map_region_t*) b;
+
     if (a_cst->base_addr > b_cst->base_addr)
         return 1;
     else if (a_cst->base_addr < b_cst->base_addr)
         return -1;
     else
         return 0;
+}
+
+/* I might regret this decision but as of now I only care whether the mem region is free or reserved. Let's see :) */
+static void combine_mergeable_regions() {
+    /* sanity checks */
+    if (mem_blocks->num_entries < 2) return;
+
+    size_t ptr_1 = 0, ptr_2 = 1;
+    do {
+        mem_map_region_t *mem_rg_1 = &mem_blocks->mem_region[ptr_1];
+        mem_map_region_t *mem_rg_2 = &mem_blocks->mem_region[ptr_2];
+
+        /* I only care whether regions are either usable or reserved for now */
+        if (mem_rg_1->type > E820_MEM_TYPE_USABLE)
+            mem_blocks->mem_region[ptr_1].type = E820_MEM_TYPE_RESERVED;
+
+        bool merge = false;
+        /* do the regions intersect ? */
+        if ((mem_rg_1->base_addr + mem_rg_1->length) >= mem_rg_2->base_addr) {
+            /* if they have the same type */
+            if (mem_rg_1->type == mem_rg_2->type)
+                merge = true;
+            /* are both "reserved" then merge them */
+            else if (mem_rg_1->type > E820_MEM_TYPE_USABLE && mem_rg_2->type > E820_MEM_TYPE_USABLE)
+                merge = true;
+        }
+
+        if (merge) {
+            /* combine regions */
+            mem_rg_1->length += mem_rg_2->length;
+            /* mark region to be removed/re-used */
+            memzero(&mem_blocks->mem_region[ptr_2], sizeof(mem_map_region_t));
+        } else {
+            ptr_1 = ptr_2;
+        }
+
+        ptr_2++;
+
+    } while (ptr_2 <= mem_blocks->num_entries);
+
+}
+
+static void squash_mem_regions() {
+    /* sanity checks */
+    if (mem_blocks->num_entries < 2) return;
+
+    for (size_t ptr_1 = 0; ptr_1 < mem_blocks->num_entries - 1; ptr_1++) {
+
+        mem_map_region_t *mem_rg = &mem_blocks->mem_region[ptr_1];
+
+        if (mem_rg->length == 0 && mem_rg->type == 0) {
+
+            bool found_next_entry = false;
+            for (size_t next_ptr = ptr_1 + 1; next_ptr < mem_blocks->num_entries; next_ptr++) {
+                mem_map_region_t *next_mem_rg = &mem_blocks->mem_region[next_ptr];
+
+                if (next_mem_rg->length != 0 && next_mem_rg->type != 0) {
+                    found_next_entry = true;
+
+                    memcpy(mem_rg, next_mem_rg, sizeof(mem_map_region_t) * (mem_blocks->num_entries - next_ptr));
+                    break;
+                }
+            }
+
+            if (!found_next_entry)
+                break;
+
+            /* mark region to be removed/re-used */
+            memzero(&mem_blocks->mem_region[mem_blocks->num_entries - 1], sizeof(mem_map_region_t));
+
+            mem_blocks->num_entries--;
+
+        }
+    }
 
 }
 
@@ -71,6 +149,9 @@ void mem_init(void) {
     /* BIOS returns those entries unsorted */
     qsort(mem_blocks->mem_region, mem_blocks->num_entries, sizeof(mem_map_region_t), qsort_cmp_mem_region);
 
+    /* combine regions to 1) make our life simpler 2) free space on the dedicated space for that */
+    combine_mergeable_regions();
+    squash_mem_regions();
     /* print memory map */
     print_mem_regions();
 
