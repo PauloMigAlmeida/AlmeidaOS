@@ -13,7 +13,7 @@
 
 /*
  * Things To Do:
- * - TODO Implement a better handling for keypressed and key released events
+ * - TODO Implement a better handling for key pressed and key released events
  * - TODO Implement ability to write on the screen (as if it was a bash / tty)
  *  -> After reading a lot, I got to the conclusion that I can only do this right after a few other things are in place
  *      such as:

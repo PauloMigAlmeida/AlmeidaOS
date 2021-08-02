@@ -5,13 +5,14 @@
  *      Author: Paulo Almeida
  */
 
-#include "kernel/arch/interrupt.h"
+#include "kernel/interrupt/idt.h"
 #include "kernel/asm/generic.h"
 #include "kernel/lib/printk.h"
 #include "kernel/lib/bit.h"
 #include "kernel/debug/coredump.h"
 #include "kernel/device/keyboard.h"
 #include "kernel/arch/pit.h"
+#include "kernel/interrupt/spurious.h"
 
 /*
  * Notes to myself:
@@ -80,6 +81,8 @@ extern void vector21(void);
 extern void vector32(void);
 /* keyboard interrupt */
 extern void vector33(void);
+/* Spurious  interrupt */
+extern void vector39(void);
 
 static const char *exception_strs[] = {
         //  Intel 64 Manual Volume 2 - Table 6-1 -> Exceptions and Interrupts
@@ -157,6 +160,8 @@ void idt_init(void) {
     config_idt_vector(32, (uintptr_t) &vector32);
     // keyboard
     config_idt_vector(33, (uintptr_t) &vector33);
+    // Spurious
+    config_idt_vector(33, (uintptr_t) &vector39);
 
     printk_info("Loading IDT");
     load_idt(&idt64_table_pointer);
@@ -183,7 +188,11 @@ void idt_init(void) {
  *
  */
 void interrupt_handler(interrupt_stack_frame_t *int_frame) {
-    if (int_frame->trap_number == 32) {
+    /* spurious interrupt */
+    if (int_frame->trap_number == 39) {
+        /* there is nothing to be done here... let's carry on with our lives */
+        spurious_handle_irq();
+    } else if (int_frame->trap_number == 32) {
         /* PIT is expected to send EOI */
         pit_timer_handle_irq();
     } else if (int_frame->trap_number == 33) {

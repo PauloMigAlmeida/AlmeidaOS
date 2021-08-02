@@ -152,6 +152,7 @@ void mem_init(void) {
     /* combine regions to 1) make our life simpler 2) free space on the dedicated space for that */
     combine_mergeable_regions();
     squash_mem_regions();
+
     /* print memory map */
     print_mem_regions();
 

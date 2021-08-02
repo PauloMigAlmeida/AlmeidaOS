@@ -39,6 +39,8 @@
 #define PIC2_COMMAND    PIC2
 #define PIC2_DATA       (PIC2+1)
 #define PIC_EOI         0x20        /* End-of-interrupt command code */
+#define PIC_READ_IRR    0x0a        /* OCW3 irq ready next CMD read */
+#define PIC_READ_ISR    0x0b        /* OCW3 irq service next CMD read */
 
 #define ICW1_INIT               (0 << 8) | (1 << 4)
 #define ICW1_ICW4_NEEDED        1
@@ -113,4 +115,14 @@ void pic_mask_irq(uint8_t isa_irq) {
         outb(pic_selector, value);
         printk_debug("IRQ %u unmasked\n", isa_irq);
     }
+}
+
+static uint16_t pic_get_irq_reg(uint8_t ocw3) {
+    outb(PIC1_COMMAND, ocw3);
+    outb(PIC2_COMMAND, ocw3);
+    return (inb(PIC2_COMMAND) << 8) | inb(PIC1_COMMAND);
+}
+
+uint16_t pic_read_isr(void) {
+    return pic_get_irq_reg(PIC_READ_ISR);
 }

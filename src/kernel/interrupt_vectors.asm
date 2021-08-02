@@ -26,6 +26,7 @@ global vector20
 global vector21
 global vector32
 global vector33
+global vector39
 
 ; Error code is pushed onto the stacka already
 %macro  vector_interrupt_errorcode_present_save_state 1
@@ -165,4 +166,8 @@ vector32:
 
 vector33:
   vector_interrupt_plain_save_state 33,0
+  vector_interrupt_body_generator
+
+vector39:
+  vector_interrupt_plain_save_state 39,0
   vector_interrupt_body_generator
