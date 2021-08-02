@@ -61,6 +61,10 @@ void* memset(void *buf, char value, size_t size) {
     return buf;
 }
 
+void* memzero(void *dst, size_t size) {
+    return memset(dst, 0, size);
+}
+
 /**
  * the radix values can be OCTAL, DECIMAL, or HEX
  */

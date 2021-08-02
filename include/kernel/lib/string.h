@@ -16,6 +16,7 @@ void* memset(void *buf, char value, size_t size);
 size_t strlen(const char *buf);
 
 /* non-standard functions (although commonly used by other compilers) */
+void* memzero(void *dst, size_t size);
 char* lltoa(long long int value, char *str, int radix);
 char* ulltoa(unsigned long long value, char *str, int radix);
 void strrev(char *str, size_t length);
