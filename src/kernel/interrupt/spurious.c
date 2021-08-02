@@ -20,8 +20,6 @@ void spurious_irq_enable(void) {
 }
 
 void spurious_handle_irq(void) {
-    //TODO There is something pretty odd about this handler...it fires once and gets stuck... I will try to figure
-    //this out tomorroe
     printk_info("Spurious irq happened");
     if (test_bit(7, pic_read_isr()))
         pic_send_eoi(PIC_LPT1_OR_SPURIOUS_INTERRUPT);

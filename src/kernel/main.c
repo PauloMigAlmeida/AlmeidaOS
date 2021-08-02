@@ -15,32 +15,12 @@
 #include "kernel/lib/shuffle.h"
 #include "kernel/lib/qsort.h"
 
-
-int qsort_cmp_int(const void *a, const void *b){
-//    printk_info("qsort_cmp_int: a(%p):%d, b(%p):%d = %d", a, *((int*)a), b, *((int*)b), *((int*)a) - *((int*)b));
-    return *((int*)a) - *((int*)b);
-}
-
 void kmain(void) {
     printk_init(PRINTK_INFO_LEVEL);
     vga_console_init();
     cpu_init();
     //tmp
     mem_init();
-
-//    /* test LCG rand() */
-//    for (int i = 0; i < 15000; i++) {
-//        printk_info("next rand(): %d", rand());
-//    }
-
-
-//    for (int i = 0; i < 1500; i++) {
-//        int arr[] = {1,2,3,4,5,6,7,8,9,10};
-//        shuffle(arr, ARR_SIZE(arr), sizeof(int));
-////        printk_info("before: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", arr[0],arr[1],arr[2],arr[3],arr[4],arr[5],arr[6],arr[7],arr[8],arr[9]);
-//        qsort(arr, ARR_SIZE(arr), sizeof(int), &qsort_cmp_int);
-//        printk_info("after : %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", arr[0],arr[1],arr[2],arr[3],arr[4],arr[5],arr[6],arr[7],arr[8],arr[9]);
-//    }
 
     idt_init();
 

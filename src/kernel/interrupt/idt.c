@@ -161,7 +161,7 @@ void idt_init(void) {
     // keyboard
     config_idt_vector(33, (uintptr_t) &vector33);
     // Spurious
-    config_idt_vector(33, (uintptr_t) &vector39);
+    config_idt_vector(39, (uintptr_t) &vector39);
 
     printk_info("Loading IDT");
     load_idt(&idt64_table_pointer);
