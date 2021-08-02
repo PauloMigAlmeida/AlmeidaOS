@@ -3,6 +3,12 @@
  *
  *  Created on: Jul 30, 2021
  *      Author: Paulo Almeida
+ *
+ *  Notes to myself:
+ *      - There are small improvements that can/should be made to qsort such as:
+ *          -> TODO: implement median of 3 pivot selection
+ *          -> TODO: use insertion sort (or other) sorting algorithm for small arrays to reduce overhead
+ *
  */
 
 #include "kernel/lib/qsort.h"
