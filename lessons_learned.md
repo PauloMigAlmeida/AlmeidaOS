@@ -265,3 +265,39 @@ Disassembly of section .text:
 
 ```
 
+### Choosing sorting algorithm for e820 memory entries - (29/07/2021)
+
+BIOS 0xe820 returns an unordered list of entries containing the memory map information.
+Each entry is 20 bytes long (I'm ignoring ACPI values TBH).
+I reserved a fraction of the low memory address to hold a few hundreded entries.
+
+Because this is unordered, I neeed to sort them in order to find entries that can be
+squashed together. Here is where the problem begins:
+
+Since at this point we have no dinamic paging / dynamic memory allocation available I had
+to do everything using in-place sorting algorithms - which greatly reduces the breath of
+options significantly. 
+
+I initially thought of using MergeSort (modified to work on Linked-List to keep O(1) auxiliary
+space).
+
+Pros: 
+
+- in the worst case, it doesn't degrade to O(n^2) like quicksort (even though this can be 
+	mostly statistically avoided) 
+Cons:
+
+- the fact that linked list nodes would require a pointer would end up increasing the size of
+each entry significantly as each entry is just 20-bytes long.
+
+Because of that, I implemented a simple version of the qsort algorithm based on the Algorithm-24-series
+found on Safari books.
+
+
+
+
+
+
+
+
+
