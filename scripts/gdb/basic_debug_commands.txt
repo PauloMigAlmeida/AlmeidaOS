@@ -1,0 +1,4 @@
+# Eclipse and other GDB tools don't support setting target remote as these are configured on the IDE.
+# so I'm splitting this into different debug command files
+set disassembly-flavor intel
+symbol-file build/kernel/kernel.debug
