@@ -10,8 +10,10 @@
 #include "kernel/lib/ringbuffer.h"
 #include "kernel/lib/string.h"
 #include "kernel/compiler/macro.h"
+#include "kernel/mm/addressconv.h"
 
-#define VIDEO_MEM_ADDR 	0xb8000
+#define VIDEO_MEM_ADDR 	UNSAFE_VA(0xb8000)
+
 #define VGA_MAX_COLS 	80
 #define VGA_MAX_ROWS 	25
 
