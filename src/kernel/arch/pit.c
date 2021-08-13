@@ -8,6 +8,7 @@
 #include "kernel/arch/pic.h"
 #include "kernel/asm/generic.h"
 #include "kernel/lib/printk.h"
+#include "kernel/mm/addressconv.h"
 
 /*
  * Notes for myself:
@@ -56,11 +57,11 @@
  *      0            BCD/Binary mode: 0 = 16-bit binary, 1 = four-digit BCD
  */
 
-#define PIT_CHANNEL_0_DATA_PORT 0x40        /* read/write */
-#define PIT_CHANNEL_1_DATA_PORT 0x41        /* read/write */
-#define PIT_CHANNEL_2_DATA_PORT 0x42        /* read/write */
-#define PIT_MODE_CMD_REG        0x43        /* write only / read is ignored */
-#define PIT_CHIP_FREQ           1193182     /* Hz (+-) */
+#define PIT_CHANNEL_0_DATA_PORT     UNSAFE_VA(0x40)        /* read/write */
+#define PIT_CHANNEL_1_DATA_PORT     UNSAFE_VA(0x41)        /* read/write */
+#define PIT_CHANNEL_2_DATA_PORT     UNSAFE_VA(0x42)        /* read/write */
+#define PIT_MODE_CMD_REG            UNSAFE_VA(0x43)        /* write only / read is ignored */
+#define PIT_CHIP_FREQ               1193182     /* Hz (+-) */
 
 #define PIT_BINARY_MODE         0           /* 16-bit binary */
 #define PIT_OP_MODE_2           1 << 2      /* Mode 2 (rate generator) */

@@ -11,7 +11,7 @@
 #include "kernel/compiler/freestanding.h"
 #include "kernel/compiler/macro.h"
 
-__force_inline uint8_t inb(uint16_t port) {
+__force_inline uint8_t inb(uint64_t port) {
     uint8_t value = 0;
     asm volatile (
             "inb  %[v],  %[p]"
@@ -21,7 +21,7 @@ __force_inline uint8_t inb(uint16_t port) {
     return value;
 }
 
-__force_inline void outb(uint16_t port, uint8_t value) {
+__force_inline void outb(uint64_t port, uint8_t value) {
     asm volatile (
             "outb  %[p],  %[v]"
             :

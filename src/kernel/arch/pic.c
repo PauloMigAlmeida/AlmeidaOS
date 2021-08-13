@@ -10,6 +10,7 @@
 #include "kernel/asm/generic.h"
 #include "kernel/lib/bit.h"
 #include "kernel/lib/printk.h"
+#include "kernel/mm/addressconv.h"
 
 /*
  *  TODO: study about PIC and APIC -> So we can get the timer working
@@ -34,10 +35,10 @@
 
 #define PIC1            0x20        /* IO base address for Active PIC */
 #define PIC2            0xA0        /* IO base address for Passive PIC */
-#define PIC1_COMMAND    PIC1
-#define PIC1_DATA       (PIC1+1)
-#define PIC2_COMMAND    PIC2
-#define PIC2_DATA       (PIC2+1)
+#define PIC1_COMMAND    UNSAFE_VA(PIC1)
+#define PIC1_DATA       UNSAFE_VA(PIC1 + 1)
+#define PIC2_COMMAND    UNSAFE_VA(PIC2)
+#define PIC2_DATA       UNSAFE_VA(PIC2 + 1)
 #define PIC_EOI         0x20        /* End-of-interrupt command code */
 #define PIC_READ_IRR    0x0a        /* OCW3 irq ready next CMD read */
 #define PIC_READ_ISR    0x0b        /* OCW3 irq service next CMD read */
@@ -48,8 +49,8 @@
 
 void pic_init(void) {
     /* Send ICW1 to both PIC chips */
-    outb(PIC1, ICW1_INIT | ICW1_CALLADDR_4 | ICW1_ICW4_NEEDED);
-    outb(PIC2, ICW1_INIT | ICW1_CALLADDR_4 | ICW1_ICW4_NEEDED);
+    outb(PIC1_COMMAND, ICW1_INIT | ICW1_CALLADDR_4 | ICW1_ICW4_NEEDED);
+    outb(PIC2_COMMAND, ICW1_INIT | ICW1_CALLADDR_4 | ICW1_ICW4_NEEDED);
 
     /* Determine the offset */
     outb(PIC1_DATA, 32);
@@ -80,7 +81,7 @@ void pic_send_eoi(uint8_t isa_irq) {
 }
 
 void pic_unmask_irq(uint8_t isa_irq) {
-    uint8_t pic_selector;
+    uint64_t pic_selector;
     if (isa_irq < 8)
         pic_selector = PIC1_DATA;
     else {
@@ -99,7 +100,7 @@ void pic_unmask_irq(uint8_t isa_irq) {
 }
 
 void pic_mask_irq(uint8_t isa_irq) {
-    uint8_t pic_selector;
+    uint64_t pic_selector;
     if (isa_irq < 8)
         pic_selector = PIC1_DATA;
     else {
