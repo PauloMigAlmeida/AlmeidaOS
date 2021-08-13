@@ -165,14 +165,14 @@ long_mode_boot:
     mov fs, ax
     mov gs, ax
     mov ss, ax
-    mov rsp, Kernel.New.Start.Address + Kernel.New.ELFTextHeader.Offset
+    mov rsp, Kernel.New.Start.VirtualAddress + Kernel.New.ELFTextHeader.Offset
 
     ; display status message
     mov rax, LongMode.SecondStage.Booting.Msg
     call lm_display_string
 
     ; jump to memory address in which the kernel should be (fingers crossed)
-    jmp Kernel.New.Start.Address + Kernel.New.ELFTextHeader.Offset
+    jmp Kernel.New.Start.VirtualAddress + Kernel.New.ELFTextHeader.Offset
 
     ; TODO: learn about which elf sections must be aligned... I'm still not convinced
 

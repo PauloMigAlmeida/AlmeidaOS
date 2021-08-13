@@ -4,10 +4,14 @@ ENTRY(kernel_start)
 SECTIONS
 {
   /* 
-  	Kernel ELF file loads at 0x200000 but the text section starts with an 
-  	offset 0x1000. Hence, 0x201000
+  	Kernel ELF file loads physically at 0x200000 but the text section starts with an 
+  	offset 0x1000. Hence, 0x201000.
+  	
+  	Since we are using paging and a higher-half kernel...we have to use the virtual 
+  	address 0xffff800000****** 
+  	
   */
-  . = 0x201000;
+  . = 0xffff800000201000;
 
   /*
     The order of the files specified to the gnu linker changes the content of
@@ -35,9 +39,6 @@ SECTIONS
     *(.text)
   }
 
-  /*
-    TODO: Check which sections that should be aligned...
-  */
   . = ALIGN(16);
   .data : {
     *(.data)

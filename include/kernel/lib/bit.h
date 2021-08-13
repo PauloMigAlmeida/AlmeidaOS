@@ -16,7 +16,7 @@ __force_inline bool test_bit(uint8_t bit_number, uint64_t field) {
 }
 
 __force_inline uint64_t extract_bit_chunk(uint8_t bit_from, uint8_t bit_to, uint64_t field) {
-    return (field >> bit_from) & ( UINT64_MAX >> (sizeof(uint64_t) * CHAR_BIT - bit_to - bit_from + 1));
+    return (field >> bit_from) & ( UINT64_MAX >> (sizeof(uint64_t) * CHAR_BIT - (bit_to - bit_from + 1)));
 }
 
 __force_inline uint64_t set_bit(uint8_t bit_number, uint64_t field) {

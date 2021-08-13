@@ -10,8 +10,8 @@
 %ifndef __ALMEIDAOS_GLOBALMEM_INC__
 %define __ALMEIDAOS_GLOBALMEM_INC__
 
-;===============================================================================
-; Memory layout:
+;======================================================================================================================
+; Physical Memory layout:
 ;
 ;   00000000 - 000003ff        1,024 bytes     Real mode IVT
 ;   00000400 - 000004ff          256 bytes     BIOS data area
@@ -21,18 +21,23 @@
 ;   0009fc00 - 0009ffff        1,024 bytes     Extended BIOS data area (EBDA)
 ;   000a0000 - 000bffff      131,072 bytes     BIOS video memory
 ;   000c0000 - 000fffff      262,144 bytes     ROM
-;===============================================================================
+;======================================================================================================================
 
-;=============================================================================
-; Memory layout
-;=============================================================================
+;======================================================================================================================
+; Physical Memory utilisation layout:
+;
+;   Second Loader   = 0x07e00 -> 0x8800        (assuming 5 IO blocks)
+;   E820 memory map = 0x08800 -> 0x8c00        (assuming 512 bytes which is enough space for 128 entries)
+;   Kernel          = 0x08c00 -> 0x15400       (assuming 100 IO blocks)
+;   (guard hole)   = 0x15400 -> 0x20000        (room to increase any of the above [+- 96 Kb]
+;   Early Paging    = 0x20000 -> 0x28000       (early 10-MiB identity paging)
+;======================================================================================================================
+
+;======================================================================================================================
+; Physical Memory Constants
+;======================================================================================================================
 MBR.Mem.Stack.Top           equ   0x00007c00
 Loader.Mem.Stack.Top        equ   0x00007e00
-
-; Scratchpad:
-;   Second Loader   = 0x7e00 -> 0x8800 (assuming 5 IO blocks)
-;   E820 memory map = 0x8800 -> 0x8c00 (assuming 512 bytes which is enough space for 128 entries)
-;   Kernel          = 0x8c00 -> 0x15400 (assuming 100 IO blocks)
 
 ; BIOS e820 memory map
 e820.Mem.Start.Address     equ (Loader.Mem.Stack.Top + Loader.File.NumberOfBlocks * 512) ; this should be 0x8800
@@ -40,11 +45,10 @@ e820.Mem.End.Address       equ (e820.Mem.Start.Address + 2 * 512) ; enough for 1
 
 ; Kernel code:
 Loader.Kernel.Start.Address       equ e820.Mem.End.Address
-Kernel.New.Start.Address          equ 0x00200000 ; TODO: to be defined yet...
+Kernel.New.Start.PhysicalAddress  equ 0x00200000
 Kernel.New.ELFTextHeader.Offset   equ 0x00001000 ; .text starts <p> + 0x1000
 
-; Rationale:
-; Second stage loader, e820 mem map and kernel can grow up from 0x00007e00 to 0x00019fff (+- 72.5 Kb)
+; Early paging
 Paging.Start.Address  equ   0x00020000
 Mem.PML4.Address      equ   0x00020000  ; PML4
 Mem.PDPE.Address      equ   0x00021000 ; 0x20000 + PML4 (512 entries of 64 bits)
@@ -52,5 +56,35 @@ Mem.PDE.Address       equ   0x00022000 ; 0x21000 + PDPE (512 entries of 64 bits)
 Mem.PTE.Address       equ   0x00023000 ; 0x22000 + PDE (512 entries of 64 bits)
 Paging.End.Address    equ   0x00028000 ; 0x23000 + 5 PT tables (512 entries of 64 bits)
 
+
+;======================================================================================================================
+; Virtual Memory utilisation layout:
+;
+;=======================================================================================================================
+;    Start addr    |   Offset   |     End addr     |  Size   | VM area description
+;=======================================================================================================================
+;                  |            |                  |         |
+; 0000000000000000 |    0       | 00007fffffffffff |  128 TB | user-space virtual memory, different per mm
+;__________________|____________|__________________|_________|__________________________________________________________
+;                  |            |                  |         |
+; 0000800000000000 | +128    TB | ffff7fffffffffff | ~16M TB | ... huge, almost 64 bits wide hole of non-canonical
+;                  |            |                  |         |     virtual memory addresses up to the -128 TB
+;                  |            |                  |         |     starting offset of kernel mappings.
+;__________________|____________|__________________|_________|__________________________________________________________
+;                                                            |
+;                                                            | Kernel-space virtual memory, shared btw all processes
+;____________________________________________________________|__________________________________________________________
+;                  |            |                  |         |
+; ffff800000000000 |   -2    GB | ffff80009fffffff |  512 MB | kernel text mapping, mapped to physical address 0
+;__________________|____________|____________________________|__________________________________________________________
+;
+;======================================================================================================================
+
+;======================================================================================================================
+; Virtual Memory Constants
+;======================================================================================================================
+
+; Kernel code
+Kernel.New.Start.VirtualAddress   equ 0xffff800000200000  ; placing it in the higher-half of the memory
 
 %endif ; __ALMEIDAOS_GLOBALMEM_INC__

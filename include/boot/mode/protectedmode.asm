@@ -311,7 +311,7 @@ pm_move_kernel:
   xor ecx, ecx
   xor esi, esi
 
-  mov edi, Kernel.New.Start.Address
+  mov edi, Kernel.New.Start.PhysicalAddress
   mov esi, Loader.Kernel.Start.Address ; 0x8c00
   mov ecx, (512 * Kernel.File.NumberOfBlocks) / 4 ; ; 512*100/4 = 12800 DWORDs
   rep movsd
@@ -360,6 +360,16 @@ pm_setup_page_tables:
     ;   -> one entry in a PML4T can address 512GB
     mov DWORD [Mem.PML4.Address], (Mem.PDPE.Address ) | .StdBits
 
+    ; >>> int(bin(0xffff800)[2+16:][:9],2) = 256
+    ; This is equivalent to the first possible virtual address that belongs to kernel-space (Higher-half)
+    ; right now it is just an alias to the identity-mapped page 0x00000 but this allows us to start
+    ; running the kernel in the kernel-space virtual address and gradually remove all dependencies to
+    ; the user-space virtual addresses.
+    ;
+    ; this involves a lot of work such as reloading GDT, reloading CR3, remapping known low-addresses such as
+    ; video mem address (0xb8000) and the area designated in which BIOS 0xe820 results were stored and so on.
+    mov DWORD [Mem.PML4.Address + 256 * 0x08], (Mem.PDPE.Address) | .StdBits
+
     ; Create a single entry [0] in PDPT Table.
     ;   -> one entry in a PDPT can address 1GB
     mov DWORD [Mem.PDPE.Address], (Mem.PDE.Address ) | .StdBits
@@ -402,6 +412,10 @@ pm_enter_long_mode:
   ; Disable interruptions
   cli
 
+
+  ; Load the 64-bit GDT.
+  lgdt    [GDT64.Table.Pointer]
+
   ; Enable PAE paging.
   mov     eax,    cr4
   or      eax,    (1 << 5)    ; CR4.PAE
@@ -422,9 +436,6 @@ pm_enter_long_mode:
   mov     eax,    cr0
   or      eax,    (1 << 31)    ; CR0.PG
   mov     cr0,    eax
-
-  ; Load the 64-bit GDT.
-  lgdt    [GDT64.Table.Pointer]
 
   ; Do a long jump using the new GDT, which forces the switch to 64-bit
   ; mode.
