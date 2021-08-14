@@ -47,9 +47,9 @@ GDT32.Table.Pointer:
 
 
 ;-----------------------------------------------------------------------------
-; Global Descriptor Table used in 64-bit protected mode
+; Temporary Global Descriptor Table used in 64-bit long mode
 ;-----------------------------------------------------------------------------
-GDT64.Table:
+GDT64.Temp.Table:
 
     ; Null descriptor
     dw      0x0000  ; LimitLow
@@ -80,10 +80,10 @@ GDT64.Table:
     db      0x00        ; BaseHigh
 
 
-GDT64.Table.Size    equ     ($ - GDT64.Table)
+GDT64.Temp.Table.Size    equ     ($ - GDT64.Temp.Table)
 
-GDT64.Table.Pointer:
-    dw  GDT64.Table.Size - 1    ; Limit = offset of last byte in table
-    dd  GDT64.Table
+GDT64.Temp.Table.Pointer:
+    dw  GDT64.Temp.Table.Size - 1    ; Limit = offset of last byte in table
+    dd  GDT64.Temp.Table
 
 %endif ; __ALMEIDAOS_GLOBALGDT_INC__

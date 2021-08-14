@@ -5,6 +5,7 @@ section .data
 ; Include useful functions, constants and macros
 %include "../../include/boot/global/const.asm"
 %include "../../include/boot/global/mem.asm"
+%include "./gdt64.asm"
 
   ; Export references to C
   global e820_mem_start
@@ -13,6 +14,7 @@ section .data
   ; variables
   e820_mem_start:  dq  e820.Mem.Start.Address
   e820_mem_end:    dq  e820.Mem.End.Address
+
 
 ; create elf section that is always placed first when linking asm and c files
 section .head.text
@@ -26,7 +28,20 @@ section .head.text
   extern _BSS_SIZE
 
 	; Export references to C
-  global kernel_start
+  global kernel_entry
+
+kernel_entry:
+
+  ; Reload the 64-bit GDT.
+  mov rdi, GDT64.Table.Pointer
+  lgdt    [rdi]
+
+  push 0x08
+  mov rdi, kernel_start
+  push rdi
+  db 0x48
+  retf
+
 
 kernel_start:
   ; The System V ABI requires the direction flag to be clear on function entry.

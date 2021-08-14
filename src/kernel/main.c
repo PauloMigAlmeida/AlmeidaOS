@@ -35,7 +35,7 @@ void kmain(void) {
     pit_enable();
 
     // doing something stupid for testing
-//    int x = 1 / 0;
+    int x = 1 / 0;
 //
 //    // dummy test of the memcpy function
 //    int a = 10;

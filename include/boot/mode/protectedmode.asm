@@ -412,9 +412,8 @@ pm_enter_long_mode:
   ; Disable interruptions
   cli
 
-
   ; Load the 64-bit GDT.
-  lgdt    [GDT64.Table.Pointer]
+  lgdt    [GDT64.Temp.Table.Pointer]
 
   ; Enable PAE paging.
   mov     eax,    cr4
