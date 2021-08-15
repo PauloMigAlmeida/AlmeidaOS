@@ -57,6 +57,8 @@ SECTIONS
   .rodata : {
     *(.rodata)
   }
+   
+  PROVIDE(kernel_virt_end_addr = .);
 
 /*
   /DISCARD/ : {
