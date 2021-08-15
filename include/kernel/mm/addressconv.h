@@ -16,8 +16,14 @@
 /* this macro doesn't perform sanity checks when converting but this does allows for .text reduction during
  * pre-compile phase. This is meant to be used only for a few reasonable cases, everything else should go
  * through the va() function */
-#define UNSAFE_VA(phys_add)         PHYS_ADDR_KERNEL_START + phys_add
+#define UNSAFE_VA(phys_add)         (PHYS_ADDR_KERNEL_START + phys_add)
+
+/* this macro doesn't perform sanity checks when converting but this does allows for .text reduction during
+ * pre-compile phase. This is meant to be used only for a few reasonable cases, everything else should go
+ * through the pa() function */
+#define UNSAFE_PA(virt_add)         (virt_add - PHYS_ADDR_KERNEL_START)
 
 uint64_t va(uint64_t phys_addr);
+uint64_t pa(uint64_t virt_addr);
 
 #endif /* INCLUDE_KERNEL_MM_PHYSICALADDRESS_H_ */

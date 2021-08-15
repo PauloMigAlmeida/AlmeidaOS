@@ -11,6 +11,7 @@
 #include "kernel/interrupt/spurious.h"
 //temp
 #include "kernel/arch/mem.h"
+#include "kernel/mm/page.h"
 #include "kernel/lib/math.h"
 #include "kernel/lib/shuffle.h"
 #include "kernel/lib/qsort.h"
@@ -21,6 +22,7 @@ void kmain(void) {
     cpu_init();
     //tmp
     mem_init();
+    paging_init();
 
     idt_init();
 
@@ -34,8 +36,16 @@ void kmain(void) {
     keyboard_enable();
     pit_enable();
 
+
+    /* We should get a Page fault here to confirm that we fully moved to the higher-half memory */
+//    volatile pml4e_t* p = (volatile pml4e_t*)0x00020000;
+//    printk_info("pml4e_t: 0x%.16llx", *p);
+//    printk_info("nx: 0x%.1x, avai_gh: 0x%lx, pdp_ba: 0x%.16llx, flags: 0x%.4lx",
+//            p->no_execute_bit, p->available_guardhole, p->pdpe_base_addr << 12,
+//            p->flags);
+
     // doing something stupid for testing
-    int x = 1 / 0;
+//    int x = 1 / 0;
 //
 //    // dummy test of the memcpy function
 //    int a = 10;

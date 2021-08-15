@@ -54,4 +54,13 @@ __force_inline void fatal() {
     asm volatile ("int 0xff");
 }
 
+__force_inline void load_cr3(uint64_t addr) {
+    asm volatile(
+            "mov cr3, %0 \n"
+            :
+            : "D" (addr)
+            : "memory"
+    );
+}
+
 #endif /* INCLUDE_KERNEL_ASM_GENERIC_H_ */
