@@ -24,6 +24,7 @@ static pte_t *pte_table = (pte_t*) (PAGE_BASE_ADDR + PAGE_SIZE * 3);
 // Paulo....please, please, pleeeeease come up with a better name for this crap
 static uint64_t pte_add_counter = 0;
 
+extern volatile void kernel_virt_start_addr;
 extern volatile void kernel_virt_end_addr;
 
 void paging_init(void) {

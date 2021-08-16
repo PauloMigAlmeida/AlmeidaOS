@@ -57,23 +57,17 @@ static void calc_phys_memory_stats(void) {
 
         if (mem_region.type == E820_MEM_TYPE_USABLE)
             total_free_mem += mem_region.length;
+
+        printk_info("Addr: 0x%.16llx - 0x%.16llx, Length (KB): %u, Type:%u", mem_region.base_addr,
+                        mem_region.base_addr + mem_region.length /*- 1*/,
+                        mem_region.length / 1024,
+                        mem_region.type);
     }
 
     phys_mem_stat.phys_avail_mem = total_mem;
     phys_mem_stat.phys_free_mem = total_free_mem;
 
     printk_info("Memory Length (kB): Total: %lu Free: %lu", total_mem / 1024, total_free_mem / 1024);
-}
-
-static void print_mem_regions(void) {
-    for (size_t cur_pos = 0; cur_pos < mem_blocks->num_entries; cur_pos++) {
-        mem_map_region_t mem_region = mem_blocks->mem_region[cur_pos];
-
-        printk_info("Addr: 0x%.16llx - 0x%.16llx, Length (KB): %u, Type:%u", mem_region.base_addr,
-                mem_region.base_addr + mem_region.length /*- 1*/,
-                mem_region.length / 1024,
-                mem_region.type);
-    }
 }
 
 static int qsort_cmp_mem_region(const void *a, const void *b) {
@@ -177,9 +171,6 @@ void mem_init(void) {
 
     /* Calculate available phys memory once so we don't have to do it again */
     calc_phys_memory_stats();
-
-    /* print memory map */
-    print_mem_regions();
 
     printk_info("read_bios_mem_map routine read %llu entries", mem_blocks->num_entries);
 

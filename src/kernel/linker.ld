@@ -12,6 +12,7 @@ SECTIONS
   	
   */
   . = 0xffff800000201000;
+  PROVIDE(kernel_virt_start_addr = .);
 
   /*
     The order of the files specified to the gnu linker changes the content of

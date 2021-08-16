@@ -9,19 +9,14 @@
 #define _KERNEL_LIB_MATH_H
 
 #include "kernel/compiler/freestanding.h"
-#include "kernel/compiler/macro.h"
 
-__force_inline int abs(int value) {
-	/*
-	 * C99 abs:"if the result cannot be represented, the behavior is undefined."
-	 * So I decided not to handle 2-complement's edge case such as -2147483648
-	 */
-	int const mask = value >> (sizeof(int) * CHAR_BIT - 1);
-	return (value + mask) ^ mask;
-}
+int abs(int value);
 
 void rand_init_seed(uint32_t new_seed);
 int rand(void);
 int rand_r(uint32_t seed);
+
+/* Round up to the nearest known power of two - Credits Hacker's Delight book */
+uint64_t round_up_po2(uint64_t value, uint64_t power_of_2);
 
 #endif /* _KERNEL_LIB_MATH_H */
