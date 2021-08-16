@@ -32,7 +32,7 @@ void paging_init(void) {
     pml4e_t hh_pml4_entry = {
             .no_execute_bit = 0,
             .available_guardhole = 0,
-            .pdpe_base_addr = PREP_BASE_ADDR(UNSAFE_PA(PAGE_BASE_ADDR + PAGE_SIZE)),
+            .pdpe_base_addr = PREP_BASE_ADDR(pa(PAGE_BASE_ADDR + PAGE_SIZE)),
             .flags = PAGE_STD_BITS
     };
 

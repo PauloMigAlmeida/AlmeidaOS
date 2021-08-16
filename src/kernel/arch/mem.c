@@ -182,6 +182,17 @@ void mem_init(void) {
     print_mem_regions();
 
     printk_info("read_bios_mem_map routine read %llu entries", mem_blocks->num_entries);
+
+    /*
+     * TODO: Next steps:
+     * - Map kernel space in here so we don't end up offering that memory to something else that can override it
+     * - Figure out what to do with the Kernel stack mem? (how to reserve that to avoid data corruption)
+     * - Initiate a memory allocator (slab or buddy system)
+     * - implement kmalloc
+     * - implement vmalloc
+     *
+     * HOw am I gonna reserve space for the mem allocator? Seems like the chicken and the egg problem
+     */
 }
 
 mem_phys_stats_t mem_phys_stat(void) {
