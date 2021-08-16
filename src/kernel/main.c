@@ -15,6 +15,7 @@
 #include "kernel/lib/math.h"
 #include "kernel/lib/shuffle.h"
 #include "kernel/lib/qsort.h"
+#include "kernel/compiler/bug.h"
 
 void kmain(void) {
     printk_init(PRINTK_INFO_LEVEL);
@@ -36,6 +37,14 @@ void kmain(void) {
     keyboard_enable();
     pit_enable();
 
+//    mem_phys_stats_t t = mem_phys_stat();
+//    printk_info("Original t.avail: %llu", t.phys_free_mem);
+//    t.phys_free_mem *= 2;
+//    printk_info("Mod t.avail: %llu", t.phys_free_mem);
+//    t = mem_phys_stat();
+//    printk_info("New t.avail: %llu", t.phys_free_mem);
+
+//    BUG_ON(true);
 
     /* We should get a Page fault here to confirm that we fully moved to the higher-half memory */
 //    volatile pml4e_t* p = (volatile pml4e_t*)0x00020000;

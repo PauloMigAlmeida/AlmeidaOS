@@ -10,6 +10,7 @@
 #include "kernel/lib/string.h"
 #include "kernel/compiler/freestanding.h"
 #include "kernel/compiler/macro.h"
+#include "kernel/compiler/bug.h"
 #include "kernel/lib/qsort.h"
 
 #define E820_MEM_TYPE_USABLE    1
@@ -42,6 +43,27 @@ typedef struct {
 } __packed mem_map_block_t;
 
 static mem_map_block_t *mem_blocks;
+static mem_phys_stats_t phys_mem_stat = { .phys_avail_mem = 0, .phys_free_mem = 0 };
+
+/* calculates how much memory we have available so we can choose how to partition the phys mem later */
+static void calc_phys_memory_stats(void) {
+    uint64_t total_mem = 0;
+    uint64_t total_free_mem = 0;
+
+    for (size_t cur_pos = 0; cur_pos < mem_blocks->num_entries; cur_pos++) {
+        mem_map_region_t mem_region = mem_blocks->mem_region[cur_pos];
+
+        total_mem += mem_region.length;
+
+        if (mem_region.type == E820_MEM_TYPE_USABLE)
+            total_free_mem += mem_region.length;
+    }
+
+    phys_mem_stat.phys_avail_mem = total_mem;
+    phys_mem_stat.phys_free_mem = total_free_mem;
+
+    printk_info("Memory Length (kB): Total: %lu Free: %lu", total_mem / 1024, total_free_mem / 1024);
+}
 
 static void print_mem_regions(void) {
     for (size_t cur_pos = 0; cur_pos < mem_blocks->num_entries; cur_pos++) {
@@ -153,9 +175,19 @@ void mem_init(void) {
     combine_mergeable_regions();
     squash_mem_regions();
 
+    /* Calculate available phys memory once so we don't have to do it again */
+    calc_phys_memory_stats();
+
     /* print memory map */
     print_mem_regions();
 
     printk_info("read_bios_mem_map routine read %llu entries", mem_blocks->num_entries);
+}
+
+mem_phys_stats_t mem_phys_stat(void) {
+    /* this assumes that calc_phys_memory_stats() was called during mem_init() */
+    BUG_ON(phys_mem_stat.phys_avail_mem == 0);
+
+    return phys_mem_stat;
 }
 
