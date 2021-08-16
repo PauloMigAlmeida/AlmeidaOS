@@ -11,16 +11,15 @@
 #include "kernel/lib/math.h"
 #include "kernel/lib/string.h"
 #include "kernel/compiler/macro.h"
+#include "kernel/compiler/bug.h"
 
 /* this function is used during paging set up, so kmalloc isn't an option here ;) */
 void shuffle(void *arr, size_t arr_length, size_t item_width) {
 
     /* sanity checks for the edge cases */
-    if (item_width == 0) {
-        //TODO create a mechanism that resembles Linux's BUG_ON macro
-        printk_error("item_width can't be zero");
-        fatal();
-    } else if (arr_length < 2) return; /* nothing to shuffle here */
+    BUG_ON(item_width == 0);
+
+    if (arr_length < 2) return; /* nothing to shuffle here */
 
     /* C doesn't allow void pointer arithmetic as it doesn't know the size of 'increment' by */
     char *arr_cst = (char*) arr;
