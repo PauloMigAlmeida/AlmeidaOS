@@ -8,8 +8,6 @@
 #include "kernel/arch/mem.h"
 #include "kernel/lib/printk.h"
 #include "kernel/lib/string.h"
-#include "kernel/compiler/freestanding.h"
-#include "kernel/compiler/macro.h"
 #include "kernel/compiler/bug.h"
 #include "kernel/lib/qsort.h"
 
@@ -18,29 +16,6 @@
 
 extern uintptr_t e820_mem_start;
 extern uintptr_t e820_mem_end;
-
-/*
- *  Address Range Descriptor Structure
- *
- *  Offset in Bytes     Name            Description
- *  0                   BaseAddrLow     Low 32 Bits of Base Address
- *  4                   BaseAddrHigh    High 32 Bits of Base Address
- *  8                   LengthLow       Low 32 Bits of Length in Bytes
- *  12                  LengthHigh      High 32 Bits of Length in Bytes
- *  16                  Type            Address type of  this range.
- *
- */
-
-typedef struct {
-    uint64_t base_addr;
-    uint64_t length;
-    uint32_t type;
-} __packed mem_map_region_t;
-
-typedef struct {
-    uint64_t num_entries;
-    mem_map_region_t mem_region[];
-} __packed mem_map_block_t;
 
 static mem_map_block_t *mem_blocks;
 static mem_phys_stats_t phys_mem_stat = { .phys_avail_mem = 0, .phys_free_mem = 0 };
@@ -59,9 +34,9 @@ static void calc_phys_memory_stats(void) {
             total_free_mem += mem_region.length;
 
         printk_info("Addr: 0x%.16llx - 0x%.16llx, Length (KB): %u, Type:%u", mem_region.base_addr,
-                        mem_region.base_addr + mem_region.length /*- 1*/,
-                        mem_region.length / 1024,
-                        mem_region.type);
+                mem_region.base_addr + mem_region.length /*- 1*/,
+                mem_region.length / 1024,
+                mem_region.type);
     }
 
     phys_mem_stat.phys_avail_mem = total_mem;
@@ -186,10 +161,62 @@ void mem_init(void) {
      */
 }
 
-mem_phys_stats_t mem_phys_stat(void) {
+mem_phys_stats_t mem_stat(void) {
     /* this assumes that calc_phys_memory_stats() was called during mem_init() */
     BUG_ON(phys_mem_stat.phys_avail_mem == 0);
 
     return phys_mem_stat;
+}
+
+mem_map_region_t mem_alloc_region(uint64_t phys_start_addr, uint64_t phys_end_addr) {
+    /* sanity check */
+    BUG_ON(phys_end_addr <= phys_start_addr);
+
+    bool found = false;
+
+    for (size_t cur_pos = 0; cur_pos < mem_blocks->num_entries; cur_pos++) {
+        mem_map_region_t mem_rg = mem_blocks->mem_region[cur_pos];
+
+        if (phys_start_addr >= mem_rg.base_addr &&
+                phys_end_addr <= (mem_rg.base_addr + mem_rg.length) &&
+                mem_rg.type == E820_MEM_TYPE_USABLE) {
+            found = true;
+
+            if (phys_start_addr == mem_rg.base_addr &&
+                    phys_end_addr == (mem_rg.base_addr + mem_rg.length)) {
+                /* happens to alloc the entire slot */
+                mem_rg.type = E820_MEM_TYPE_RESERVED;
+                return mem_rg;
+
+            } else if (phys_start_addr == mem_rg.base_addr) {
+                /* happens to alloc from the beginning of the mem slot */
+                mem_rg.base_addr += phys_end_addr;
+            } else if (phys_end_addr == (mem_rg.base_addr + mem_rg.length)) {
+                /* happens to alloc from somewhere in the middle all the way to the end of the mem slot */
+                mem_rg.length -= (phys_end_addr - phys_start_addr);
+            } else {
+                /* happens to be somewhere in the middle */
+
+            }
+
+            break;
+        }
+    }
+
+    /* hang the kernel if we couldn't allocate a piece of the physical memory as this is critical at this point */
+    BUG_ON(!found);
+
+    /* build entry & add that to physical memory map */
+    mem_map_region_t ret_region;
+    ret_region.base_addr = phys_start_addr;
+    ret_region.length = phys_end_addr - phys_start_addr;
+    ret_region.type = E820_MEM_TYPE_RESERVED;
+
+    mem_blocks->mem_region[mem_blocks->num_entries++] = ret_region;
+
+    /* Sort entries */
+    qsort(mem_blocks->mem_region, mem_blocks->num_entries, sizeof(mem_map_region_t), qsort_cmp_mem_region);
+
+    return ret_region;
 }
 
