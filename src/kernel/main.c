@@ -23,6 +23,10 @@ void kmain(void) {
     cpu_init();
     //tmp
     mem_init();
+
+    mem_map_region_t region = mem_alloc_region(0x200000, 0x200000 + 0x10000);
+    printk_info("start: 0x%llx end: 0x%llx length (Kb): %llu", region.base_addr, region.base_addr + region.length, region.length / 1024);
+
     paging_init();
 
     idt_init();
@@ -36,6 +40,8 @@ void kmain(void) {
     spurious_irq_enable();
     keyboard_enable();
     pit_enable();
+
+
 
 //    mem_phys_stats_t t = mem_phys_stat();
 //    printk_info("Original t.avail: %llu", t.phys_free_mem);

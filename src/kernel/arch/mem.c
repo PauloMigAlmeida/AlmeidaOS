@@ -237,7 +237,7 @@ mem_map_region_t mem_alloc_region(uint64_t phys_start_addr, uint64_t phys_end_ad
     /* build entry & add that to physical memory map */
     mem_map_region_t ret_region;
     ret_region.base_addr = phys_start_addr;
-    ret_region.length = phys_end_addr - phys_start_addr;
+    ret_region.length = req_length;
     ret_region.type = E820_MEM_TYPE_RESERVED;
 
     mem_blocks->mem_region[mem_blocks->num_entries++] = ret_region;
@@ -246,7 +246,7 @@ mem_map_region_t mem_alloc_region(uint64_t phys_start_addr, uint64_t phys_end_ad
     qsort(mem_blocks->mem_region, mem_blocks->num_entries, sizeof(mem_map_region_t), qsort_cmp_mem_region);
 
     /* update mem stats */
-    phys_mem_stat.phys_free_mem -= ret_region.length;
+    phys_mem_stat.phys_free_mem -= req_length;
     mem_print_entries();
 
     return ret_region;
