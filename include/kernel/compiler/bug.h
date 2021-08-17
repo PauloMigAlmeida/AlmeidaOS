@@ -16,7 +16,7 @@
 #define BUG_ON(cond)                                                          \
   do {                                                                        \
       if((cond)) {                                                            \
-          printk_error("BUG_ON: file: %s, line: %u", __FILE__, __LINE__);     \
+          printk_error("BUG_ON: func: %s, line: %u", __func__, __LINE__);     \
           fatal();                                                            \
       }                                                                       \
   } while (0)

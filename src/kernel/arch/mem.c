@@ -32,17 +32,23 @@ static void calc_phys_memory_stats(void) {
 
         if (mem_region.type == E820_MEM_TYPE_USABLE)
             total_free_mem += mem_region.length;
-
-        printk_info("Addr: 0x%.16llx - 0x%.16llx, Length (KB): %u, Type:%u", mem_region.base_addr,
-                mem_region.base_addr + mem_region.length /*- 1*/,
-                mem_region.length / 1024,
-                mem_region.type);
     }
 
     phys_mem_stat.phys_avail_mem = total_mem;
     phys_mem_stat.phys_free_mem = total_free_mem;
+}
 
-    printk_info("Memory Length (kB): Total: %lu Free: %lu", total_mem / 1024, total_free_mem / 1024);
+static void mem_print_entries(void) {
+    for (size_t cur_pos = 0; cur_pos < mem_blocks->num_entries; cur_pos++) {
+        mem_map_region_t mem_region = mem_blocks->mem_region[cur_pos];
+
+        printk_info("Addr: 0x%.16llx - 0x%.16llx, Length (KB): %u, Type:%u", mem_region.base_addr,
+                mem_region.base_addr + mem_region.length - 1,
+                mem_region.length / 1024,
+                mem_region.type);
+    }
+
+    printk_info("Memory Length (kB): Total: %lu Free: %lu", phys_mem_stat.phys_avail_mem / 1024, phys_mem_stat.phys_free_mem / 1024);
 }
 
 static int qsort_cmp_mem_region(const void *a, const void *b) {
@@ -146,6 +152,7 @@ void mem_init(void) {
 
     /* Calculate available phys memory once so we don't have to do it again */
     calc_phys_memory_stats();
+    mem_print_entries();
 
     printk_info("read_bios_mem_map routine read %llu entries", mem_blocks->num_entries);
 
@@ -173,30 +180,51 @@ mem_map_region_t mem_alloc_region(uint64_t phys_start_addr, uint64_t phys_end_ad
     BUG_ON(phys_end_addr <= phys_start_addr);
 
     bool found = false;
+    uint64_t req_length = (phys_end_addr - phys_start_addr);
 
     for (size_t cur_pos = 0; cur_pos < mem_blocks->num_entries; cur_pos++) {
-        mem_map_region_t mem_rg = mem_blocks->mem_region[cur_pos];
+        mem_map_region_t* mem_rg = &mem_blocks->mem_region[cur_pos];
 
-        if (phys_start_addr >= mem_rg.base_addr &&
-                phys_end_addr <= (mem_rg.base_addr + mem_rg.length) &&
-                mem_rg.type == E820_MEM_TYPE_USABLE) {
+        if (phys_start_addr >= mem_rg->base_addr &&
+                phys_end_addr <= (mem_rg->base_addr + mem_rg->length) &&
+                req_length <= mem_rg->length &&
+                mem_rg->type == E820_MEM_TYPE_USABLE) {
             found = true;
 
-            if (phys_start_addr == mem_rg.base_addr &&
-                    phys_end_addr == (mem_rg.base_addr + mem_rg.length)) {
+            if (phys_start_addr == mem_rg->base_addr &&
+                    phys_end_addr == (mem_rg->base_addr + mem_rg->length)) {
+
                 /* happens to alloc the entire slot */
-                mem_rg.type = E820_MEM_TYPE_RESERVED;
-                return mem_rg;
+                mem_rg->type = E820_MEM_TYPE_RESERVED;
+                return *mem_rg;
 
-            } else if (phys_start_addr == mem_rg.base_addr) {
+            } else if (phys_start_addr == mem_rg->base_addr) {
+
                 /* happens to alloc from the beginning of the mem slot */
-                mem_rg.base_addr += phys_end_addr;
-            } else if (phys_end_addr == (mem_rg.base_addr + mem_rg.length)) {
-                /* happens to alloc from somewhere in the middle all the way to the end of the mem slot */
-                mem_rg.length -= (phys_end_addr - phys_start_addr);
-            } else {
-                /* happens to be somewhere in the middle */
+                mem_rg->base_addr = phys_end_addr;
+                mem_rg->length -= req_length;
 
+            } else if (phys_end_addr == (mem_rg->base_addr + mem_rg->length)) {
+
+                /* happens to alloc from somewhere in the middle all the way to the end of the mem slot */
+                mem_rg->length -= req_length;
+
+            } else {
+
+                /* happens to be somewhere in the middle */
+                uint64_t tmp_length = (mem_rg->base_addr + mem_rg->length) - phys_end_addr;
+
+                /* deal with left entry */
+                mem_rg->length = phys_start_addr - mem_rg->base_addr;
+
+                /* deal with right entry */
+                mem_map_region_t right_region = {
+                        .base_addr = phys_end_addr,
+                        .length = tmp_length,
+                        .type = E820_MEM_TYPE_USABLE
+                };
+
+                mem_blocks->mem_region[mem_blocks->num_entries++] = right_region;
             }
 
             break;
@@ -216,6 +244,10 @@ mem_map_region_t mem_alloc_region(uint64_t phys_start_addr, uint64_t phys_end_ad
 
     /* Sort entries */
     qsort(mem_blocks->mem_region, mem_blocks->num_entries, sizeof(mem_map_region_t), qsort_cmp_mem_region);
+
+    /* update mem stats */
+    phys_mem_stat.phys_free_mem -= ret_region.length;
+    mem_print_entries();
 
     return ret_region;
 }
