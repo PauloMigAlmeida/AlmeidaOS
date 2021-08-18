@@ -43,6 +43,7 @@ void mem_init(void);
 void mem_print_entries(void);
 mem_phys_stats_t mem_stat(void);
 mem_map_region_t mem_alloc_region(uint64_t phys_start_addr, uint64_t phys_end_addr);
+mem_map_region_t mem_alloc_amount(uint64_t length);
 
 
 #endif /* INCLUDE_KERNEL_ARCH_MEM_H_ */

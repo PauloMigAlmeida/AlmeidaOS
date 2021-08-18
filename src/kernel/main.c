@@ -24,17 +24,17 @@ void kmain(void) {
     vga_console_init();
     cpu_init();
     mm_init();
-//    idt_init();
-//
-//    pic_init();
-//    pit_init(100);
-//
-//    enable_interrupts();
-//
-//    /* enabled IRQs */
-//    spurious_irq_enable();
-//    keyboard_enable();
-//    pit_enable();
+    idt_init();
+
+    pic_init();
+    pit_init(100);
+
+    enable_interrupts();
+
+    /* enabled IRQs */
+    spurious_irq_enable();
+    keyboard_enable();
+    pit_enable();
 
 
 

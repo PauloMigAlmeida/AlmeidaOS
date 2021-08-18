@@ -18,7 +18,6 @@
 extern uintptr_t e820_mem_start;
 extern uintptr_t e820_mem_end;
 
-
 static mem_map_block_t *mem_blocks;
 static mem_phys_stats_t phys_mem_stat = { .phys_avail_mem = 0, .phys_free_mem = 0 };
 
@@ -132,7 +131,7 @@ static void squash_mem_regions() {
                 }
             }
 
-            if (!found_next_entry){
+            if (!found_next_entry) {
                 break;
             }
 
@@ -148,6 +147,45 @@ static void squash_mem_regions() {
         }
     }
 
+}
+
+static void mem_reserve_first_mb(void) {
+    for (size_t i = 0; i < mem_blocks->num_entries - 1; i++) {
+        mem_map_region_t *mem_rg = &mem_blocks->mem_region[i];
+
+        if ((mem_rg->base_addr + mem_rg->length - 1) < 0x100000) {
+            memset(mem_rg, 0, sizeof(mem_map_region_t));
+        }
+    }
+
+    mem_map_region_t ret_region;
+    ret_region.base_addr = 0x0;
+    ret_region.length = 0x100000;
+    ret_region.type = E820_MEM_TYPE_RESERVED;
+
+    mem_blocks->mem_region[mem_blocks->num_entries++] = ret_region;
+}
+
+void mem_init(void) {
+    printk_info("e820_mem_start: 0x%.8lx e820_mem_end: 0x%.8lx", va(e820_mem_start), va(e820_mem_end));
+
+    mem_blocks = (mem_map_block_t*) va(e820_mem_start);
+
+    /* reserve low 1 Mb as this is used by the BIOS, VGA among other things */
+    mem_reserve_first_mb();
+
+    /* BIOS returns those entries unsorted */
+    qsort(mem_blocks->mem_region, mem_blocks->num_entries, sizeof(mem_map_region_t), qsort_cmp_mem_region);
+
+    /* combine regions to 1) make our life simpler 2) free space on the dedicated space for that */
+    combine_mergeable_regions();
+    squash_mem_regions();
+
+    /* Calculate available phys memory once so we don't have to do it again */
+    calc_phys_memory_stats();
+    mem_print_entries();
+
+    printk_info("read_bios_mem_map routine read %llu entries", mem_blocks->num_entries);
 }
 
 mem_phys_stats_t mem_stat(void) {
@@ -237,42 +275,23 @@ mem_map_region_t mem_alloc_region(uint64_t phys_start_addr, uint64_t phys_end_ad
     return ret_region;
 }
 
-static void mem_reserve_first_mb(void) {
-    for (size_t i = 0; i < mem_blocks->num_entries - 1; i++) {
-        mem_map_region_t *mem_rg = &mem_blocks->mem_region[i];
+mem_map_region_t mem_alloc_amount(uint64_t length) {
+    /* sanity check */
+    BUG_ON(length == 0);
 
-        if ((mem_rg->base_addr + mem_rg->length - 1) < 0x100000) {
-            memset(mem_rg, 0, sizeof(mem_map_region_t));
+    mem_map_region_t ret_region = { .base_addr = 0, .length = 0, .type = 0 };
+
+    for (size_t cur_pos = 0; cur_pos < mem_blocks->num_entries; cur_pos++) {
+        mem_map_region_t *mem_rg = &mem_blocks->mem_region[cur_pos];
+
+        if (mem_rg->length >= length && mem_rg->type == E820_MEM_TYPE_USABLE) {
+            ret_region = mem_alloc_region(mem_rg->base_addr, mem_rg->base_addr + length);
+            break;
         }
     }
 
-    mem_map_region_t ret_region;
-    ret_region.base_addr = 0x0;
-    ret_region.length = 0x100000;
-    ret_region.type = E820_MEM_TYPE_RESERVED;
+    BUG_ON(ret_region.base_addr == 0 || ret_region.length == 0 || ret_region.type == 0);
 
-    mem_blocks->mem_region[mem_blocks->num_entries++] = ret_region;
-}
-
-void mem_init(void) {
-    printk_info("e820_mem_start: 0x%.8lx e820_mem_end: 0x%.8lx", va(e820_mem_start), va(e820_mem_end));
-
-    mem_blocks = (mem_map_block_t*) va(e820_mem_start);
-
-    /* reserve low 1 Mb as this is used by the BIOS, VGA among other things */
-    mem_reserve_first_mb();
-
-    /* BIOS returns those entries unsorted */
-    qsort(mem_blocks->mem_region, mem_blocks->num_entries, sizeof(mem_map_region_t), qsort_cmp_mem_region);
-
-    /* combine regions to 1) make our life simpler 2) free space on the dedicated space for that */
-    combine_mergeable_regions();
-    squash_mem_regions();
-
-    /* Calculate available phys memory once so we don't have to do it again */
-    calc_phys_memory_stats();
-    mem_print_entries();
-
-    printk_info("read_bios_mem_map routine read %llu entries", mem_blocks->num_entries);
+    return ret_region;
 }
 
