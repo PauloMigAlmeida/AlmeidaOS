@@ -13,11 +13,13 @@
 void printk_init(const uint8_t level);
 void printk(const uint8_t level, const char *format, ...);
 
-#define PRINTK_DEBUG_LEVEL  2
+#define PRINTK_DEBUG_LEVEL  3
+#define PRINTK_FINE_LEVEL   2
 #define PRINTK_INFO_LEVEL   1
 #define PRINTK_ERR_LEVEL    0
 
 #define printk_debug(fmt, ...)   printk(PRINTK_DEBUG_LEVEL, fmt, ##__VA_ARGS__)
+#define printk_fine(fmt, ...)    printk(PRINTK_FINE_LEVEL, fmt, ##__VA_ARGS__)
 #define printk_info(fmt, ...)    printk(PRINTK_INFO_LEVEL, fmt, ##__VA_ARGS__)
 #define printk_error(fmt, ...)   printk(PRINTK_ERR_LEVEL, fmt, ##__VA_ARGS__)
 

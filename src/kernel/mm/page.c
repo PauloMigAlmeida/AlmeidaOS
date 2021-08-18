@@ -6,13 +6,13 @@
  */
 
 #include "kernel/mm/page.h"
+#include "kernel/mm/init.h"
 #include "kernel/mm/addressconv.h"
 #include "kernel/asm/generic.h"
 #include "kernel/lib/printk.h"
 
 //0x100000 -> gonna use this just for testing the kernel migration to the higher-half memory
 #define PAGE_BASE_ADDR          UNSAFE_VA(0x100000)
-#define PAGE_SIZE               0x1000
 #define PREP_BASE_ADDR(addr)    (((addr) >> 12) & (UINT64_MAX >> (sizeof(uint64_t) * CHAR_BIT - (64-36))))
 #define PAGE_STD_BITS           0x03
 
@@ -24,11 +24,9 @@ static pte_t *pte_table = (pte_t*) (PAGE_BASE_ADDR + PAGE_SIZE * 3);
 // Paulo....please, please, pleeeeease come up with a better name for this crap
 static uint64_t pte_add_counter = 0;
 
-extern volatile void kernel_virt_start_addr;
-extern volatile void kernel_virt_end_addr;
+
 
 void paging_init(void) {
-    printk_info("kernel_virt_end_addr: 0x%.16llx", &kernel_virt_end_addr);
 
     pml4e_t hh_pml4_entry = {
             .no_execute_bit = 0,

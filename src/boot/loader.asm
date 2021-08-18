@@ -165,7 +165,7 @@ long_mode_boot:
     mov fs, ax
     mov gs, ax
     mov ss, ax
-    mov rsp, Kernel.New.Start.VirtualAddress + Kernel.New.ELFTextHeader.Offset
+    mov rsp, Kernel.New.Start.VirtualAddress
 
     ; display status message
     mov rax, LongMode.SecondStage.Booting.Msg

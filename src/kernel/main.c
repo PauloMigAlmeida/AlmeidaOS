@@ -9,6 +9,7 @@
 #include "kernel/arch/pit.h"
 #include "kernel/device/keyboard.h"
 #include "kernel/interrupt/spurious.h"
+#include "kernel/mm/init.h"
 //temp
 #include "kernel/arch/mem.h"
 #include "kernel/mm/page.h"
@@ -17,29 +18,23 @@
 #include "kernel/lib/qsort.h"
 #include "kernel/compiler/bug.h"
 
+
 void kmain(void) {
     printk_init(PRINTK_INFO_LEVEL);
     vga_console_init();
     cpu_init();
-    //tmp
-    mem_init();
-
-    mem_map_region_t region = mem_alloc_region(0x200000, 0x200000 + 0x10000);
-    printk_info("start: 0x%llx end: 0x%llx length (Kb): %llu", region.base_addr, region.base_addr + region.length, region.length / 1024);
-
-    paging_init();
-
-    idt_init();
-
-    pic_init();
-    pit_init(100);
-
-    enable_interrupts();
-
-    /* enabled IRQs */
-    spurious_irq_enable();
-    keyboard_enable();
-    pit_enable();
+    mm_init();
+//    idt_init();
+//
+//    pic_init();
+//    pit_init(100);
+//
+//    enable_interrupts();
+//
+//    /* enabled IRQs */
+//    spurious_irq_enable();
+//    keyboard_enable();
+//    pit_enable();
 
 
 

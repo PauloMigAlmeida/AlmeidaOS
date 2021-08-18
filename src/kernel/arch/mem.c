@@ -6,6 +6,7 @@
  */
 
 #include "kernel/arch/mem.h"
+#include "kernel/mm/addressconv.h"
 #include "kernel/lib/printk.h"
 #include "kernel/lib/string.h"
 #include "kernel/compiler/bug.h"
@@ -16,6 +17,7 @@
 
 extern uintptr_t e820_mem_start;
 extern uintptr_t e820_mem_end;
+
 
 static mem_map_block_t *mem_blocks;
 static mem_phys_stats_t phys_mem_stat = { .phys_avail_mem = 0, .phys_free_mem = 0 };
@@ -38,7 +40,7 @@ static void calc_phys_memory_stats(void) {
     phys_mem_stat.phys_free_mem = total_free_mem;
 }
 
-static void mem_print_entries(void) {
+void mem_print_entries(void) {
     for (size_t cur_pos = 0; cur_pos < mem_blocks->num_entries; cur_pos++) {
         mem_map_region_t mem_region = mem_blocks->mem_region[cur_pos];
 
@@ -48,7 +50,8 @@ static void mem_print_entries(void) {
                 mem_region.type);
     }
 
-    printk_info("Memory Length (kB): Total: %lu Free: %lu", phys_mem_stat.phys_avail_mem / 1024, phys_mem_stat.phys_free_mem / 1024);
+    printk_info("Memory Length (kB): Total: %lu Free: %lu", phys_mem_stat.phys_avail_mem / 1024,
+            phys_mem_stat.phys_free_mem / 1024);
 }
 
 static int qsort_cmp_mem_region(const void *a, const void *b) {
@@ -66,7 +69,8 @@ static int qsort_cmp_mem_region(const void *a, const void *b) {
 /* I might regret this decision but as of now I only care whether the mem region is free or reserved. Let's see :) */
 static void combine_mergeable_regions() {
     /* sanity checks */
-    if (mem_blocks->num_entries < 2) return;
+    if (mem_blocks->num_entries < 2)
+        return;
 
     size_t ptr_1 = 0, ptr_2 = 1;
     do {
@@ -105,11 +109,12 @@ static void combine_mergeable_regions() {
 
 static void squash_mem_regions() {
     /* sanity checks */
-    if (mem_blocks->num_entries < 2) return;
+    if (mem_blocks->num_entries < 2)
+        return;
 
+    mem_map_region_t *mem_rg;
     for (size_t ptr_1 = 0; ptr_1 < mem_blocks->num_entries - 1; ptr_1++) {
-
-        mem_map_region_t *mem_rg = &mem_blocks->mem_region[ptr_1];
+        mem_rg = &mem_blocks->mem_region[ptr_1];
 
         if (mem_rg->length == 0 && mem_rg->type == 0) {
 
@@ -120,52 +125,29 @@ static void squash_mem_regions() {
                 if (next_mem_rg->length != 0 && next_mem_rg->type != 0) {
                     found_next_entry = true;
 
-                    memcpy(mem_rg, next_mem_rg, sizeof(mem_map_region_t) * (mem_blocks->num_entries - next_ptr));
+                    memcpy(mem_rg, next_mem_rg, sizeof(mem_map_region_t));
+                    memzero(next_mem_rg, sizeof(mem_map_region_t));
+
                     break;
                 }
             }
 
-            if (!found_next_entry)
+            if (!found_next_entry){
                 break;
-
-            /* mark region to be removed/re-used */
-            memzero(&mem_blocks->mem_region[mem_blocks->num_entries - 1], sizeof(mem_map_region_t));
-
-            mem_blocks->num_entries--;
+            }
 
         }
     }
 
-}
+    /* adjust num_entries value */
+    for (size_t ptr_1 = 0; ptr_1 < mem_blocks->num_entries; ptr_1++) {
+        mem_rg = &mem_blocks->mem_region[ptr_1];
+        if (mem_rg->length == 0 && mem_rg->type == 0) {
+            mem_blocks->num_entries = ptr_1;
+            break;
+        }
+    }
 
-void mem_init(void) {
-    printk_info("e820_mem_start: 0x%.8lx e820_mem_end: 0x%.8lx", e820_mem_start, e820_mem_end);
-
-    mem_blocks = (mem_map_block_t*) e820_mem_start;
-
-    /* BIOS returns those entries unsorted */
-    qsort(mem_blocks->mem_region, mem_blocks->num_entries, sizeof(mem_map_region_t), qsort_cmp_mem_region);
-
-    /* combine regions to 1) make our life simpler 2) free space on the dedicated space for that */
-    combine_mergeable_regions();
-    squash_mem_regions();
-
-    /* Calculate available phys memory once so we don't have to do it again */
-    calc_phys_memory_stats();
-    mem_print_entries();
-
-    printk_info("read_bios_mem_map routine read %llu entries", mem_blocks->num_entries);
-
-    /*
-     * TODO: Next steps:
-     * - Map kernel space in here so we don't end up offering that memory to something else that can override it
-     * - Figure out what to do with the Kernel stack mem? (how to reserve that to avoid data corruption)
-     * - Initiate a memory allocator (slab or buddy system)
-     * - implement kmalloc
-     * - implement vmalloc
-     *
-     * HOw am I gonna reserve space for the mem allocator? Seems like the chicken and the egg problem
-     */
 }
 
 mem_phys_stats_t mem_stat(void) {
@@ -183,7 +165,7 @@ mem_map_region_t mem_alloc_region(uint64_t phys_start_addr, uint64_t phys_end_ad
     uint64_t req_length = (phys_end_addr - phys_start_addr);
 
     for (size_t cur_pos = 0; cur_pos < mem_blocks->num_entries; cur_pos++) {
-        mem_map_region_t* mem_rg = &mem_blocks->mem_region[cur_pos];
+        mem_map_region_t *mem_rg = &mem_blocks->mem_region[cur_pos];
 
         if (phys_start_addr >= mem_rg->base_addr &&
                 phys_end_addr <= (mem_rg->base_addr + mem_rg->length) &&
@@ -245,10 +227,52 @@ mem_map_region_t mem_alloc_region(uint64_t phys_start_addr, uint64_t phys_end_ad
     /* Sort entries */
     qsort(mem_blocks->mem_region, mem_blocks->num_entries, sizeof(mem_map_region_t), qsort_cmp_mem_region);
 
+    /* combine regions to 1) make our life simpler 2) free space on the dedicated space for that */
+    combine_mergeable_regions();
+    squash_mem_regions();
+
     /* update mem stats */
     phys_mem_stat.phys_free_mem -= req_length;
-    mem_print_entries();
 
     return ret_region;
+}
+
+static void mem_reserve_first_mb(void) {
+    for (size_t i = 0; i < mem_blocks->num_entries - 1; i++) {
+        mem_map_region_t *mem_rg = &mem_blocks->mem_region[i];
+
+        if ((mem_rg->base_addr + mem_rg->length - 1) < 0x100000) {
+            memset(mem_rg, 0, sizeof(mem_map_region_t));
+        }
+    }
+
+    mem_map_region_t ret_region;
+    ret_region.base_addr = 0x0;
+    ret_region.length = 0x100000;
+    ret_region.type = E820_MEM_TYPE_RESERVED;
+
+    mem_blocks->mem_region[mem_blocks->num_entries++] = ret_region;
+}
+
+void mem_init(void) {
+    printk_info("e820_mem_start: 0x%.8lx e820_mem_end: 0x%.8lx", va(e820_mem_start), va(e820_mem_end));
+
+    mem_blocks = (mem_map_block_t*) va(e820_mem_start);
+
+    /* reserve low 1 Mb as this is used by the BIOS, VGA among other things */
+    mem_reserve_first_mb();
+
+    /* BIOS returns those entries unsorted */
+    qsort(mem_blocks->mem_region, mem_blocks->num_entries, sizeof(mem_map_region_t), qsort_cmp_mem_region);
+
+    /* combine regions to 1) make our life simpler 2) free space on the dedicated space for that */
+    combine_mergeable_regions();
+    squash_mem_regions();
+
+    /* Calculate available phys memory once so we don't have to do it again */
+    calc_phys_memory_stats();
+    mem_print_entries();
+
+    printk_info("read_bios_mem_map routine read %llu entries", mem_blocks->num_entries);
 }
 
