@@ -11,6 +11,11 @@
 #include "kernel/compiler/freestanding.h"
 #include "kernel/arch/mem.h"
 
-void buddy_alloc_init(mem_map_region_t mem_reg);
+typedef struct {
+    mem_map_region_t header_mem_reg;
+    mem_map_region_t content_mem_reg;
+} buddy_alloc_ref_t;
+
+buddy_alloc_ref_t buddy_alloc_init(mem_map_region_t mem_reg);
 
 #endif /* INCLUDE_KERNEL_MM_BUDDY_ALLOC_H_ */

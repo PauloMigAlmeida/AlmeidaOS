@@ -272,6 +272,10 @@ mem_map_region_t mem_alloc_region(uint64_t phys_start_addr, uint64_t phys_end_ad
     /* update mem stats */
     phys_mem_stat.phys_free_mem -= req_length;
 
+    printk_info("start: 0x%llx end: 0x%llx length (Kb): %llu", ret_region.base_addr,
+            ret_region.base_addr + ret_region.length,
+            ret_region.length / 1024);
+
     return ret_region;
 }
 
