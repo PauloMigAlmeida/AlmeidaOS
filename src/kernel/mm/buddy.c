@@ -74,7 +74,7 @@ buddy_ref_t buddy_init(mem_map_region_t h_mem_reg, mem_map_region_t c_mem_reg) {
 
     buddy_slot_t *ptr = (buddy_slot_t*) goto_porder_idx(&ref, max_pow_order);
     buddy_slot_t largest_slot = {
-            .base_addr = 0,
+            .base_addr = c_mem_reg.base_addr,
             .pow_order = max_pow_order,
             .used = 0
     };
@@ -115,14 +115,29 @@ static void insert_slot(buddy_ref_t *ref, buddy_slot_t slot) {
     }
 }
 
-static void remove_slot(buddy_ref_t *ref, buddy_slot_t slot) {
-    buddy_slot_t *idx = (buddy_slot_t*) goto_porder_idx(ref, slot.pow_order);
-    uint64_t n_entries = n_of_entries(ref, slot.pow_order);
+static void remove_slot(buddy_ref_t *ref, buddy_slot_t* slot) {
+    buddy_slot_t *idx = (buddy_slot_t*) goto_porder_idx(ref, slot->pow_order);
+    uint64_t n_entries = n_of_entries(ref, slot->pow_order);
 
     for (size_t i = 0; i < n_entries; i++) {
         buddy_slot_t *tmp = (idx + i);
-        if (is_entry_empty(tmp)) {
-            *tmp = slot;
+        if (tmp->base_addr == slot->base_addr) {
+
+            if(i == (n_entries - 1))
+                memzero(tmp, sizeof(buddy_slot_t));
+            else{
+                memcpy(tmp, tmp+1, (n_entries - i) * sizeof(buddy_slot_t));
+
+                //remove last entry as it is duplicated
+                // TODO: fuck, this is horrendous..I have to fix this
+                for (size_t j = i+1; j < n_entries - 1; j++) {
+                    tmp = (idx + j + 1);
+                    if(is_entry_empty(tmp)){
+                        memzero(tmp - 1, sizeof(buddy_slot_t));
+                    }
+                }
+            }
+
             break;
         }
     }
@@ -140,7 +155,7 @@ void* buddy_alloc(buddy_ref_t *ref, uint64_t bytes) {
         k_order = ref->min_pow_order;
 
     bool found = false;
-    buddy_slot_t *ptr = NULL;
+    uintptr_t *ptr = NULL;
     uint8_t tmp_k_order = k_order;
 
     while (true) {
@@ -159,7 +174,7 @@ void* buddy_alloc(buddy_ref_t *ref, uint64_t bytes) {
             };
 
             buddy_slot_t right = {
-                    .base_addr = idx->base_addr + upow(2, idx->pow_order) / 2,
+                    .base_addr = idx->base_addr + upow(2, idx->pow_order -1) ,
                     .pow_order = idx->pow_order - 1,
                     .used = 0
             };
@@ -172,11 +187,17 @@ void* buddy_alloc(buddy_ref_t *ref, uint64_t bytes) {
 
             // now that the split happened, try to acquire the one we are after
             tmp_k_order--;
+        }else {
+            // we found the perfect fit \o/
+            idx->used = 1;
+            found = true;
+            ptr = (uintptr_t*)idx->base_addr;
+            break;
         }
     }
 
     BUG_ON(!found);
-    return &ptr->base_addr;
+    return ptr;
 }
 
 //void buddy_free(buddy_ref_t *ref, void *ptr) {
