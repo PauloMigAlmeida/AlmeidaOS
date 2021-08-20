@@ -19,5 +19,7 @@ int rand_r(uint32_t seed);
 uint64_t round_up_po2(uint64_t value, uint64_t power_of_2);
 uint64_t flp2(uint64_t value);
 uint64_t clp2(uint64_t value);
+int ilog2(uint64_t value);
+uint64_t upow(uint64_t base, uint64_t exp);
 
 #endif /* _KERNEL_LIB_MATH_H */
