@@ -32,16 +32,14 @@ uint64_t kmem_calc_kernel_mem_space() {
 }
 
 void kmem_init(void) {
-    /* calc memory space the kernel is entitled to */
-    uint64_t k_mem_space = kmem_calc_kernel_mem_space();
 
     /* reserve memory area to hold kernel stack which is going to be 2x 4Kb PAGES (same as Linux) */
-    mem_map_region_t k_stack_rg = mem_alloc_region(
+    /*mem_map_region_t k_stack_rg =*/ mem_alloc_region(
             pa((uint64_t) &kernel_virt_start_addr) - ELF_TEXT_OFFSET - PAGE_SIZE * 2,
             round_up_po2(pa((uint64_t) &kernel_virt_start_addr) - ELF_TEXT_OFFSET, PAGE_SIZE));
 
     /* reserve memory area already used to hold the kernel */
-    mem_map_region_t k_text_rg = mem_alloc_region(
+    /*mem_map_region_t k_text_rg =*/ mem_alloc_region(
             pa((uint64_t) &kernel_virt_start_addr) - ELF_TEXT_OFFSET,
             round_up_po2(pa((uint64_t) &kernel_virt_end_addr), PAGE_SIZE));
 
@@ -49,12 +47,16 @@ void kmem_init(void) {
 //    k_mem_space -= 1 * 1024 * 1024;
 //    k_mem_space -= k_stack_rg.length;
 //    k_mem_space -= k_text_rg.length;
+    /* calc memory space the kernel is entitled to */
+    uint64_t k_mem_content_space = kmem_calc_kernel_mem_space();
 
     /* reserve memory area to be used by the buddy memory allocator */
-    mem_map_region_t k_mem_rg = mem_alloc_amount(k_mem_space);
-    k_mem_alloc = buddy_alloc_init(k_mem_rg);
+    uint64_t k_mem_header_space = buddy_alloc_calc_header_space(k_mem_content_space);
+    mem_map_region_t k_mem_header_rg = mem_alloc_amount(k_mem_header_space);
+    mem_map_region_t k_mem_content_rg = mem_alloc_amount(k_mem_content_space);
+    k_mem_alloc = buddy_alloc_init(k_mem_header_rg, k_mem_content_rg);
 
-    mem_print_entries();
+//    mem_print_entries();
 
 }
 
