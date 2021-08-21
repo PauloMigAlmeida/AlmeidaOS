@@ -28,6 +28,9 @@ uint64_t kmem_calc_kernel_mem_space() {
     if (k_mem_space > KMEM_MAX_KERNEL_SPACE)
         k_mem_space = KMEM_MAX_KERNEL_SPACE;
 
+    //FOR TESTING PURPOSES ONLY
+    k_mem_space = 1024 * 1024; // 1 MB
+
     printk_info("kernel space is: %llu bytes", k_mem_space);
 
     return flp2(k_mem_space);
@@ -59,15 +62,16 @@ void kmem_init(void) {
     mem_map_region_t k_mem_content_rg = mem_alloc_amount(k_mem_content_space);
     k_mem_alloc = buddy_init(k_mem_header_rg, k_mem_content_rg);
 
-//    mem_print_entries();
+    mem_print_entries();
 
 }
 
 void* kmalloc(uint64_t bytes) {
+    //TODO we have to deal with Virtual addresses here too
     return buddy_alloc(&k_mem_alloc, bytes);
 }
 
-//void kfree(void *ptr) {
-//    buddy_free(&k_mem_alloc, ptr);
-//}
+void kfree(void *ptr) {
+    buddy_free(&k_mem_alloc, (uintptr_t)ptr);
+}
 

@@ -21,7 +21,7 @@ typedef struct {
 uint64_t buddy_calc_header_space(uint64_t mem_space);
 buddy_ref_t buddy_init(mem_map_region_t h_mem_reg, mem_map_region_t c_mem_reg);
 void* buddy_alloc(buddy_ref_t *ref, uint64_t bytes);
-void buddy_free(buddy_ref_t *ref, void* ptr);
+void buddy_free(buddy_ref_t *ref, uintptr_t ptr);
 
 
 #endif /* INCLUDE_KERNEL_MM_BUDDY_H_ */

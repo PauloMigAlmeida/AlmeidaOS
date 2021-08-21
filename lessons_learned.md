@@ -294,10 +294,12 @@ Because of that, I implemented a simple version of the qsort algorithm based on 
 found on Safari books.
 
 
+### GDB print struct array - (22/08/2021)
 
+@(number) determines how many times you the operation to repeat
 
-
-
-
+```
+ p (buddy_slot_t)*0x100000@511
+```
 
 
