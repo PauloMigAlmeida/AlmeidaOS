@@ -126,16 +126,7 @@ static void remove_slot(buddy_ref_t *ref, buddy_slot_t* slot) {
             if(i == (n_entries - 1))
                 memzero(tmp, sizeof(buddy_slot_t));
             else{
-                memcpy(tmp, tmp+1, (n_entries - i) * sizeof(buddy_slot_t));
-
-                //remove last entry as it is duplicated
-                // TODO: fuck, this is horrendous..I have to fix this
-                for (size_t j = i+1; j < n_entries - 1; j++) {
-                    tmp = (idx + j + 1);
-                    if(is_entry_empty(tmp)){
-                        memzero(tmp - 1, sizeof(buddy_slot_t));
-                    }
-                }
+                memmove(tmp, tmp+1, (n_entries - i) * sizeof(buddy_slot_t));
             }
 
             break;
@@ -162,7 +153,11 @@ void* buddy_alloc(buddy_ref_t *ref, uint64_t bytes) {
         buddy_slot_t *idx = find_free_slot(ref, tmp_k_order);
 
         if (!idx) {
-            /* means nothing is in this k_order, we need to split a higher order blk */
+            /* we've exausted the possibilities, simply there is no memory left */
+            if (tmp_k_order == ref->max_pow_order)
+                break;
+
+            /* nothing found in this k_order, we need to split a higher order blk */
             tmp_k_order++;
 
         } else if (idx->pow_order > k_order) {
