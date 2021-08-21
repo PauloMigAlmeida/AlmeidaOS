@@ -1,8 +1,6 @@
 #include "kernel/lib/string.h"
 #include "kernel/lib/math.h"
 
-void strrev(char *str, size_t length);
-
 void* memcpy(void *dst, const void *src, size_t size) {
 
     /*
@@ -63,6 +61,40 @@ void* memset(void *buf, char value, size_t size) {
 
 void* memzero(void *dst, size_t size) {
     return memset(dst, 0, size);
+}
+
+void* memmove(void *dst, void *src, size_t size) {
+    char *t_dst = dst;
+    char *t_src = src;
+
+    /* sanity check */
+    if (t_src == t_dst)
+        return dst;
+
+    memcpy(t_dst, t_src, size);
+
+    if ((t_dst > t_src && (t_src + size) < t_dst) || (t_src > t_dst && (t_dst + size) < t_src)) {
+        /* they don't interset */
+        memzero(t_src, size);
+    } else if (t_dst > t_src) {
+        memzero(t_src, size - (t_dst - t_src));
+    } else {
+        memzero(t_src + ((t_src + size) - (t_dst + size)), (t_src + size) - (t_dst + size));
+    }
+
+    return dst;
+}
+
+void strrev(char *str, size_t length) {
+    /* str is expected to be NUL-terminated */
+    if (length < 2)
+        return;
+
+    for (size_t start = 0, end = length - 1; start < length / 2; start++, end--) {
+        char tmp = *(str + start);
+        *(str + start) = *(str + end);
+        *(str + end) = tmp;
+    }
 }
 
 /**
@@ -140,17 +172,5 @@ size_t strlen(const char *buf) {
     for (; *(buf + len) != '\0'; len++)
         ;
     return len;
-}
-
-void strrev(char *str, size_t length) {
-    /* str is expected to be NUL-terminated */
-    if (length < 2)
-        return;
-
-    for (size_t start = 0, end = length - 1; start < length / 2; start++, end--) {
-        char tmp = *(str + start);
-        *(str + start) = *(str + end);
-        *(str + end) = tmp;
-    }
 }
 

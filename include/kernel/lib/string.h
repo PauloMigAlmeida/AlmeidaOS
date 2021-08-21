@@ -13,6 +13,7 @@
 /* C standard functions */
 void* memcpy(void *dst, const void *src, size_t size);
 void* memset(void *buf, char value, size_t size);
+void* memmove(void *dst, void *src, size_t size);
 size_t strlen(const char *buf);
 
 /* non-standard functions (although commonly used by other compilers) */
