@@ -31,6 +31,11 @@ typedef struct {
     slot_type_t type;
 } buddy_slot_t;
 
+static void print_mem_region(mem_map_region_t rg) {
+    printk_info("buddy: start: 0x%llx end: 0x%llx length (Kb): %llu", rg.base_addr,
+            rg.base_addr + rg.length,
+            rg.length / 1024);
+}
 
 uint64_t buddy_calc_header_space(uint64_t mem_space) {
     BUG_ON(mem_space != flp2(mem_space));
@@ -41,11 +46,8 @@ uint64_t buddy_calc_header_space(uint64_t mem_space) {
 }
 
 static uint64_t goto_porder_idx(buddy_ref_t *ref, uint8_t pow_order) {
-    uint64_t offset_addr = 0;
-    int cond = ref->max_pow_order - pow_order;
-    for (int i = (ref->max_pow_order - ref->min_pow_order); i > cond; i--) {
-        offset_addr += upow(2, i);
-    }
+    uint64_t offset_addr = upow(2, (ref->max_pow_order - (ref->min_pow_order - 1)))
+            - upow(2, ref->max_pow_order - pow_order + 1);
     return ref->header_mem_reg.base_addr + (offset_addr * sizeof(buddy_slot_t));
 }
 
@@ -88,6 +90,9 @@ __force_inline static bool is_entry_empty(buddy_slot_t *idx) {
 
 buddy_ref_t buddy_init(mem_map_region_t h_mem_reg, mem_map_region_t c_mem_reg) {
     BUG_ON(c_mem_reg.length != flp2(c_mem_reg.length));
+
+    print_mem_region(h_mem_reg);
+    print_mem_region(c_mem_reg);
 
     uint8_t max_pow_order = ilog2(c_mem_reg.length);
 
