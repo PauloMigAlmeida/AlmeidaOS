@@ -17,7 +17,7 @@
  * Typically the lower limit would be small enough to minimize the average
  * wasted space per allocation, but large enough to avoid excessive overhead.
  */
-#define BUDDY_ALLOC_SMALLEST_BLOCK   4096
+#define BUDDY_ALLOC_SMALLEST_BLOCK   1024
 
 typedef enum {
     UNUSED,
@@ -30,12 +30,6 @@ typedef struct {
     uint8_t pow_order;
     slot_type_t type;
 } buddy_slot_t;
-
-static void print_mem_region(mem_map_region_t rg) {
-    printk_info("buddy: start: 0x%llx end: 0x%llx length (Kb): %llu", rg.base_addr,
-            rg.base_addr + rg.length,
-            rg.length / 1024);
-}
 
 uint64_t buddy_calc_header_space(uint64_t mem_space) {
     BUG_ON(mem_space != flp2(mem_space));
@@ -90,9 +84,6 @@ __force_inline static bool is_entry_empty(buddy_slot_t *idx) {
 
 buddy_ref_t buddy_init(mem_map_region_t h_mem_reg, mem_map_region_t c_mem_reg) {
     BUG_ON(c_mem_reg.length != flp2(c_mem_reg.length));
-
-    print_mem_region(h_mem_reg);
-    print_mem_region(c_mem_reg);
 
     uint8_t max_pow_order = ilog2(c_mem_reg.length);
 
