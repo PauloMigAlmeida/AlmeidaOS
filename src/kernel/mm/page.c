@@ -15,10 +15,15 @@
 #include "kernel/compiler/bug.h"
 #include "kernel/compiler/freestanding.h"
 
-#define PREP_BASE_ADDR(addr)        ((((uint64_t )addr) >> 12) & (UINT64_MAX >> (sizeof(uint64_t) * CHAR_BIT - (64-36))))
+#define PREP_BASE_ADDR(addr)        (((addr) >> 12) & (UINT64_MAX >> (sizeof(uint64_t) * CHAR_BIT - (64-36))))
 #define PAGE_STD_BITS               0x03
 
-static pml4e_t *k_pml4_table;
+typedef struct {
+    uint64_t phys_root;     ///< Physical address of root page table (PML4T) entry
+    uint64_t virt_root;     ///< Virtual address of root page table (PML4T) entry
+} pagetable_t;
+
+static pagetable_t k_root_pgt;
 
 /*
  * Database Operations:
@@ -44,12 +49,12 @@ uint64_t paging_calc_space_needed(uint64_t bytes) {
     return clp2((bytes / PAGE_SIZE) * sizeof(pml4e_t));
 }
 
-void* pageframe_alloc(void) {
+uint64_t pageframe_alloc(void) {
     /* check if we haven't run out of page frames to allocate */
     BUG_ON(pfdb.p_next_free_addr > pfdb.p_end_addr);
 
     /* alloc page frame */
-    uintptr_t *ret = (uintptr_t*) pfdb.p_next_free_addr;
+    uint64_t ret = pfdb.p_next_free_addr;
 
     /* adjust references to the next free page frame */
     pfdb.p_next_free_addr += PAGEFRAME_SIZE;
@@ -67,7 +72,8 @@ void paging_init(mem_map_region_t k_pages_struct_rg) {
     memzero((void*) k_pages_struct_rg.base_addr, k_pages_struct_rg.length);
 
     /* allocate the kernel root page table that will be used across the OS */
-    k_pml4_table = pageframe_alloc();
+    k_root_pgt.phys_root = pageframe_alloc();
+    k_root_pgt.virt_root = va(k_root_pgt.phys_root);
 }
 
 __force_inline bool is_page_entry_empty(void *entry) {
@@ -79,12 +85,12 @@ void page_alloc(pml4e_t *pml4_pgtable, uint64_t v_addr, uint64_t p_dest_addr) {
     /* Alloc PML4if needed */
     uint16_t pm4l_idx = extract_bit_chunk(39, 47, v_addr);
     if (is_page_entry_empty(&pml4_pgtable[pm4l_idx])) {
-        uintptr_t *pdp_pgtable = pageframe_alloc();
+        uintptr_t pdp_pgtable_addr = pageframe_alloc();
 
         pml4e_t hh_pml4_entry = {
                 .no_execute_bit = 0,
                 .available_guardhole = 0,
-                .pdpe_base_addr = PREP_BASE_ADDR(pdp_pgtable),
+                .pdpe_base_addr = PREP_BASE_ADDR(pdp_pgtable_addr),
                 .flags = PAGE_STD_BITS
         };
 
@@ -93,14 +99,14 @@ void page_alloc(pml4e_t *pml4_pgtable, uint64_t v_addr, uint64_t p_dest_addr) {
 
     /* Alloc PDP if needed */
     uint16_t pdp_idx = extract_bit_chunk(30, 38, v_addr);
-    pdpe_t *pdp_pgtable = (pdpe_t*) ((uintptr_t) pml4_pgtable[pm4l_idx].pdpe_base_addr << 12);
+    pdpe_t *pdp_pgtable = (pdpe_t*) va(pml4_pgtable[pm4l_idx].pdpe_base_addr << 12);
     if (is_page_entry_empty(&pdp_pgtable[pdp_idx])) {
-        uintptr_t *pd_pgtable = pageframe_alloc();
+        uintptr_t pd_pgtable_addr = pageframe_alloc();
 
         pdpe_t hh_pdpe_entry = {
                 .no_execute_bit = 0,
                 .available_guardhole = 0,
-                .pde_base_addr = PREP_BASE_ADDR(pd_pgtable),
+                .pde_base_addr = PREP_BASE_ADDR(pd_pgtable_addr),
                 .flags = PAGE_STD_BITS
         };
 
@@ -109,14 +115,14 @@ void page_alloc(pml4e_t *pml4_pgtable, uint64_t v_addr, uint64_t p_dest_addr) {
 
     /* Alloc PD if needed */
     int pd_idx = extract_bit_chunk(21, 29, v_addr);
-    pde_t *pd_pgtable = (pde_t*) ((uintptr_t) pdp_pgtable[pdp_idx].pde_base_addr << 12);
+    pde_t *pd_pgtable = (pde_t*) va(pdp_pgtable[pdp_idx].pde_base_addr << 12);
     if (is_page_entry_empty(&pd_pgtable[pd_idx])) {
-        uintptr_t *pt_pgtable = pageframe_alloc();
+        uintptr_t pt_pgtable_addr = pageframe_alloc();
 
         pde_t hh_pde_entry = {
                 .no_execute_bit = 0,
                 .available_guardhole = 0,
-                .pte_base_addr = PREP_BASE_ADDR(pt_pgtable),
+                .pte_base_addr = PREP_BASE_ADDR(pt_pgtable_addr),
                 .flags = PAGE_STD_BITS
         };
         pd_pgtable[pd_idx] = hh_pde_entry;
@@ -124,7 +130,7 @@ void page_alloc(pml4e_t *pml4_pgtable, uint64_t v_addr, uint64_t p_dest_addr) {
 
     /* Alloc PT if needed */
     uint16_t pt_idx = extract_bit_chunk(12, 20, v_addr);
-    pte_t *pt_pgtable = (pte_t*) ((uintptr_t) pd_pgtable[pd_idx].pte_base_addr << 12);
+    pte_t *pt_pgtable = (pte_t*) va(pd_pgtable[pd_idx].pte_base_addr << 12);
     if (is_page_entry_empty(&pt_pgtable[pt_idx])) {
         pte_t hh_pte_entry = {
                 .no_execute_bit = 0,
@@ -138,9 +144,11 @@ void page_alloc(pml4e_t *pml4_pgtable, uint64_t v_addr, uint64_t p_dest_addr) {
 }
 
 void paging_identity_map(uint64_t p_start_addr, uint64_t p_end_addr, uint64_t v_base_start_addr) {
+
+    pml4e_t *pml4_table = (pml4e_t *)k_root_pgt.virt_root;
     while (p_start_addr <= p_end_addr) {
 
-        page_alloc(k_pml4_table, v_base_start_addr, p_start_addr);
+        page_alloc(pml4_table, v_base_start_addr, p_start_addr);
 
         p_start_addr += PAGE_SIZE;
         v_base_start_addr += PAGE_SIZE;
@@ -149,5 +157,5 @@ void paging_identity_map(uint64_t p_start_addr, uint64_t p_end_addr, uint64_t v_
 
 void paging_reload_cr3() {
     //TODO: Figure out a way to move k_pml4_table somewhere else so this function can get a pgtable argument instead
-    load_cr3((uint64_t)k_pml4_table);
+    load_cr3(k_root_pgt.phys_root);
 }

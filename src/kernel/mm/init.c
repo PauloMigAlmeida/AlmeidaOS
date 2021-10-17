@@ -69,7 +69,7 @@ void mm_init(void) {
     /*
      * We have to make sure that the paging structure sits within the first 10MB
      * identity-mapped pages set up before we moved to long mode, otherwise we can't
-     * access these locations. Luckily for us, the e820 return content is sorted
+     * access these locations. Luckily for us, we sorted the e820 return content
      * so that we are likely to find a space that fits in the begining of the
      * physical memory.
      */
