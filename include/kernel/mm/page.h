@@ -10,7 +10,7 @@
 
 #include "kernel/compiler/freestanding.h"
 #include "kernel/compiler/macro.h"
-
+#include "kernel/arch/mem.h"
 
 /*
  * Notes to myself:
@@ -48,6 +48,9 @@ typedef struct {
 	uint8_t no_execute_bit:1;
 } __packed pte_t;
 
-void paging_init(void);
+uint64_t paging_calc_space_needed(uint64_t bytes);
+void paging_init(mem_map_region_t k_pages_struct_rg);
+void paging_identity_map(uint64_t p_start_addr, uint64_t p_end_addr, uint64_t v_base_start_addr);
+void paging_reload_cr3();
 
 #endif /* INCLUDE_KERNEL_MM_PAGE_H_ */

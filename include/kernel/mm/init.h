@@ -10,6 +10,7 @@
 
 #define ELF_TEXT_OFFSET         0x1000
 #define PAGE_SIZE               0x1000
+#define PAGEFRAME_SIZE          0x1000
 
 void mm_init(void);
 

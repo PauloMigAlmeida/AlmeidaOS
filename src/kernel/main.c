@@ -10,13 +10,6 @@
 #include "kernel/device/keyboard.h"
 #include "kernel/interrupt/spurious.h"
 #include "kernel/mm/init.h"
-//temp
-#include "kernel/arch/mem.h"
-#include "kernel/mm/page.h"
-#include "kernel/lib/math.h"
-#include "kernel/lib/shuffle.h"
-#include "kernel/lib/qsort.h"
-#include "kernel/compiler/bug.h"
 
 
 void kmain(void) {

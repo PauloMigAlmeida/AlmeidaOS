@@ -9,8 +9,9 @@
 #define INCLUDE_KERNEL_MM_KMEM_H_
 
 #include "kernel/compiler/freestanding.h"
+#include "kernel/arch/mem.h"
 
-void kmem_init(void);
+void kmem_init(mem_map_region_t k_mem_header_rg, mem_map_region_t k_mem_content_rg);
 void* kmalloc(uint64_t bytes);
 void kfree(void *ptr);
 
