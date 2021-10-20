@@ -143,11 +143,10 @@ void page_alloc(pml4e_t *pml4_pgtable, uint64_t v_addr, uint64_t p_dest_addr) {
 
 }
 
-void paging_identity_map(uint64_t p_start_addr, uint64_t p_end_addr, uint64_t v_base_start_addr) {
-
+void paging_contiguous_map(uint64_t p_start_addr, uint64_t p_end_addr, uint64_t v_base_start_addr) {
     pml4e_t *pml4_table = (pml4e_t *)k_root_pgt.virt_root;
-    while (p_start_addr <= p_end_addr) {
 
+    while (p_start_addr <= p_end_addr) {
         page_alloc(pml4_table, v_base_start_addr, p_start_addr);
 
         p_start_addr += PAGE_SIZE;

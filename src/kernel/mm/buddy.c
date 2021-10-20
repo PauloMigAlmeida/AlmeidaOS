@@ -17,7 +17,7 @@
  * Typically the lower limit would be small enough to minimize the average
  * wasted space per allocation, but large enough to avoid excessive overhead.
  */
-#define BUDDY_ALLOC_SMALLEST_BLOCK   1024
+#define BUDDY_ALLOC_SMALLEST_BLOCK   4096
 
 typedef enum {
     UNUSED,
@@ -36,7 +36,7 @@ uint64_t buddy_calc_header_space(uint64_t mem_space) {
 
     int max_k = ilog2(mem_space);
     int min_k = ilog2(BUDDY_ALLOC_SMALLEST_BLOCK);
-    return (upow(2, (max_k - min_k) + 1) - 1) * sizeof(buddy_slot_t);
+    return (upow(2, (max_k - min_k) + 1)) * sizeof(buddy_slot_t);
 }
 
 static uint64_t goto_porder_idx(buddy_ref_t *ref, uint8_t pow_order) {

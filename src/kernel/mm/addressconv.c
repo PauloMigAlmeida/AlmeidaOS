@@ -14,11 +14,11 @@
 /* convert physical address to virtual address */
 uint64_t va(uint64_t phys_addr) {
     BUG_ON(phys_addr > PHYS_ADDR_MAX_BOUNDARY);
-    return PHYS_ADDR_KERNEL_START + phys_addr;
+    return VIRT_ADDR_KERNEL_START + phys_addr;
 }
 
 /* convert virtual address to physical address */
 uint64_t pa(uint64_t virt_addr) {
     BUG_ON(virt_addr < PHYS_ADDR_MAX_BOUNDARY);
-    return virt_addr - PHYS_ADDR_KERNEL_START;
+    return virt_addr - VIRT_ADDR_KERNEL_START;
 }

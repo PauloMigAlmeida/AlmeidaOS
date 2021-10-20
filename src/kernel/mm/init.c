@@ -22,7 +22,6 @@
  * - implement kmalloc - Done
  * - implement vmalloc - TBD
  *
- * HOw am I gonna reserve space for the mem allocator? Seems like the chicken and the egg problem
  */
 
 extern volatile void kernel_virt_start_addr;
@@ -73,11 +72,9 @@ void mm_init(void) {
      * so that we are likely to find a space that fits in the begining of the
      * physical memory.
      */
-    BUG_ON((k_pages_struct_rg.base_addr + k_pages_struct_rg.length) > (10*1024*1024));
+    BUG_ON((k_pages_struct_rg.base_addr + k_pages_struct_rg.length) > (10 * 1024 * 1024));
     paging_init(k_pages_struct_rg);
-    paging_identity_map(0, pa((uint64_t) &kernel_virt_end_addr), PHYS_ADDR_KERNEL_START);
-    paging_reload_cr3();
-
+    paging_contiguous_map(0, pa((uint64_t) &kernel_virt_end_addr), K_VIRT_TEXT_ADDR);
 
     /* reserve memory area to be used by the buddy memory allocator */
     mem_map_region_t k_mem_header_rg = mem_alloc_amount(k_mem_header_space);
@@ -85,9 +82,21 @@ void mm_init(void) {
 
     mem_print_entries();
 
-    //TEMP disabled until I finish testing the paging stuff
-    /* initialise kernel memory && kmalloc */
-//    kmem_init(k_mem_header_rg, k_mem_content_rg);
+    paging_contiguous_map(k_mem_header_rg.base_addr,
+            k_mem_header_rg.base_addr + k_mem_header_rg.length,
+            K_VIRT_MEM_HEADER_ADDR);
 
+    paging_contiguous_map(k_mem_content_rg.base_addr,
+            k_mem_content_rg.base_addr + k_mem_content_rg.length,
+                K_VIRT_MEM_CONTENT_ADDR);
+
+    /* Reload CR3 with new Paging structure */
+    paging_reload_cr3();
+
+
+    /* initialise kernel memory && kmalloc */
+    k_mem_header_rg.base_addr = K_VIRT_MEM_HEADER_ADDR;
+    k_mem_content_rg.base_addr = K_VIRT_MEM_CONTENT_ADDR;
+    kmem_init(k_mem_header_rg, k_mem_content_rg);
 }
 

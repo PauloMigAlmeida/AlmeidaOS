@@ -40,6 +40,7 @@ static void calc_phys_memory_stats(void) {
 }
 
 void mem_print_entries(void) {
+    printk_info("==========");
     for (size_t cur_pos = 0; cur_pos < mem_blocks->num_entries; cur_pos++) {
         mem_map_region_t mem_region = mem_blocks->mem_region[cur_pos];
 
@@ -51,6 +52,7 @@ void mem_print_entries(void) {
 
     printk_info("Memory Length (kB): Total: %lu Free: %lu", phys_mem_stat.phys_avail_mem / 1024,
             phys_mem_stat.phys_free_mem / 1024);
+    printk_info("==========");
 }
 
 static int qsort_cmp_mem_region(const void *a, const void *b) {
@@ -283,7 +285,7 @@ mem_map_region_t mem_alloc_amount(uint64_t length) {
     /* sanity check */
     BUG_ON(length == 0);
 
-    mem_map_region_t ret_region = { .base_addr = 0, .length = 0, .type = 0 };
+    mem_map_region_t ret_region = {0};
 
     for (size_t cur_pos = 0; cur_pos < mem_blocks->num_entries; cur_pos++) {
         mem_map_region_t *mem_rg = &mem_blocks->mem_region[cur_pos];

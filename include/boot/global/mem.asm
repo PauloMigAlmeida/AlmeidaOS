@@ -72,7 +72,7 @@ Paging.End.Address    equ   0x00028000 ; 0x23000 + 5 PT tables (512 entries of 6
 ;                  |            |                  |         |     starting offset of kernel mappings.
 ;__________________|____________|__________________|_________|__________________________________________________________
 ;                                                            |
-;                                                            | Kernel-space virtual memory, shared btw all processes
+;                                                            | Kernel-space virtual memory, shared among all processes
 ;____________________________________________________________|__________________________________________________________
 ;                  |            |                  |         |
 ; ffff800000000000 | -128    TB | ffff80001fffffff |  512 MB | kernel text mapping, mapped to physical address 0
@@ -81,8 +81,11 @@ Paging.End.Address    equ   0x00028000 ; 0x23000 + 5 PT tables (512 entries of 6
 ; ffff800020000000 | ~ -128  TB | ffff80003fffffff |  512 MB | unused hole / guard hole
 ;__________________|____________|____________________________|__________________________________________________________
 ;                  |            |                  |         |
-; ffff800040000000 | ~ -128  TB | ffff80007fffffff |    1 GB | kernel address space (max), which includes space mapped
-;                  |            |                  |         | for kmalloc, vmalloc
+; ffff800040000000 | ~ -128  TB | ffff80005fffffff |  512 MB | kernel address space -> memory allocator header
+;__________________|____________|____________________________|__________________________________________________________
+;                  |            |                  |         |
+; ffff800060000000 | ~ -128  TB | ffff80009fffffff |    1 GB | kernel address space -> content (max), which includes
+;                  |            |                  |         | space mapped for kmalloc, vmalloc
 ;__________________|____________|__________________|_________|__________________________________________________________
 ;
 ;======================================================================================================================
