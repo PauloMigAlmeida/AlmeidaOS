@@ -34,6 +34,8 @@ global vector39
   push %1
   ; save general purpose registers
   pushaq
+  ; save system control registers
+  pushacr
 %endmacro
 
 ; No error code is returned from this vector, so we fake one to ensure we can use a single C struct for simplicity
@@ -44,6 +46,8 @@ global vector39
   push %1
   ; save general purpose registers
   pushaq
+  ; save system control registers
+  pushacr
 %endmacro
 
 %macro  vector_interrupt_restore_state 0
@@ -51,6 +55,8 @@ global vector39
   add rsp, 16
   ; restore general purpose registers
   popaq
+  ; pop system control registers off the stack
+  add rsp, 40
 %endmacro
 
 %macro  vector_interrupt_body_generator 0
@@ -73,6 +79,7 @@ section .text
 ; Pre-defined vectors used in the x86-64 IDT (Long mode)
 ;
 ; Stack state:
+;	-> push all system control registers
 ;   -> push all general purpose registers
 ;   -> push trap number
 ;   -> push error number - not all interrupts have one but this ensure I can use

@@ -43,3 +43,32 @@
   pop rax       ;restore rax
 %endmacro
 
+;=============================================================================
+; pushacr
+;
+; Push all system control registers onto the tstack
+;
+; Return flags:
+;   None
+;
+; Killed registers:
+;   rax
+;=============================================================================
+%macro pushacr 0
+	mov rax, cr0
+    push rax
+
+    mov rax, cr2
+    push rax
+
+    mov rax, cr3
+    push rax
+
+    mov rax, cr4
+    push rax
+
+	mov rax, cr8
+    push rax
+%endmacro
+
+

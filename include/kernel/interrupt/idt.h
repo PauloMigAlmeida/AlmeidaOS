@@ -31,6 +31,18 @@ typedef struct {
 } __packed registers_64_t;
 
 typedef struct {
+    /* System control registers: AMD manual 3.1, Page: 41 */
+    uint64_t cr8;
+    uint64_t cr4;
+    uint64_t cr3;
+    uint64_t cr2;
+    uint64_t cr0;
+} __packed sys_ctrl_regs_t;
+
+typedef struct {
+    /* 64-bits general purpose registers*/
+    sys_ctrl_regs_t sys_ctrl_regs;
+
     /* 64-bits general purpose registers*/
     registers_64_t regs;
 
