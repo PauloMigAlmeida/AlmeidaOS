@@ -165,7 +165,6 @@ void idt_init(void) {
 
     printk_info("Loading IDT");
     load_idt(&idt64_table_pointer);
-    printk_info("Enabling interruptions");
 }
 
 /*

@@ -13,16 +13,27 @@
 
 
 void kmain(void) {
+    /* printk init */
     printk_init(PRINTK_INFO_LEVEL);
     vga_console_init();
+
+    /* CPU features initialisation */
     cpu_init();
-    mm_init();
+
+    /* Interrupt Descriptor table */
     idt_init();
 
+    /* Programmable Interrupt Controller */
     pic_init();
+
+    /* Programmable Interval Timerchip */
     pit_init(100);
 
+    /* Unleash all possible problems in the world */
     enable_interrupts();
+
+    /* memory management module init */
+    mm_init();
 
     /* enabled IRQs */
     spurious_irq_enable();

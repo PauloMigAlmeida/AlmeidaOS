@@ -27,8 +27,8 @@ static pagetable_t k_root_pgt;
 
 /*
  * Database Operations:
- *  -> Get next available free page frame or BUG_ON if none is available
- *  -> Free page frame by reference
+ *  -> Get next available free page frame or BUG_ON if none is available -> Done
+ *  -> Free page frame by reference -> TBD
  *
  *  Questions: Should that be pagetable or pageframe? I guess this is a matter of nomenclature really
  *      as both of them occupy the same amount og space... darn it, this thing gets more confusing

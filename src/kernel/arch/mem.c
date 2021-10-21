@@ -185,7 +185,7 @@ void mem_init(void) {
 
     /* Calculate available phys memory once so we don't have to do it again */
     calc_phys_memory_stats();
-    mem_print_entries();
+//    mem_print_entries();
 
     printk_info("read_bios_mem_map routine read %llu entries", mem_blocks->num_entries);
 }
