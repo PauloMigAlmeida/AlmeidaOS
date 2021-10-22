@@ -312,8 +312,8 @@ pm_move_kernel:
   xor esi, esi
 
   mov edi, Kernel.New.Start.PhysicalAddress
-  mov esi, Loader.Kernel.Start.Address ; 0x8c00
-  mov ecx, (512 * Kernel.File.NumberOfBlocks) / 4 ; ; 512*100/4 = 12800 DWORDs
+  mov esi, Loader.Kernel.Start.Address
+  mov ecx, (512 * Kernel.File.NumberOfBlocks) / 4 ;  blk_size * n_blk / 4 = n DWORDs
   rep movsd
 
   popa

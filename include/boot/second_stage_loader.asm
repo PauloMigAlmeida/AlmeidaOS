@@ -14,6 +14,7 @@
 Realmode.SecondStage.Booting.Msg            db 'Booting Second Stage Loader',CR,LF,0
 Realmode.SecondStage.A20Enabled.Msg         db 'A20 enabled successfully',CR,LF,0
 Realmode.SecondStage.A20EnablingError.Msg   db 'A20 could not be enabled. Aborting',CR,LF,0
+Realmode.SecondStage.KernelLoaded.Msg  		db 'Kernel loaded into memory',CR,LF,0
 Realmode.SecondStage.CPUIDNotSupported.Msg  db 'CPUID instruction is not available. Aborting',CR,LF,0
 Realmode.SecondStage.64BitNotSupported.Msg  db '64-bit mode is not available. Aborting',CR,LF,0
 Realmode.SecondStage.64BitSupported.Msg     db '64-bit mode is available',CR,LF,0
@@ -218,6 +219,52 @@ test_A20:
 
         ret
 
+read_kernel_from_disk:
+  ; preserve all registers
+  pusha
+
+  ; Read the kernel file from the disk.
+  xor edx, edx
+
+  ; Set destination address where kernel will be loaded
+  mov eax, Loader.Kernel.Start.Address
+  mov edx, Kernel.File.NumberOfBlocks
+  mov ecx, 6
+
+  .read_run:
+  	cmp edx, BIOS.DiskExt.MaxBlocksPerOp
+  	jle .read_remainder
+
+  ; read max number of blocks supported
+  .read_block:
+  	; define number of blocks to be read
+  	mov ebx, BIOS.DiskExt.MaxBlocksPerOp
+  	; read from disk
+  	call bios_extended_read_sectors_from_drive
+
+	; Adjust absolute block number from which the reading will start
+  	add ecx, BIOS.DiskExt.MaxBlocksPerOp
+  	; Subtract blocks read from the number of blocks that comprise the kernel
+  	sub edx, BIOS.DiskExt.MaxBlocksPerOp
+  	; Adjust destination address
+  	add eax, BIOS.DiskExt.MaxBlocksPerOp * 512
+  	; read next block
+  	jmp .read_run
+
+  ; read remainder blocks
+  .read_remainder:
+  	; define number of blocks to be read
+  	mov ebx, edx
+  	; read from disk
+  	call bios_extended_read_sectors_from_drive
+
+  ; status message
+  mov si, Realmode.SecondStage.KernelLoaded.Msg
+  call display_string
+
+  ; restore registers
+  popa
+  ret
 
 ;===============================================================================
 ; memzero

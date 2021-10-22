@@ -27,10 +27,11 @@
 ; Physical Memory utilisation layout:
 ;
 ;   Second Loader   = 0x07e00 -> 0x8800        (assuming 5 IO blocks)
-;   E820 memory map = 0x08800 -> 0x8c00        (assuming 512 bytes which is enough space for 128 entries)
-;   Kernel          = 0x08c00 -> 0x15400       (assuming 100 IO blocks)
-;   (guard hole)   = 0x15400 -> 0x20000        (room to increase any of the above [+- 96 Kb]
+;   E820 memory map = 0x08800 -> 0x9000        (assuming 2048 bytes which is enough space for 102 entries)
+;   Kernel          = 0x09000 -> 0x1bc00       (assuming 150 IO blocks)
+;   (guard hole)    = 0x1bc00 -> 0xfffff       (room to increase any of the above [+- 912 Kb] - hard limit given A20)
 ;   Early Paging    = 0x20000 -> 0x28000       (early 10-MiB identity paging)
+;												 - Kernel is moved to another location before early paging is setup
 ;======================================================================================================================
 
 ;======================================================================================================================
@@ -41,7 +42,7 @@ Loader.Mem.Stack.Top        equ   0x00007e00
 
 ; BIOS e820 memory map
 e820.Mem.Start.Address     equ (Loader.Mem.Stack.Top + Loader.File.NumberOfBlocks * 512) ; this should be 0x8800
-e820.Mem.End.Address       equ (e820.Mem.Start.Address + 2 * 512) ; enough for 128 entries
+e820.Mem.End.Address       equ (e820.Mem.Start.Address + 4 * 512) ; enough for 102 entries
 
 ; Kernel code:
 Loader.Kernel.Start.Address       equ e820.Mem.End.Address
@@ -49,12 +50,13 @@ Kernel.New.Start.PhysicalAddress  equ 0x00200000
 Kernel.New.ELFTextHeader.Offset   equ 0x00001000 ; .text starts <p> + 0x1000
 
 ; Early paging
-Paging.Start.Address  equ   0x00020000
-Mem.PML4.Address      equ   0x00020000  ; PML4
-Mem.PDPE.Address      equ   0x00021000 ; 0x20000 + PML4 (512 entries of 64 bits)
-Mem.PDE.Address       equ   0x00022000 ; 0x21000 + PDPE (512 entries of 64 bits)
-Mem.PTE.Address       equ   0x00023000 ; 0x22000 + PDE (512 entries of 64 bits)
-Paging.End.Address    equ   0x00028000 ; 0x23000 + 5 PT tables (512 entries of 64 bits)
+Paging.Start.Address  equ   0x20000
+Paging.Table.Size     equ   0x1000									  ; 0x1000 = 4kb = 512 entries of 64 bits
+Mem.PML4.Address      equ   Paging.Start.Address                      ; PML4
+Mem.PDPE.Address      equ   Mem.PML4.Address + Paging.Table.Size      ; 0x20000 + PML4 (512 entries of 64 bits)
+Mem.PDE.Address       equ   Mem.PDPE.Address + Paging.Table.Size      ; 0x21000 + PDPE (512 entries of 64 bits)
+Mem.PTE.Address       equ   Mem.PDE.Address  + Paging.Table.Size      ; 0x22000 + PDE (512 entries of 64 bits)
+Paging.End.Address    equ   Mem.PTE.Address  + Paging.Table.Size * 5  ; 0x23000 + 5 PT tables (512 entries of 64 bits)
 
 
 ;======================================================================================================================

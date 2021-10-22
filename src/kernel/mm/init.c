@@ -43,22 +43,32 @@ static uint64_t calc_kernel_mem_space() {
     return k_mem_space;
 }
 
+static void print_mem_alloc(char *desc, mem_map_region_t *region) {
+    printk_info("[%s]: start: 0x%llx end: 0x%llx length (Kb): %llu", desc,
+            region->base_addr,
+            region->base_addr + region->length,
+            region->length / 1024);
+}
+
 static void reserve_kernel_sections(void) {
     /* reserve memory area to hold kernel stack which is going to be 2x 4Kb PAGES (same as Linux) */
-    mem_alloc_region(
+    mem_map_region_t kern_stack = mem_alloc_region(
             pa((uint64_t) &kernel_virt_start_addr) - ELF_TEXT_OFFSET - PAGE_SIZE * 2,
             round_up_po2(pa((uint64_t) &kernel_virt_start_addr) - ELF_TEXT_OFFSET, PAGE_SIZE));
+    print_mem_alloc("K_STACK", &kern_stack);
 
     /* reserve memory area already used to hold the kernel */
-    mem_alloc_region(
+    mem_map_region_t kern_elf_file = mem_alloc_region(
             pa((uint64_t) &kernel_virt_start_addr) - ELF_TEXT_OFFSET,
             round_up_po2(pa((uint64_t) &kernel_virt_end_addr), PAGE_SIZE));
+    print_mem_alloc("K_ELF", &kern_elf_file);
 }
 
 static void paging_setup(uint64_t total_kern_space) {
     /* Calculate space required to hold page table struct to accomodate the entire kernel space */
     uint64_t paging_mem = paging_calc_space_needed(total_kern_space);
     mem_map_region_t k_pages_struct_rg = mem_alloc_amount(paging_mem);
+    print_mem_alloc("K_PAGE_STR", &k_pages_struct_rg);
 
     /*
      * We have to make sure that the paging structure sits within the first 10MB
@@ -73,14 +83,14 @@ static void paging_setup(uint64_t total_kern_space) {
     /* identity mapping all the way to the end kernel text */
     paging_contiguous_map(0, pa((uint64_t) &kernel_virt_end_addr), K_VIRT_TEXT_ADDR);
 
-    /* Reload CR3 with new Paging structure */
-    paging_reload_cr3();
 }
 
 static void buddy_allocator_setup(uint64_t k_mem_header_space, uint64_t k_mem_content_space) {
     /* reserve memory area to be used by the buddy memory allocator */
     mem_map_region_t k_mem_header_rg = mem_alloc_amount(k_mem_header_space);
+    print_mem_alloc("K_BUDDY_H", &k_mem_header_rg);
     mem_map_region_t k_mem_content_rg = mem_alloc_amount(k_mem_content_space);
+    print_mem_alloc("K_BUDDY_C", &k_mem_content_rg);
 
 //    mem_print_entries();
 
@@ -92,6 +102,9 @@ static void buddy_allocator_setup(uint64_t k_mem_header_space, uint64_t k_mem_co
     paging_contiguous_map(k_mem_content_rg.base_addr,
             k_mem_content_rg.base_addr + k_mem_content_rg.length,
             K_VIRT_MEM_CONTENT_ADDR);
+
+    /* Reload CR3 with new Paging structure */
+    paging_reload_cr3();
 
     /* initialise kernel memory && kmalloc */
     k_mem_header_rg.base_addr = K_VIRT_MEM_HEADER_ADDR;
@@ -112,7 +125,7 @@ void mm_init(void) {
     // @formatter:off
     /* allocate and provisiong the paging space required to accomodate everything */
     paging_setup(
-            /* bold move saying that from 0 all the way to 0x200000 is required */
+            /* bold move saying that from 0 all the way to 0x200000 is *also* required */
             pa((uint64_t) &kernel_virt_end_addr) +
             /* Kernel space */
             k_mem_content_space +

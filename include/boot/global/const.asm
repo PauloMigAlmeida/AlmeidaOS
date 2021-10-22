@@ -14,7 +14,8 @@
 ; will be the unit used for now. This defines that the second stage Loader
 ; can't be bigger than 5*512 bytes (which ought to be enough for now)
 Loader.File.NumberOfBlocks   equ   5
-Kernel.File.NumberOfBlocks   equ   100
+Kernel.File.NumberOfBlocks   equ   150
+BIOS.DiskExt.MaxBlocksPerOp  equ   127 ; (some BIOSes are limited to 127 sectors)
 
 ;===============================================================================
 ; Message Constants

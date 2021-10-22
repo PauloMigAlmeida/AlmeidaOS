@@ -73,7 +73,7 @@ boot:
     xor ecx, ecx
 
     ; Read the second-stage loader from the disk.
-    mov eax, (0 << 4) + Loader.Mem.Stack.Top
+    mov eax, Loader.Mem.Stack.Top
     mov bx, Loader.File.NumberOfBlocks
     mov ecx, 1
     call bios_extended_read_sectors_from_drive

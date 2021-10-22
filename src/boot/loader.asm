@@ -73,11 +73,8 @@ boot:
   ; Attempt to enable the A20 line if necessary.
   call enable_A20
 
-  ; Read the kernel file from the disk.
-  mov eax, (0 << 4) + (Loader.Kernel.Start.Address)
-  mov ebx, Kernel.File.NumberOfBlocks
-  mov ecx, 6
-  call bios_extended_read_sectors_from_drive
+  ; read kernel from disk and move it to memory
+  call read_kernel_from_disk
 
   ; Check whether we are running on a 64-bit processor
   call cpu_supports_64_bit_mode

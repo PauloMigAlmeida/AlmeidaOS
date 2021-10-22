@@ -95,7 +95,14 @@ bios_extended_read_sectors_from_drive:
   ;   buffer to which sectors will be transferred (note that x86 is
   ;   little-endian: if declaring the segment and offset separately,
   ;   the offset must be declared before the segment)
-  mov dword[si+4], eax
+  mov word[si+4], ax ; offset
+
+  ; obtain upper half of the eax register
+  shr eax, 16
+  ; adjust result to fit the segment:offset schema
+  shl eax, 12
+
+  mov word[si+6], ax ; segment
   ; offset: 08h..0Fh  | range size: 8 byte | absolute number of the start of the
   ;    sectors to be read (1st sector of drive has number 0) using logical block
   ;    addressing (note that the lower half comes before the upper half)

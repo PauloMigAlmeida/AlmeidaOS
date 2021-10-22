@@ -42,7 +42,8 @@ qemu-debug:
 .PHONY: gdb-debug
 gdb-debug:
 	@$(GDB) -x $(DIR_SCRIPTS)/gdb/tui_debug_commands.txt \
-		-ex "set directories $(shell find src/ include/ -type d -exec echo -n {}: \;)" \
+		-ex 'b *0x7c00' \
+		-ex "set directories $(shell find src/ include/ -type d -exec echo -n {}: \; | sed 's/.$//')" \
 		-ex 'b kmain'
 	@# Help: Runs GDB with some personal preferences to debug the bootloader
 
