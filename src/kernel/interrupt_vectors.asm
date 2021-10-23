@@ -51,12 +51,12 @@ global vector39
 %endmacro
 
 %macro  vector_interrupt_restore_state 0
-  ; pop trap number and errono off the stack
-  add rsp, 16
-  ; restore general purpose registers
-  popaq
   ; pop system control registers off the stack
   add rsp, 40
+  ; restore general purpose registers
+  popaq
+  ; pop trap number and errono off the stack
+  add rsp, 16
 %endmacro
 
 %macro  vector_interrupt_body_generator 0

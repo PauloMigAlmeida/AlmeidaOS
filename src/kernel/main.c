@@ -29,17 +29,31 @@ void kmain(void) {
     /* Programmable Interval Timerchip */
     pit_init(100);
 
-    /* Unleash all possible problems in the world */
-    enable_interrupts();
-
     /* memory management module init */
     mm_init();
+
+    /* Unleash all possible problems in the world */
+    enable_interrupts();
 
     /* enabled IRQs */
     spurious_irq_enable();
     keyboard_enable();
     pit_enable();
 
+//        // force page fault
+//        memzero((void*)0x20000, 1);
+
+//    /* Testing kmalloc and kmem */
+//    for (int i = 0; i < 8192; i++) {
+//        int rnd = (rand() % (8192)) + 1;
+//        int *ptr = kmalloc(rnd);
+//        if (ptr) {
+//            *ptr = 10;
+//        }
+//        printk_info("i: %d ptr: %p rnd: %d content: %d", i, ptr, rnd, *ptr);
+//        if(ptr)
+//            kfree(ptr);
+//    }
 
 
 //    mem_phys_stats_t t = mem_phys_stat();
@@ -57,8 +71,7 @@ void kmain(void) {
 //    printk_info("nx: 0x%.1x, avai_gh: 0x%lx, pdp_ba: 0x%.16llx, flags: 0x%.4lx",
 //            p->no_execute_bit, p->available_guardhole, p->pdpe_base_addr << 12,
 //            p->flags);
-
-    // doing something stupid for testing
+// doing something stupid for testing
 //    int x = 1 / 0;
 //
 //    // dummy test of the memcpy function
@@ -69,12 +82,10 @@ void kmain(void) {
 //    printk("a: %d\n", a);
 //    x = 1 / 0;
 //    printk("Value of b is: %d\n", b);
-
 // test row reset;
 //  for(int i=0; i < 12; i++){
 //	  printk("i: %d\n", i);
 //  }
-
 //    test soft wrap
 //    printk("abcde/fghijklmnopqrstuvxzabcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxzabcdefghijklmnopqrstuvxz\n");
 //
@@ -94,7 +105,6 @@ void kmain(void) {
 //    int x = -100;
 //    uint64_t ia32_misc_enable = 0x00ff0000000000009;
 //    printk("0x%.16llx and %llu and %o %.15s %.5d %.75c", ia32_misc_enable, ia32_misc_enable, 9, "Paulo", x, 'a');
-
     /* do let kmain finish. Among other things, this ensure that interrupts have to to occur */
     for (;;) {
         asm("hlt");

@@ -16,7 +16,6 @@ void kmem_init(mem_map_region_t k_mem_header_rg, mem_map_region_t k_mem_content_
 }
 
 void* kmalloc(uint64_t bytes) {
-    //TODO we have to deal with Virtual addresses here too
     return buddy_alloc(&k_mem_alloc, bytes);
 }
 

@@ -202,7 +202,7 @@ void interrupt_handler(interrupt_stack_frame_t *int_frame) {
         disable_interrupts();
 
         printk_error("Error: %s, Error Code: 0x%x", exception_strs[int_frame->trap_number], int_frame->error_code);
-        coredump(int_frame, 10);
+        coredump(int_frame, 6);
 
         for (;;) {
             halt();
