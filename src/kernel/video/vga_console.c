@@ -21,14 +21,22 @@
 static int row = 0;
 
 /*
+ * Notes:
+ *
+ * On 21/06/2021:
+ *
  * Controls ring-buffer structure that holds a copy of recently printed msgs.
  * This should come in handy to analyze crashes which memory dumps.
  * Ideally, I would like that to be a separate reusable ring-buff impl, however,
  * I have to implement a kmalloc-like functionality... to I have to play with
  * stuff created in the stack during compile time
  *
- * TODO: create kmalloc functionality and move this ring buffer to a re-useable
- * mod
+ * On 24/10/2021:
+ *
+ * UPDATE: I implemented the kmalloc functionality but I use printk for debugging
+ * purposes as the mm/init.c is very critical. This creates a cyclic dependecy
+ * in which I'm not willing to give up my only debugging method (printk) just to
+ * not have this struct sitting on the stack.
  */
 
 static ringbuffer_tp msg_buffer = { 

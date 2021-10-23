@@ -46,8 +46,6 @@ void keyboard_handle_irq(void) {
     }
     printk_info("Keyboard %s %u\n", event, scan_code);
 
-    // compose cmd line
-
     /* Acknowledge that we've received the interrupt */
     pic_send_eoi(PIC_KEYBOARD_INTERRUPT);
 }

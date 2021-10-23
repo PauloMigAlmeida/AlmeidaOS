@@ -11,6 +11,10 @@
 #include "kernel/compiler/freestanding.h"
 
 /*
+ * Notes:
+ *
+ * On 21/06/2021:
+ *
  * I first created that to hold the VGA messages printed by printk..that's why
  * the hard-coded values there.
  *
@@ -19,8 +23,13 @@
  * I have to implement a kmalloc-like functionality first. Right now I can only
  * have a play with stuff created in the stack during compile time
  *
- * TODO: create kmalloc functionality change this implementation to allow
- * arbitrary size
+ * On 24/10/2021:
+ *
+ * UPDATE: I implemented the kmalloc functionality but I use printk for debugging
+ * purposes as the mm/init.c is very critical. This creates a cyclic dependecy
+ * in which I'm not willing to give up my only debugging method (printk) just to
+ * not have this struct sitting on the stack.
+ *
  */
 
 typedef struct {

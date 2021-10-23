@@ -105,7 +105,8 @@ void kmain(void) {
 //    int x = -100;
 //    uint64_t ia32_misc_enable = 0x00ff0000000000009;
 //    printk("0x%.16llx and %llu and %o %.15s %.5d %.75c", ia32_misc_enable, ia32_misc_enable, 9, "Paulo", x, 'a');
-    /* do let kmain finish. Among other things, this ensure that interrupts have to to occur */
+
+    /* don't let kmain finish. Among other things, this ensure that interrupts have to to occur */
     for (;;) {
         asm("hlt");
     }
