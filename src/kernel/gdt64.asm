@@ -61,20 +61,40 @@ GDT64.Table:
     db      0x00        ; BaseHigh
 
 	; TSS: Task State Segment descriptor (selector = 0x28)
-    dw      0x0000      ; LimitLow
-    dw      0x0000      ; BaseLow
-    db      0x00        ; BaseMiddle
-    db      10001001b   ; P=1, DPL=00, 0, Type=1001 (Available 64-bit TSS - AMD manual 4.8.3)
-    db      00000000b   ; G=0, 0, 0, AVL=0, Segment limit [19:16] = 0
-    db      0x00        ; BaseHigh
-    dd		0x00		; BaseHighest
-    dd		0x00		; Reserved
+	;	Section 7.2.4 - TSS Descriptor in 64-bit mode - Intel 64 manual Volume 3
+TSS64.Descriptor:
+    dw      TSS64.Segment.Size - 1      ; SegmentLimit 	[15:00]
+    dw      0x0000      				; Base Low 		[15:00]
+    db      0x00        				; Base Middle 	[23:16]
+    db      10001001b   				; P=1, DPL=00, 0, Type=1001 (Available 64-bit TSS - AMD manual 4.8.3)
+    db      00000000b   				; G=0, 0, 0, AVL=0, Segment limit [19:16] = 0
+    db      0x00        				; Base High		[31:24]
+    dd		0x00						; Base Highest	[63:32]
+    dd		0x00						; Reserved
 
 GDT64.Table.Size    equ     ($ - GDT64.Table)
 
 GDT64.Table.Pointer:
-    dw  GDT64.Table.Size - 1    ; Limit = offset of last byte in table
+    dw  GDT64.Table.Size - 1    		; Limit = offset of last byte in table
     dq  GDT64.Table
 
+TSS64.Segment:
+	dd 	0x00							; Reserved
+	dq	0x00							; RSP0 (Ring 0 64-bit stack canonical address)
+	dq	0x00							; RSP1 (Ring 1 64-bit stack canonical address)
+	dq	0x00							; RSP2 (Ring 2 64-bit stack canonical address)
+	dq	0x00							; Reserved
+	dq	0x00							; IST 1
+	dq	0x00							; IST 2
+	dq	0x00							; IST 3
+	dq	0x00							; IST 4
+	dq	0x00							; IST 5
+	dq	0x00							; IST 6
+	dq	0x00							; IST 7
+	dq	0x00							; Reserved
+	dw	0x00							; Reserved
+	dw	0x00							; I/O Map Base Address
+
+TSS64.Segment.Size	equ		($ - TSS64.Segment)
 
 %endif ; __ALMEIDAOS_GDT64_INC__

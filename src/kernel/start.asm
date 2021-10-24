@@ -33,10 +33,36 @@ section .head.text
 kernel_entry:
 
   ; Reload the 64-bit GDT.
-  mov rdi, GDT64.Table.Pointer
-  lgdt    [rdi]
+  mov 	rdi, 	GDT64.Table.Pointer
+  lgdt	[rdi]
 
-  ; Load TSS Selector (0x28 on GDT64.Table)
+  ; Prepare TSS Segment
+  mov	rdi,			TSS64.Segment
+  ; RSP0 (lower 32 bits)
+  mov 	DWORD[rdi+4],	Kernel.New.Start.VirtualAddress & 0xffffffff
+  ; RSP0 (upper 32 bits)
+  mov 	DWORD[rdi+8],	(Kernel.New.Start.VirtualAddress >> 32) & 0xffffffff
+
+
+  ; Prepare TSS Descriptor
+  mov	rdi,			TSS64.Descriptor
+  mov	rsi,			TSS64.Segment
+  ; Set Base Low 	 [15:00]
+  mov	[rdi+2],		si
+  shr	rsi,			16
+  ; Set Base Middle  [23:16]
+  mov	[rdi+4],		sil
+  shr	rsi,			8
+  ; Set Base High 	 [31:24]
+  mov	[rdi+7],		sil
+  shr	rsi,			8
+  ; Set Base Highest [63:32]
+  mov	[rdi+8],		esi
+
+
+  ; Load TSS Selector (0x28 on GDT64.Table).
+  ; The LTR instruction loads a segment selector (source operand) into
+  ;	the task register that points to a TSS descriptor in the GDT.
   mov 	ax, 	0x28
   ltr 	ax
 
