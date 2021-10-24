@@ -36,13 +36,17 @@ kernel_entry:
   mov rdi, GDT64.Table.Pointer
   lgdt    [rdi]
 
+  ; Load TSS Selector (0x28 on GDT64.Table)
+  mov 	ax, 	0x28
+  ltr 	ax
+
   ; Far jumps are invalid in long mode so this trick is required
   ; to obtain the same result. This is required to properly load
   ; the new GDT structure
-  push 0x08
-  mov rdi, kernel_start
-  push rdi
-  db 0x48
+  push 	0x08
+  mov 	rdi, 	kernel_start
+  push 	rdi
+  db 	0x48
   retf
 
 

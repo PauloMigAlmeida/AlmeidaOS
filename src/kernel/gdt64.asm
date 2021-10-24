@@ -22,7 +22,7 @@ GDT64.Table:
 
     ; kernel: code segment descriptor (selector = 0x08)
     ; most fields are ignored (hence set to 0) according to AMD 64 manual
-    ;   Section 4.8.1 - Long-Mode Code Segment Descriptiors
+    ;   Section 4.8.1 - Long-Mode Code Segment Descriptors
     dw      0x0000      ; LimitLow
     dw      0x0000      ; BaseLow
     db      0x00        ; BaseMiddle
@@ -32,7 +32,7 @@ GDT64.Table:
 
     ; kernel: data segment descriptor (selector = 0x10)
     ; most fields are ignored (hence set to 0) according to AMD 64 manual
-    ;   Section 4.8.3 - Long-Mode Data Segment Descriptiors
+    ;   Section 4.8.3 - Long-Mode Data Segment Descriptors
     dw      0x0000      ; LimitLow
     dw      0x0000      ; BaseLow
     db      0x00        ; BaseMiddle
@@ -40,6 +40,35 @@ GDT64.Table:
     db      0x00        ; LimitHighFlags -> G=0, D=0, L=0, AVL=0, Segment limit [19:16] = 0
     db      0x00        ; BaseHigh
 
+    ; user: code segment descriptor (selector = 0x18)
+    ; most fields are ignored (hence set to 0) according to AMD 64 manual
+    ;   Section 4.8.1 - Long-Mode Code Segment Descriptors
+    dw      0x0000      ; LimitLow
+    dw      0x0000      ; BaseLow
+    db      0x00        ; BaseMiddle
+    db      11111000b   ; P=1, DPL=11, 1, 1, C=0, R=0 , A=0
+    db      00100000b   ; G=0, D=0, L=1, AVL=0, Segment limit [19:16] = 0
+    db      0x00        ; BaseHigh
+
+    ; user: data segment descriptor (selector = 0x20)
+    ; most fields are ignored (hence set to 0) according to AMD 64 manual
+    ;   Section 4.8.3 - Long-Mode Data Segment Descriptors
+    dw      0x0000      ; LimitLow
+    dw      0x0000      ; BaseLow
+    db      0x00        ; BaseMiddle
+    db      11110010b   ; Access -> P=1, DPL=11, 1, 0, E=0, W=1 , A=0
+    db      0x00        ; LimitHighFlags -> G=0, D=0, L=0, AVL=0, Segment limit [19:16] = 0
+    db      0x00        ; BaseHigh
+
+	; TSS: Task State Segment descriptor (selector = 0x28)
+    dw      0x0000      ; LimitLow
+    dw      0x0000      ; BaseLow
+    db      0x00        ; BaseMiddle
+    db      10001001b   ; P=1, DPL=00, 0, Type=1001 (Available 64-bit TSS - AMD manual 4.8.3)
+    db      00000000b   ; G=0, 0, 0, AVL=0, Segment limit [19:16] = 0
+    db      0x00        ; BaseHigh
+    dd		0x00		; BaseHighest
+    dd		0x00		; Reserved
 
 GDT64.Table.Size    equ     ($ - GDT64.Table)
 
