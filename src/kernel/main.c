@@ -17,6 +17,9 @@ void kmain(void) {
     printk_init(PRINTK_INFO_LEVEL);
     vga_console_init();
 
+    /* memory management module init */
+    mm_init();
+
     /* CPU features initialisation */
     cpu_init();
 
@@ -28,9 +31,6 @@ void kmain(void) {
 
     /* Programmable Interval Timerchip */
     pit_init(100);
-
-    /* memory management module init */
-    mm_init();
 
     /* Unleash all possible problems in the world */
     enable_interrupts();
@@ -44,6 +44,8 @@ void kmain(void) {
 //        memzero((void*)0x20000, 1);
 
 //    /* Testing kmalloc and kmem */
+//    #include "kernel/lib/math.h"
+//    #include "kernel/mm/kmem.h"
 //    for (int i = 0; i < 8192; i++) {
 //        int rnd = (rand() % (8192)) + 1;
 //        int *ptr = kmalloc(rnd);

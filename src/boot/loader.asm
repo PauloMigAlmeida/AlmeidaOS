@@ -106,6 +106,12 @@ protected_mode_boot:
 ;       If the ES, FS, and/or GS registers are not going to be used,
 ;       load them with a null selector.
 
+  ; Turn off interrupts for SS:SP update to avoid a problem with buggy 8088 CPUs
+  ; Also, interrupts will be disabled all the way to long mode as I don't need
+  ; them in protected mode for anything. In fact, this was causing a weird
+  ; race condition on QEMU that took me a few months to figure the culprit out
+  cli
+
   ; 0x10 = 16 which points to the GDT Data Segment (and the right DPL too)
   mov ax, 0x10
   mov ds, ax
@@ -115,14 +121,6 @@ protected_mode_boot:
   mov ss, ax
   mov esp, Loader.Mem.Stack.Top
 
-
-  ; 10. Execute the LIDT instruction to load the IDTR register with the address
-  ;   and limit of the protected-mode IDT.
-  lidt [IDT32.Table.Pointer]
-
-  ; 11. Execute the STI instruction to enable maskable hardware interrupts and
-  ;   perform the necessary hardware operation to enable NMI interrupts.
-  sti
 
   ; fix video text printing
   call pm_retrive_video_cursor_settings

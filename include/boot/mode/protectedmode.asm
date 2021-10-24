@@ -16,7 +16,6 @@ PM.Video_Text.Colour      equ 0x07    ; White on black attribute
 ;===============================================================================
 ; Message Constants
 ;===============================================================================
-ProtectedMode.SecondStage.32IDTVec0.Msg  db 'Div by 0 32-bit trap gate trigged',CR,LF,0
 ProtectedMode.SecondStage.CleanPages.Msg db 'Cleaning 4-level paging structure',CR,LF,0
 ProtectedMode.SecondStage.PagesBuilt.Msg db 'Identity-mapped pages setup for first 10MiB',CR,LF,0
 
@@ -26,59 +25,6 @@ ProtectedMode.SecondStage.PagesBuilt.Msg db 'Identity-mapped pages setup for fir
 cur_row:      dd 0x00
 cur_col:      dd 0x00
 screen_width: dd 0x00
-
-;=============================================================================
-; Interrupt Descriptor Table used (temporarily) in 32-bit protected mode
-;=============================================================================
-IDT32.Table:
-.vec0:
-    dw pm_div0_int_handler  ; offset bits 0..15
-    dw 0x0008               ; a code segment selector in GDT or LDT
-    db 0x00                 ; unused, set to 0
-    db 10001111b            ; ( P=1, DPL=00b, S=0, type=1111b ) -> 32-bit trap gate
-    dw 0x0000               ; offset bits 16..31
-
-IDT32.Table.Size  equ  ($ - IDT32.Table)
-
-IDT32.Table.Pointer:
-  dw IDT32.Table.Size - 1
-  dq IDT32.Table
-
-;===============================================================================
-; Functions
-;===============================================================================
-
-;===============================================================================
-; pm_div0_int_handler:
-;
-; Dummy 32-bit trap gate handler that displays a message when triggered.
-; The rationale for creating this function here is to get me used to the IDT
-; structure (took me a while to understand it) as I know I will have to use it
-; in long mode for real work.
-;
-; Refs: https://wiki.osdev.org/Interrupts_Descriptor_Table
-;       https://stackoverflow.com/a/3425381/832748
-;       https://www.amd.com/system/files/TechDocs/24593.pdf (Chapter 8)
-;
-; Killed registers:
-;   None
-;===============================================================================
-pm_div0_int_handler:
-  ; preserve the registers
-  pusha;
-
-  ; display the status message
-  mov eax, ProtectedMode.SecondStage.32IDTVec0.Msg
-  call pm_display_string
-
-  ; restore the registers
-  popa
-
-  ; at this point of the booting process/developement, any int is 'fatal'.
-  ; usually, we would use iret to return to the EIP that triggered this
-  ; interruption but this would only trigger it again.. so I'm halting the os
-  jmp pm_endless_loop
-  ; iret
 
 ;===============================================================================
 ; pm_retrive_video_cursor_settings
