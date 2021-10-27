@@ -336,13 +336,13 @@ go_to_ring3:
     iretq
 
 user_entry:
-	; Check if we are really in Ring 3) 
+    ; Check if we are really in Ring 3) 
     mov ax, cs
     and ax, 3
     cmp al, 11b
     jne user_end
 
-	; Print a character in the vga to confirm
+    ; Print a character in the vga to confirm
     mov rax, 0xffff8000000b8000
     mov byte[rax], 'U'
     mov rax, 0xffff8000000b8001
