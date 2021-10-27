@@ -321,21 +321,28 @@ On `src/kernel/start.asm`:
 global go_to_ring3
 
 go_to_ring3:
+    ; SS selector + RPL = 3 (Ring 3)
     push 0x20 | 3
+    ; RSP address (in this test I'm using the same stack for kernel)
     mov rax, Kernel.New.Start.VirtualAddress
     push rax
+    ; RFLAGS (inclusing interrupt flag = enabled)
     push 0x202
+    ; CS selector + RPL = 3 (Ring 3)
     push 0x18 | 3
+    ; RIP (place in which the CPU should start processing)
     mov rax, user_entry
     push rax
     iretq
 
 user_entry:
+	; Check if we are really in Ring 3) 
     mov ax, cs
     and ax, 3
     cmp al, 11b
     jne user_end
 
+	; Print a character in the vga to confirm
     mov rax, 0xffff8000000b8000
     mov byte[rax], 'U'
     mov rax, 0xffff8000000b8001
