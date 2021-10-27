@@ -316,7 +316,7 @@ To test it quickly, we can afford the luxury of 'not doing it right' and just te
 
 On `src/kernel/start.asm`:
 
-```
+```assembly
 ; Export to C 
 global go_to_ring3
 
