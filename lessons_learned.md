@@ -281,11 +281,12 @@ options significantly.
 I initially thought of using MergeSort (modified to work on Linked-List to keep O(1) auxiliary
 space).
 
-Pros: 
+**Pros**: 
 
 - in the worst case, it doesn't degrade to O(n^2) like quicksort (even though this can be 
 	mostly statistically avoided) 
-Cons:
+
+**Cons**:
 
 - the fact that linked list nodes would require a pointer would end up increasing the size of
 each entry significantly as each entry is just 20-bytes long.
@@ -302,4 +303,66 @@ found on Safari books.
  p (buddy_slot_t)*0x100000@511
 ```
 
+### Testing TSS - (27/10/2021)
 
+In OS development, the easiest thing is to get to 'analysis paralysis' state. That's what prevents progress 
+given that can always start with something more archaic and evolve it later.
+
+To test interrupts in Ring 3, one needs to choose among the many different ways to jump to ring 3. Most likely,
+one wants to use syscall and sysret (because that's what it wants to implement that for his OS) but that implies
+that a lot more must be implemented before this could be tested.
+
+To test it quickly, we can afford the luxury of 'not doing it right' and just test that already. Here is what I did:
+
+On `src/kernel/start.asm`:
+
+```
+; Export to C 
+global go_to_ring3
+
+go_to_ring3:
+    push 0x20 | 3
+    mov rax, Kernel.New.Start.VirtualAddress
+    push rax
+    push 0x202
+    push 0x18 | 3
+    mov rax, user_entry
+    push rax
+    iretq
+
+user_entry:
+    mov ax, cs
+    and ax, 3
+    cmp al, 11b
+    jne user_end
+
+    mov rax, 0xffff8000000b8000
+    mov byte[rax], 'U'
+    mov rax, 0xffff8000000b8001
+    mov byte[rax], 0xE
+
+user_end:
+    jmp user_end
+
+``` 
+
+On `src/kernel/main.c`:
+
+```C
+extern void go_to_ring3(void);
+
+void kmain(void) {
+	.....
+    /* Unleash all possible problems in the world */
+    enable_interrupts();
+
+    /* enabled IRQs */
+    spurious_irq_enable();
+    keyboard_enable();
+    pit_enable();
+
+    /* Test jumping to Ring 3 */
+    go_to_ring3();
+}
+	
+```
