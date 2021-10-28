@@ -306,7 +306,7 @@ found on Safari books.
 ### Testing TSS - (27/10/2021)
 
 In OS development, the easiest thing is to get to 'analysis paralysis' state. That's what prevents progress 
-given that can always start with something more archaic and evolve it later.
+given that we can always start with something more archaic and evolve it later.
 
 To test interrupts in Ring 3, one needs to choose among the many different ways to jump to ring 3. Most likely,
 one wants to use syscall and sysret (because that's what it wants to implement that for his OS) but that implies

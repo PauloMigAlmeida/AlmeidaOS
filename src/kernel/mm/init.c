@@ -67,7 +67,8 @@ static void reserve_kernel_sections(void) {
 static void paging_setup(uint64_t total_kern_space) {
     /* Calculate space required to hold page table struct to accomodate the entire kernel space */
     uint64_t paging_mem = paging_calc_space_needed(total_kern_space);
-    mem_map_region_t k_pages_struct_rg = mem_alloc_amount(paging_mem);
+    /* The PML4 table must be aligned on a 4-Kbyte base address - AMD manual section 5.3.2  */
+    mem_map_region_t k_pages_struct_rg = mem_alloc_amount(paging_mem, PAGE_SIZE);
     print_mem_alloc("K_PAGE_STR", &k_pages_struct_rg);
 
     /*
@@ -87,9 +88,9 @@ static void paging_setup(uint64_t total_kern_space) {
 
 static void buddy_allocator_setup(uint64_t k_mem_header_space, uint64_t k_mem_content_space) {
     /* reserve memory area to be used by the buddy memory allocator */
-    mem_map_region_t k_mem_header_rg = mem_alloc_amount(k_mem_header_space);
+    mem_map_region_t k_mem_header_rg = mem_alloc_amount(k_mem_header_space, PAGE_SIZE);
     print_mem_alloc("K_BUDDY_H", &k_mem_header_rg);
-    mem_map_region_t k_mem_content_rg = mem_alloc_amount(k_mem_content_space);
+    mem_map_region_t k_mem_content_rg = mem_alloc_amount(k_mem_content_space, PAGE_SIZE);
     print_mem_alloc("K_BUDDY_C", &k_mem_content_rg);
 
 //    mem_print_entries();

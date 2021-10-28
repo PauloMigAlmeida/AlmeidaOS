@@ -6,11 +6,12 @@
  */
 
 #include "kernel/arch/mem.h"
+#include "kernel/compiler/bug.h"
 #include "kernel/mm/addressconv.h"
 #include "kernel/lib/printk.h"
 #include "kernel/lib/string.h"
-#include "kernel/compiler/bug.h"
 #include "kernel/lib/qsort.h"
+#include "kernel/lib/math.h"
 
 #define E820_MEM_TYPE_USABLE    1
 #define E820_MEM_TYPE_RESERVED  2
@@ -19,7 +20,7 @@ extern uintptr_t e820_mem_start;
 extern uintptr_t e820_mem_end;
 
 static mem_map_block_t *mem_blocks;
-static mem_phys_stats_t phys_mem_stat = { .phys_avail_mem = 0, .phys_free_mem = 0 };
+static mem_phys_stats_t phys_mem_stat = { 0 };
 
 /* calculates how much memory we have available so we can choose how to partition the phys mem later */
 static void calc_phys_memory_stats(void) {
@@ -277,19 +278,31 @@ mem_map_region_t mem_alloc_region(uint64_t phys_start_addr, uint64_t phys_end_ad
     return ret_region;
 }
 
-mem_map_region_t mem_alloc_amount(uint64_t length) {
+mem_map_region_t mem_alloc_amount(uint64_t length, uint64_t addr_align) {
     /* sanity check */
     BUG_ON(length == 0);
+    /* validate if that's a power of 2 */
+    BUG_ON(addr_align != clp2(addr_align));
 
-    mem_map_region_t ret_region = {0};
+    mem_map_region_t ret_region = { 0 };
 
     for (size_t cur_pos = 0; cur_pos < mem_blocks->num_entries; cur_pos++) {
         mem_map_region_t *mem_rg = &mem_blocks->mem_region[cur_pos];
 
+        /* find an elegible memory region */
         if (mem_rg->length >= length && mem_rg->type == E820_MEM_TYPE_USABLE) {
-            ret_region = mem_alloc_region(mem_rg->base_addr, mem_rg->base_addr + length);
-            break;
+
+            /* align the start address of this region */
+            uint64_t base_addr = round_up_po2(mem_rg->base_addr, addr_align);
+
+            /* check if that region is still fit for the job after the start address alignment round up */
+            if(base_addr >= mem_rg->base_addr && (base_addr + length ) <= (mem_rg->base_addr + mem_rg->length)){
+                ret_region = mem_alloc_region(mem_rg->base_addr, mem_rg->base_addr + length);
+                break;
+            }
+
         }
+
     }
 
     BUG_ON(ret_region.base_addr == 0 || ret_region.length == 0 || ret_region.type == 0);
