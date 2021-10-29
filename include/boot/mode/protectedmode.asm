@@ -17,7 +17,7 @@ PM.Video_Text.Colour      equ 0x07    ; White on black attribute
 ; Message Constants
 ;===============================================================================
 ProtectedMode.SecondStage.CleanPages.Msg db 'Cleaning 4-level paging structure',CR,LF,0
-ProtectedMode.SecondStage.PagesBuilt.Msg db 'Identity-mapped pages setup for first 10MiB',CR,LF,0
+ProtectedMode.SecondStage.PagesBuilt.Msg db 'Identity-mapped pages setup for first 16MiB',CR,LF,0
 
 ;=============================================================================
 ; Global variables
@@ -320,20 +320,23 @@ pm_setup_page_tables:
     ;   -> one entry in a PDPT can address 1GB
     mov DWORD [Mem.PDPE.Address], (Mem.PDE.Address ) | .StdBits
 
-    ; Create entries [0...4] in PDE Table.
+    ; Create entries [0...7] in PDE Table.
     ;   -> one entry in a PDE can address 2MB
     mov DWORD [Mem.PDE.Address], (Mem.PTE.Address ) | .StdBits
     mov DWORD [Mem.PDE.Address + 0x08], ((Mem.PTE.Address + 0x1000) ) | .StdBits
     mov DWORD [Mem.PDE.Address + 0x10], ((Mem.PTE.Address + 0x1000 * 2) ) | .StdBits
     mov DWORD [Mem.PDE.Address + 0x18], ((Mem.PTE.Address + 0x1000 * 3) ) | .StdBits
     mov DWORD [Mem.PDE.Address + 0x20], ((Mem.PTE.Address + 0x1000 * 4) ) | .StdBits
+    mov DWORD [Mem.PDE.Address + 0x28], ((Mem.PTE.Address + 0x1000 * 5) ) | .StdBits
+    mov DWORD [Mem.PDE.Address + 0x30], ((Mem.PTE.Address + 0x1000 * 6) ) | .StdBits
+    mov DWORD [Mem.PDE.Address + 0x38], ((Mem.PTE.Address + 0x1000 * 7) ) | .StdBits
 
     ; Create all 512 entries in the PT table.
     ;   -> one entry in a PT can address 4Kb
 
     ; Prep
     mov edi, Mem.PTE.Address
-    mov ecx, 512 * 5
+    mov ecx, 512 * 8
     mov eax,  .StdBits
 
     .make_pte_page:
@@ -361,14 +364,14 @@ pm_enter_long_mode:
   ; Load the 64-bit GDT.
   lgdt    [GDT64.Temp.Table.Pointer]
 
-  ; Enable PAE paging.
+  ; Enable PAE paging and Global Pages
   mov     eax,    cr4
   or      eax,    (1 << 5)    ; CR4.PAE
+  or      eax,    (1 << 7)    ; CR4.PGE
   mov     cr4,    eax
 
   ; CR3 is the page directory base register.
   mov     eax,    Paging.Start.Address
-  ; mov eax, 0x80000
   mov     cr3,    eax
 
   ; Enable 64-bit mode
@@ -388,8 +391,9 @@ pm_enter_long_mode:
 
 
 pm_endless_loop:
-; Disable interruptions
-cli
+  ; Disable interruptions
+  cli
+
   .end:
     hlt
     jmp .end

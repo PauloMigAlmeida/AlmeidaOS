@@ -56,7 +56,7 @@ Mem.PML4.Address      equ   Paging.Start.Address                      ; PML4
 Mem.PDPE.Address      equ   Mem.PML4.Address + Paging.Table.Size      ; 0x20000 + PML4 (512 entries of 64 bits)
 Mem.PDE.Address       equ   Mem.PDPE.Address + Paging.Table.Size      ; 0x21000 + PDPE (512 entries of 64 bits)
 Mem.PTE.Address       equ   Mem.PDE.Address  + Paging.Table.Size      ; 0x22000 + PDE (512 entries of 64 bits)
-Paging.End.Address    equ   Mem.PTE.Address  + Paging.Table.Size * 5  ; 0x23000 + 5 PT tables (512 entries of 64 bits)
+Paging.End.Address    equ   Mem.PTE.Address  + Paging.Table.Size * 8  ; 0x2a000 + 8 PT tables (512 entries of 64 bits)
 
 
 ;======================================================================================================================

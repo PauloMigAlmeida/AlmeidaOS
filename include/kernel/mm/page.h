@@ -20,6 +20,18 @@
  * bitfield for that.
  */
 
+#define PAGE_PRESENT_BIT            (1 << 0)
+#define PAGE_READ_WRITE_BIT         (1 << 1)
+#define PAGE_USER_SUPERVISOR_BIT    (1 << 2)
+#define PAGE_PL_WRITETHR_BIT        (1 << 3)
+#define PAGE_PL_CACHEDIS_BIT        (1 << 4)
+#define PAGE_ACCESSED_BIT           (1 << 5)
+#define PAGE_DIRTY_BIT              (1 << 6)
+#define PAGE_PAGESIZE_BIT           (1 << 7)
+#define PAGE_GLOBAL_BIT             (1 << 8)
+
+#define PAGE_STD_BITS               PAGE_PRESENT_BIT | PAGE_READ_WRITE_BIT
+
 typedef struct {
 	uint16_t flags:12;
 	uint64_t pdpe_base_addr:36;
@@ -55,7 +67,7 @@ typedef struct {
 
 uint64_t paging_calc_space_needed(uint64_t bytes);
 void paging_init(mem_map_region_t k_pages_struct_rg, mem_map_region_t k_pfdb_struct_rg);
-void paging_contiguous_map(uint64_t p_start_addr, uint64_t p_end_addr, uint64_t v_base_start_addr);
+void paging_contiguous_map(uint64_t p_start_addr, uint64_t p_end_addr, uint64_t v_base_start_addr, uint16_t flags);
 void paging_reload_cr3();
 
 #endif /* INCLUDE_KERNEL_MM_PAGE_H_ */

@@ -15,15 +15,6 @@
 #include "kernel/lib/math.h"
 #include "kernel/compiler/bug.h"
 
-/*
- * TODO: Next steps:
- * - Map kernel space in here so we don't end up offering that memory to something else that can override it - Done
- * - Figure out what to do with the Kernel stack mem? (how to reserve that to avoid data corruption) - Done
- * - Initiate a memory allocator (slab or buddy system) - Done (Buddy)
- * - implement kmalloc - Done
- * - implement vmalloc - TBD
- *
- */
 
 extern volatile void kernel_virt_start_addr;
 extern volatile void kernel_virt_end_addr;
@@ -75,20 +66,22 @@ static void paging_setup(uint64_t total_kern_space) {
     mem_map_region_t k_pfdb_struct_rg = mem_alloc_amount(pfdb_mem, PAGE_SIZE);
     print_mem_alloc("K_PFDB_STR", &k_pfdb_struct_rg);
 
-
     /*
-     * We have to make sure that the paging structure sits within the first 10MB
+     * We have to make sure that the paging structure sits within the first 16MB
      * identity-mapped pages set up before we moved to long mode, otherwise we can't
      * access these locations. Luckily for us, we sorted the e820 return content
      * so that we are likely to find a space that fits in the begining of the
      * physical memory.
      */
-    BUG_ON((k_pages_struct_rg.base_addr + k_pages_struct_rg.length) > (10 * 1024 * 1024));
-    BUG_ON((k_pfdb_struct_rg.base_addr + k_pfdb_struct_rg.length) > (10 * 1024 * 1024));
+    BUG_ON((k_pages_struct_rg.base_addr + k_pages_struct_rg.length) > (16 * 1024 * 1024));
+    BUG_ON((k_pfdb_struct_rg.base_addr + k_pfdb_struct_rg.length) > (16 * 1024 * 1024));
     paging_init(k_pages_struct_rg, k_pfdb_struct_rg);
 
     /* identity mapping all the way to the end kernel text */
-    paging_contiguous_map(0, pa((uint64_t) &kernel_virt_end_addr), K_VIRT_TEXT_ADDR);
+    paging_contiguous_map(0,
+            pa((uint64_t) &kernel_virt_end_addr),
+            K_VIRT_TEXT_ADDR,
+            PAGE_PRESENT_BIT | PAGE_READ_WRITE_BIT | PAGE_GLOBAL_BIT);
 
 }
 
@@ -107,11 +100,13 @@ static void buddy_allocator_setup(void) {
     /* anticipatory paging for kernel space. Demand paging will be used for user space only */
     paging_contiguous_map(k_mem_header_rg.base_addr,
             k_mem_header_rg.base_addr + k_mem_header_rg.length,
-            K_VIRT_MEM_HEADER_ADDR);
+            K_VIRT_MEM_HEADER_ADDR,
+            PAGE_PRESENT_BIT | PAGE_READ_WRITE_BIT | PAGE_GLOBAL_BIT);
 
     paging_contiguous_map(k_mem_content_rg.base_addr,
             k_mem_content_rg.base_addr + k_mem_content_rg.length,
-            K_VIRT_MEM_CONTENT_ADDR);
+            K_VIRT_MEM_CONTENT_ADDR,
+            PAGE_PRESENT_BIT | PAGE_READ_WRITE_BIT | PAGE_GLOBAL_BIT);
 
     /* Reload CR3 with new Paging structure */
     paging_reload_cr3();
