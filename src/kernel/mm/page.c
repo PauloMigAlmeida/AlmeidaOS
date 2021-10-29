@@ -16,7 +16,18 @@
 #include "kernel/compiler/freestanding.h"
 
 #define PREP_BASE_ADDR(addr)        (((addr) >> 12) & (UINT64_MAX >> (sizeof(uint64_t) * CHAR_BIT - (64-36))))
-#define PAGE_STD_BITS               0x03
+
+#define PAGE_PRESENT_BIT            (1 << 0)
+#define PAGE_READ_WRITE_BIT         (1 << 1)
+#define PAGE_USER_SUPERVISOR_BIT    (1 << 2)
+#define PAGE_PL_WRITETHR_BIT        (1 << 3)
+#define PAGE_PL_CACHEDIS_BIT        (1 << 4)
+#define PAGE_ACCESSED_BIT           (1 << 5)
+#define PAGE_DIRTY_BIT              (1 << 6)
+#define PAGE_PAGESIZE_BIT           (1 << 7)
+#define PAGE_GLOBAL_BIT             (1 << 8)
+
+#define PAGE_STD_BITS               PAGE_PRESENT_BIT | PAGE_READ_WRITE_BIT
 
 typedef struct {
     uint64_t phys_root;     ///< Physical address of root page table (PML4T) entry
@@ -29,6 +40,7 @@ static pagetable_t k_root_pgt;
  * Database Operations:
  *  -> Get next available free page frame or BUG_ON if none is available -> Done
  *  -> Free page frame by reference -> TBD
+ *  -> Split page and pageframe implementations... they look unnecessarly complicated together
  *
  *  Questions: Should that be pagetable or pageframe? I guess this is a matter of nomenclature really
  *      as both of them occupy the same amount og space... darn it, this thing gets more confusing
@@ -36,40 +48,110 @@ static pagetable_t k_root_pgt;
  *
  */
 
+struct pageframe_t {
+    uintptr_t phy_addr;
+    struct pageframe_t *next;
+};
+
 typedef struct {
-    /* all members below deal with physical addresses */
-    uintptr_t p_start_addr;
-    uintptr_t p_end_addr;
-    uintptr_t p_next_free_addr;
+    struct pageframe_t *free;
+    struct pageframe_t *used;
 } pageframe_database;
 
 static pageframe_database pfdb;
 
+/*
+ * this code block makes the assumption that
+ * the space needed is contiguous like from 0x0 to 0x10000
+ *
+ * On mm/init.c I ensured that this is the case but should
+ * this requirement ever change then another algorithm
+ * must be considered
+ */
 uint64_t paging_calc_space_needed(uint64_t bytes) {
-    return clp2((bytes / PAGE_SIZE) * sizeof(pml4e_t));
+    unsigned int mb_2 = (2 * 1024 * 1024);
+
+    unsigned int pte_tables = bytes / mb_2;
+    if (bytes % mb_2 != 0) {
+        pte_tables++;
+    }
+
+    unsigned int pd_tables = pte_tables / 512;
+    if (pd_tables % 512 != 0) {
+        pd_tables++;
+    }
+
+    unsigned int pdp_tables = pd_tables / 512;
+    if (pdp_tables % 512 != 0) {
+        pdp_tables++;
+    }
+
+    unsigned int pm4l_tables = 1;
+
+    unsigned int total_tables = pm4l_tables + pdp_tables + pd_tables + pte_tables;
+
+    return total_tables * PAGE_SIZE;
+}
+
+uint64_t pageframedb_calc_space_needed(uint64_t pagetable_bytes) {
+    return (pagetable_bytes / PAGE_SIZE) * sizeof(struct pageframe_t);
 }
 
 uint64_t pageframe_alloc(void) {
     /* check if we haven't run out of page frames to allocate */
-    BUG_ON(pfdb.p_next_free_addr > pfdb.p_end_addr);
+    BUG_ON(pfdb.free == NULL);
 
     /* alloc page frame */
-    uint64_t ret = pfdb.p_next_free_addr;
+    struct pageframe_t *page_frame = pfdb.free;
+    uint64_t ret = page_frame->phy_addr;
 
     /* adjust references to the next free page frame */
-    pfdb.p_next_free_addr += PAGEFRAME_SIZE;
+    pfdb.free = pfdb.free->next;
+    page_frame->next = pfdb.used;
+    pfdb.used = page_frame;
 
     return ret;
 }
 
-void paging_init(mem_map_region_t k_pages_struct_rg) {
-    /* setup page frame database */
-    pfdb.p_start_addr = k_pages_struct_rg.base_addr;
-    pfdb.p_end_addr = k_pages_struct_rg.base_addr + k_pages_struct_rg.length;
-    pfdb.p_next_free_addr = k_pages_struct_rg.base_addr;
+void pfdb_setup(mem_map_region_t k_pages_struct_rg, mem_map_region_t k_pfdb_struct_rg) {
+    /* init page frame database */
+    pfdb.free = NULL;
+    pfdb.used = NULL;
+
+    /* populate page frame database */
+    size_t pfn = k_pfdb_struct_rg.length / sizeof(struct pageframe_t);
+    uint64_t pagetable_addr = k_pages_struct_rg.base_addr;
+    uint64_t pageframe_addr = k_pfdb_struct_rg.base_addr;
+
+    for (size_t i = 0; i < pfn; i++) {
+        struct pageframe_t *pf = (struct pageframe_t*) pageframe_addr;
+        pf->phy_addr = pagetable_addr;
+
+        if (pfdb.free == NULL) {
+            /* first entry */
+            pf->next = NULL;
+
+        } else {
+            /* add to the beginning of the linked list */
+            pf->next = pfdb.free;
+        }
+
+        /* add to the list of free pageframes */
+        pfdb.free = pf;
+
+        /* adjust pointers */
+        pagetable_addr += PAGE_SIZE;
+        pageframe_addr += sizeof(struct pageframe_t);
+    }
+}
+
+void paging_init(mem_map_region_t k_pages_struct_rg, mem_map_region_t k_pfdb_struct_rg) {
 
     /* clean area in which page tables will eventually be stored at */
     memzero((void*) k_pages_struct_rg.base_addr, k_pages_struct_rg.length);
+
+    /* initialise pageframe database */
+    pfdb_setup(k_pages_struct_rg, k_pfdb_struct_rg);
 
     /* allocate the kernel root page table that will be used across the OS */
     k_root_pgt.phys_root = pageframe_alloc();
@@ -144,7 +226,7 @@ void page_alloc(pml4e_t *pml4_pgtable, uint64_t v_addr, uint64_t p_dest_addr) {
 }
 
 void paging_contiguous_map(uint64_t p_start_addr, uint64_t p_end_addr, uint64_t v_base_start_addr) {
-    pml4e_t *pml4_table = (pml4e_t *)k_root_pgt.virt_root;
+    pml4e_t *pml4_table = (pml4e_t*) k_root_pgt.virt_root;
 
     while (p_start_addr <= p_end_addr) {
         page_alloc(pml4_table, v_base_start_addr, p_start_addr);

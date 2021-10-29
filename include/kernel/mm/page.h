@@ -49,7 +49,8 @@ typedef struct {
 } __packed pte_t;
 
 uint64_t paging_calc_space_needed(uint64_t bytes);
-void paging_init(mem_map_region_t k_pages_struct_rg);
+uint64_t pageframedb_calc_space_needed(uint64_t pagetable_bytes);
+void paging_init(mem_map_region_t k_pages_struct_rg, mem_map_region_t k_pfdb_struct_rg);
 void paging_contiguous_map(uint64_t p_start_addr, uint64_t p_end_addr, uint64_t v_base_start_addr);
 void paging_reload_cr3();
 

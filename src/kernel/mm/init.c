@@ -67,9 +67,13 @@ static void reserve_kernel_sections(void) {
 static void paging_setup(uint64_t total_kern_space) {
     /* Calculate space required to hold page table struct to accomodate the entire kernel space */
     uint64_t paging_mem = paging_calc_space_needed(total_kern_space);
+    uint64_t pfdb_mem = pageframedb_calc_space_needed(paging_mem);
     /* The PML4 table must be aligned on a 4-Kbyte base address - AMD manual section 5.3.2  */
     mem_map_region_t k_pages_struct_rg = mem_alloc_amount(paging_mem, PAGE_SIZE);
     print_mem_alloc("K_PAGE_STR", &k_pages_struct_rg);
+    mem_map_region_t k_pfdb_struct_rg = mem_alloc_amount(pfdb_mem, PAGE_SIZE);
+    print_mem_alloc("K_PFDB_STR", &k_pfdb_struct_rg);
+
 
     /*
      * We have to make sure that the paging structure sits within the first 10MB
@@ -79,14 +83,18 @@ static void paging_setup(uint64_t total_kern_space) {
      * physical memory.
      */
     BUG_ON((k_pages_struct_rg.base_addr + k_pages_struct_rg.length) > (10 * 1024 * 1024));
-    paging_init(k_pages_struct_rg);
+    BUG_ON((k_pfdb_struct_rg.base_addr + k_pfdb_struct_rg.length) > (10 * 1024 * 1024));
+    paging_init(k_pages_struct_rg, k_pfdb_struct_rg);
 
     /* identity mapping all the way to the end kernel text */
     paging_contiguous_map(0, pa((uint64_t) &kernel_virt_end_addr), K_VIRT_TEXT_ADDR);
 
 }
 
-static void buddy_allocator_setup(uint64_t k_mem_header_space, uint64_t k_mem_content_space) {
+static void buddy_allocator_setup(void) {
+    uint64_t k_mem_content_space = calc_kernel_mem_space();
+    uint64_t k_mem_header_space = buddy_calc_header_space(k_mem_content_space);
+
     /* reserve memory area to be used by the buddy memory allocator */
     mem_map_region_t k_mem_header_rg = mem_alloc_amount(k_mem_header_space, PAGE_SIZE);
     print_mem_alloc("K_BUDDY_H", &k_mem_header_rg);
@@ -120,22 +128,15 @@ void mm_init(void) {
     /* reserve regions already used by kernel text and stack */
     reserve_kernel_sections();
 
-    uint64_t k_mem_content_space = calc_kernel_mem_space();
-    uint64_t k_mem_header_space = buddy_calc_header_space(k_mem_content_space);
-
     // @formatter:off
     /* allocate and provisiong the paging space required to accomodate everything */
     paging_setup(
-            /* bold move saying that from 0 all the way to 0x200000 is *also* required */
-            pa((uint64_t) &kernel_virt_end_addr) +
-            /* Kernel space */
-            k_mem_content_space +
-            /* Kernel space header allocator space -> buddy system */
-            k_mem_header_space
+            //TODO doc this / refactor this
+            0xffff80009fffffff - K_VIRT_TEXT_ADDR
     ); // @formatter:on
 
     /* buddy memory allocator */
-    buddy_allocator_setup(k_mem_header_space, k_mem_content_space);
+    buddy_allocator_setup();
 
 }
 
