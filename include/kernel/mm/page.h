@@ -48,8 +48,12 @@ typedef struct {
 	uint8_t no_execute_bit:1;
 } __packed pte_t;
 
+typedef struct {
+    uint64_t phys_root;     ///< Physical address of root page table (PML4T) entry
+    uint64_t virt_root;     ///< Virtual address of root page table (PML4T) entry
+} pagetable_t;
+
 uint64_t paging_calc_space_needed(uint64_t bytes);
-uint64_t pageframedb_calc_space_needed(uint64_t pagetable_bytes);
 void paging_init(mem_map_region_t k_pages_struct_rg, mem_map_region_t k_pfdb_struct_rg);
 void paging_contiguous_map(uint64_t p_start_addr, uint64_t p_end_addr, uint64_t v_base_start_addr);
 void paging_reload_cr3();

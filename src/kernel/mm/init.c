@@ -7,6 +7,7 @@
 
 #include "kernel/mm/init.h"
 #include "kernel/mm/page.h"
+#include "kernel/mm/pageframe.h"
 #include "kernel/mm/kmem.h"
 #include "kernel/mm/addressconv.h"
 #include "kernel/mm/buddy.h"
@@ -67,7 +68,7 @@ static void reserve_kernel_sections(void) {
 static void paging_setup(uint64_t total_kern_space) {
     /* Calculate space required to hold page table struct to accomodate the entire kernel space */
     uint64_t paging_mem = paging_calc_space_needed(total_kern_space);
-    uint64_t pfdb_mem = pageframedb_calc_space_needed(paging_mem);
+    uint64_t pfdb_mem = pageframe_calc_space_needed(paging_mem);
     /* The PML4 table must be aligned on a 4-Kbyte base address - AMD manual section 5.3.2  */
     mem_map_region_t k_pages_struct_rg = mem_alloc_amount(paging_mem, PAGE_SIZE);
     print_mem_alloc("K_PAGE_STR", &k_pages_struct_rg);
@@ -128,12 +129,8 @@ void mm_init(void) {
     /* reserve regions already used by kernel text and stack */
     reserve_kernel_sections();
 
-    // @formatter:off
-    /* allocate and provisiong the paging space required to accomodate everything */
-    paging_setup(
-            //TODO doc this / refactor this
-            0xffff80009fffffff - K_VIRT_TEXT_ADDR
-    ); // @formatter:on
+    /* allocate and provisiong the paging space required to accomodate entire virt space*/
+    paging_setup(K_VIRT_END_ADDR - K_VIRT_START_ADDR);
 
     /* buddy memory allocator */
     buddy_allocator_setup();

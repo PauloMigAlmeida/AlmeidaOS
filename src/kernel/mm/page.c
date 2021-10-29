@@ -6,14 +6,15 @@
  */
 
 #include "kernel/mm/page.h"
+#include "kernel/compiler/bug.h"
 #include "kernel/mm/init.h"
+#include "kernel/mm/pageframe.h"
 #include "kernel/mm/addressconv.h"
 #include "kernel/asm/generic.h"
 #include "kernel/lib/string.h"
 #include "kernel/lib/math.h"
 #include "kernel/lib/bit.h"
-#include "kernel/compiler/bug.h"
-#include "kernel/compiler/freestanding.h"
+
 
 #define PREP_BASE_ADDR(addr)        (((addr) >> 12) & (UINT64_MAX >> (sizeof(uint64_t) * CHAR_BIT - (64-36))))
 
@@ -29,36 +30,9 @@
 
 #define PAGE_STD_BITS               PAGE_PRESENT_BIT | PAGE_READ_WRITE_BIT
 
-typedef struct {
-    uint64_t phys_root;     ///< Physical address of root page table (PML4T) entry
-    uint64_t virt_root;     ///< Virtual address of root page table (PML4T) entry
-} pagetable_t;
-
+/* kernel space pagetable */
 static pagetable_t k_root_pgt;
 
-/*
- * Database Operations:
- *  -> Get next available free page frame or BUG_ON if none is available -> Done
- *  -> Free page frame by reference -> TBD
- *  -> Split page and pageframe implementations... they look unnecessarly complicated together
- *
- *  Questions: Should that be pagetable or pageframe? I guess this is a matter of nomenclature really
- *      as both of them occupy the same amount og space... darn it, this thing gets more confusing
- *      over time.
- *
- */
-
-struct pageframe_t {
-    uintptr_t phy_addr;
-    struct pageframe_t *next;
-};
-
-typedef struct {
-    struct pageframe_t *free;
-    struct pageframe_t *used;
-} pageframe_database;
-
-static pageframe_database pfdb;
 
 /*
  * this code block makes the assumption that
@@ -93,65 +67,14 @@ uint64_t paging_calc_space_needed(uint64_t bytes) {
     return total_tables * PAGE_SIZE;
 }
 
-uint64_t pageframedb_calc_space_needed(uint64_t pagetable_bytes) {
-    return (pagetable_bytes / PAGE_SIZE) * sizeof(struct pageframe_t);
-}
-
-uint64_t pageframe_alloc(void) {
-    /* check if we haven't run out of page frames to allocate */
-    BUG_ON(pfdb.free == NULL);
-
-    /* alloc page frame */
-    struct pageframe_t *page_frame = pfdb.free;
-    uint64_t ret = page_frame->phy_addr;
-
-    /* adjust references to the next free page frame */
-    pfdb.free = pfdb.free->next;
-    page_frame->next = pfdb.used;
-    pfdb.used = page_frame;
-
-    return ret;
-}
-
-void pfdb_setup(mem_map_region_t k_pages_struct_rg, mem_map_region_t k_pfdb_struct_rg) {
-    /* init page frame database */
-    pfdb.free = NULL;
-    pfdb.used = NULL;
-
-    /* populate page frame database */
-    size_t pfn = k_pfdb_struct_rg.length / sizeof(struct pageframe_t);
-    uint64_t pagetable_addr = k_pages_struct_rg.base_addr;
-    uint64_t pageframe_addr = k_pfdb_struct_rg.base_addr;
-
-    for (size_t i = 0; i < pfn; i++) {
-        struct pageframe_t *pf = (struct pageframe_t*) pageframe_addr;
-        pf->phy_addr = pagetable_addr;
-
-        if (pfdb.free == NULL) {
-            /* first entry */
-            pf->next = NULL;
-
-        } else {
-            /* add to the beginning of the linked list */
-            pf->next = pfdb.free;
-        }
-
-        /* add to the list of free pageframes */
-        pfdb.free = pf;
-
-        /* adjust pointers */
-        pagetable_addr += PAGE_SIZE;
-        pageframe_addr += sizeof(struct pageframe_t);
-    }
-}
-
 void paging_init(mem_map_region_t k_pages_struct_rg, mem_map_region_t k_pfdb_struct_rg) {
 
     /* clean area in which page tables will eventually be stored at */
     memzero((void*) k_pages_struct_rg.base_addr, k_pages_struct_rg.length);
+    memzero((void*) k_pfdb_struct_rg.base_addr, k_pfdb_struct_rg.length);
 
     /* initialise pageframe database */
-    pfdb_setup(k_pages_struct_rg, k_pfdb_struct_rg);
+    pageframe_init(k_pages_struct_rg, k_pfdb_struct_rg);
 
     /* allocate the kernel root page table that will be used across the OS */
     k_root_pgt.phys_root = pageframe_alloc();
