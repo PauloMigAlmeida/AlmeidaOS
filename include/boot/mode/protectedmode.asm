@@ -320,24 +320,24 @@ pm_setup_page_tables:
     ;   -> one entry in a PDPT can address 1GB
     mov DWORD [Mem.PDPE.Address], (Mem.PDE.Address ) | .StdBits
 
-    ; Create entries [0...7] in PDE Table.
+    ; Create entries [0...7] in PDE Table. (8 PDE pages == 16 MB)
     ;   -> one entry in a PDE can address 2MB
-    mov DWORD [Mem.PDE.Address], (Mem.PTE.Address ) | .StdBits
-    mov DWORD [Mem.PDE.Address + 0x08], ((Mem.PTE.Address + 0x1000) ) | .StdBits
-    mov DWORD [Mem.PDE.Address + 0x10], ((Mem.PTE.Address + 0x1000 * 2) ) | .StdBits
-    mov DWORD [Mem.PDE.Address + 0x18], ((Mem.PTE.Address + 0x1000 * 3) ) | .StdBits
-    mov DWORD [Mem.PDE.Address + 0x20], ((Mem.PTE.Address + 0x1000 * 4) ) | .StdBits
-    mov DWORD [Mem.PDE.Address + 0x28], ((Mem.PTE.Address + 0x1000 * 5) ) | .StdBits
-    mov DWORD [Mem.PDE.Address + 0x30], ((Mem.PTE.Address + 0x1000 * 6) ) | .StdBits
-    mov DWORD [Mem.PDE.Address + 0x38], ((Mem.PTE.Address + 0x1000 * 7) ) | .StdBits
+    mov edi, Mem.PDE.Address
+    mov ecx, 8
+    mov eax, Mem.PTE.Address | .StdBits
+
+    .make_pde_page:
+      mov [edi], eax
+      add edi, 0x8
+      add eax, 0x1000
+      loop .make_pde_page
+
 
     ; Create all 512 entries in the PT table.
     ;   -> one entry in a PT can address 4Kb
-
-    ; Prep
     mov edi, Mem.PTE.Address
     mov ecx, 512 * 8
-    mov eax,  .StdBits
+    mov eax, .StdBits
 
     .make_pte_page:
       mov [edi], eax
@@ -345,9 +345,9 @@ pm_setup_page_tables:
       add eax, 0x1000
       loop .make_pte_page
 
-      ; Display status message
-      mov eax, ProtectedMode.SecondStage.PagesBuilt.Msg
-      call pm_display_string
+  ; Display status message
+  mov eax, ProtectedMode.SecondStage.PagesBuilt.Msg
+  call pm_display_string
 
   ; Restore registers.
   popa
