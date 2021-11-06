@@ -53,10 +53,13 @@ void kmain(void) {
     BUG_ON(*x != 10);
     printk_info("&x: 0x%.16llx *x: 0x%.16llx", x, *x);
 
-    //TODO something isn't working right for the page_free operation..it needs more investigation
 
-//    page_free(kernel_pagetable(),
-//            K_VIRT_END_ADDR + 1);
+    page_free(kernel_pagetable(),
+            K_VIRT_END_ADDR + 1);
+    // This should cause a page fault exception if the page free did its work right (including invalidation)
+    *x = 11;
+    BUG_ON(*x != 11);
+    printk_info("&x: 0x%.16llx *x: 0x%.16llx", x, *x);
 
 //        // force page fault
 //        memzero((void*)0x20000, 1);

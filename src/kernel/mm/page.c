@@ -137,7 +137,7 @@ void page_free(pagetable_t *pgtable, uint64_t v_addr) {
     // recurssively remove empty parent pagetables
 
     /* delete entry from page table */
-    pml4e_t *pml4_pgtable = (pml4e_t*) pgtable->phys_root;
+    pml4e_t *pml4_pgtable = (pml4e_t*) pgtable->virt_root;
 
     uint16_t pm4l_idx = extract_bit_chunk(39, 47, v_addr);
     pdpe_t *pdp_pgtable = (pdpe_t*) va(pml4_pgtable[pm4l_idx].pdpe_base_addr << 12);
@@ -152,11 +152,12 @@ void page_free(pagetable_t *pgtable, uint64_t v_addr) {
     uint64_t pf_phys_addr = pt_pgtable[pt_idx].phys_pg_base_addr << 12;
     memzero(&pt_pgtable[pt_idx], sizeof(pte_t));
 
+    //TODO for tomorrow: we can only delete a pageframe once the entire pagetable is actually free.
     /* delete pageframe */
-    pageframe_free(pf_phys_addr);
+//    pageframe_free(pf_phys_addr);
 
     /* invalidate entry */
-    invalidate_page(pf_phys_addr);
+    invalidate_page(v_addr);
 }
 
 void paging_contiguous_map(pagetable_t *pgtable, uint64_t p_start_addr, uint64_t p_end_addr, uint64_t v_base_start_addr, uint16_t flags) {
