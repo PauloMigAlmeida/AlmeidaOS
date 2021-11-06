@@ -15,12 +15,7 @@
 #include "kernel/lib/math.h"
 #include "kernel/lib/bit.h"
 
-
 #define PREP_BASE_ADDR(addr)        (((addr) >> 12) & (UINT64_MAX >> (sizeof(uint64_t) * CHAR_BIT - (64-36))))
-
-/* kernel space pagetable */
-static pagetable_t k_root_pgt;
-
 
 /*
  * this code block makes the assumption that
@@ -55,7 +50,7 @@ uint64_t paging_calc_space_needed(uint64_t bytes) {
     return total_tables * PAGE_SIZE;
 }
 
-void paging_init(mem_map_region_t k_pages_struct_rg, mem_map_region_t k_pfdb_struct_rg) {
+void paging_init(pagetable_t *pgtable, mem_map_region_t k_pages_struct_rg, mem_map_region_t k_pfdb_struct_rg) {
 
     /* clean area in which page tables will eventually be stored at */
     memzero((void*) k_pages_struct_rg.base_addr, k_pages_struct_rg.length);
@@ -64,16 +59,17 @@ void paging_init(mem_map_region_t k_pages_struct_rg, mem_map_region_t k_pfdb_str
     /* initialise pageframe database */
     pageframe_init(k_pages_struct_rg, k_pfdb_struct_rg);
 
-    /* allocate the kernel root page table that will be used across the OS */
-    k_root_pgt.phys_root = pageframe_alloc();
-    k_root_pgt.virt_root = va(k_root_pgt.phys_root);
+    /* allocate the root page table that will be used across the OS */
+    pgtable->phys_root = pageframe_alloc();
+    pgtable->virt_root = va(pgtable->phys_root);
 }
 
 __force_inline bool is_page_entry_empty(void *entry) {
     return *((uint64_t*) entry) == 0;
 }
 
-void page_alloc(pml4e_t *pml4_pgtable, uint64_t v_addr, uint64_t p_dest_addr, uint16_t flags) {
+void page_alloc(pagetable_t *pgtable, uint64_t v_addr, uint64_t p_dest_addr, uint16_t flags) {
+    pml4e_t *pml4_pgtable = (pml4e_t*) pgtable->virt_root;
 
     /* Alloc PML4if needed */
     uint16_t pm4l_idx = extract_bit_chunk(39, 47, v_addr);
@@ -107,7 +103,7 @@ void page_alloc(pml4e_t *pml4_pgtable, uint64_t v_addr, uint64_t p_dest_addr, ui
     }
 
     /* Alloc PD if needed */
-    int pd_idx = extract_bit_chunk(21, 29, v_addr);
+    uint16_t pd_idx = extract_bit_chunk(21, 29, v_addr);
     pde_t *pd_pgtable = (pde_t*) va(pdp_pgtable[pdp_idx].pde_base_addr << 12);
     if (is_page_entry_empty(&pd_pgtable[pd_idx])) {
         uintptr_t pt_pgtable_addr = pageframe_alloc();
@@ -136,18 +132,41 @@ void page_alloc(pml4e_t *pml4_pgtable, uint64_t v_addr, uint64_t p_dest_addr, ui
 
 }
 
-void paging_contiguous_map(uint64_t p_start_addr, uint64_t p_end_addr, uint64_t v_base_start_addr, uint16_t flags) {
-    pml4e_t *pml4_table = (pml4e_t*) k_root_pgt.virt_root;
+void page_free(pagetable_t *pgtable, uint64_t v_addr) {
+    //TODO add sanity checks (whether page exist or not)
+    // recurssively remove empty parent pagetables
 
+    /* delete entry from page table */
+    pml4e_t *pml4_pgtable = (pml4e_t*) pgtable->phys_root;
+
+    uint16_t pm4l_idx = extract_bit_chunk(39, 47, v_addr);
+    pdpe_t *pdp_pgtable = (pdpe_t*) va(pml4_pgtable[pm4l_idx].pdpe_base_addr << 12);
+
+    uint16_t pdp_idx = extract_bit_chunk(30, 38, v_addr);
+    pde_t *pd_pgtable = (pde_t*) va(pdp_pgtable[pdp_idx].pde_base_addr << 12);
+
+    uint16_t pd_idx = extract_bit_chunk(21, 29, v_addr);
+    pte_t *pt_pgtable = (pte_t*) va(pd_pgtable[pd_idx].pte_base_addr << 12);
+
+    uint16_t pt_idx = extract_bit_chunk(12, 20, v_addr);
+    uint64_t pf_phys_addr = pt_pgtable[pt_idx].phys_pg_base_addr << 12;
+    memzero(&pt_pgtable[pt_idx], sizeof(pte_t));
+
+    /* delete pageframe */
+    pageframe_free(pf_phys_addr);
+
+    /* invalidate entry */
+    invalidate_page(pf_phys_addr);
+}
+
+void paging_contiguous_map(pagetable_t *pgtable, uint64_t p_start_addr, uint64_t p_end_addr, uint64_t v_base_start_addr, uint16_t flags) {
     while (p_start_addr <= p_end_addr) {
-        page_alloc(pml4_table, v_base_start_addr, p_start_addr, flags);
-
+        page_alloc(pgtable, v_base_start_addr, p_start_addr, flags);
         p_start_addr += PAGE_SIZE;
         v_base_start_addr += PAGE_SIZE;
     }
 }
 
-void paging_reload_cr3() {
-    //TODO: Figure out a way to move k_pml4_table somewhere else so this function can get a pgtable argument instead
-    load_cr3(k_root_pgt.phys_root);
+void paging_reload_cr3(pagetable_t *pgtable) {
+    load_cr3(pgtable->phys_root);
 }

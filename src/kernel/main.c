@@ -11,6 +11,9 @@
 #include "kernel/interrupt/spurious.h"
 #include "kernel/mm/init.h"
 
+//temp
+#include "kernel/mm/page.h"
+#include "kernel/compiler/bug.h"
 
 void kmain(void) {
     /* printk init */
@@ -40,6 +43,21 @@ void kmain(void) {
     keyboard_enable();
     pit_enable();
 
+    /* Test page alloc and page free */
+    page_alloc(kernel_pagetable(),
+    K_VIRT_END_ADDR + 1,
+            0x10000,
+            PAGE_PRESENT_BIT | PAGE_READ_WRITE_BIT);
+    int *x = (int*) (K_VIRT_END_ADDR + 1);
+    *x = 10;
+    BUG_ON(*x != 10);
+    printk_info("&x: 0x%.16llx *x: 0x%.16llx", x, *x);
+
+    //TODO something isn't working right for the page_free operation..it needs more investigation
+
+//    page_free(kernel_pagetable(),
+//            K_VIRT_END_ADDR + 1);
+
 //        // force page fault
 //        memzero((void*)0x20000, 1);
 
@@ -56,7 +74,6 @@ void kmain(void) {
 //        if(ptr)
 //            kfree(ptr);
 //    }
-
 
 //    mem_phys_stats_t t = mem_phys_stat();
 //    printk_info("Original t.avail: %llu", t.phys_free_mem);
@@ -107,7 +124,6 @@ void kmain(void) {
 //    int x = -100;
 //    uint64_t ia32_misc_enable = 0x00ff0000000000009;
 //    printk("0x%.16llx and %llu and %o %.15s %.5d %.75c", ia32_misc_enable, ia32_misc_enable, 9, "Paulo", x, 'a');
-
     /* don't let kmain finish. Among other things, this ensure that interrupts have to to occur */
     for (;;) {
         asm("hlt");

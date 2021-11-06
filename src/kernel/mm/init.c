@@ -8,13 +8,13 @@
 #include "kernel/mm/init.h"
 #include "kernel/mm/page.h"
 #include "kernel/mm/pageframe.h"
+#include "kernel/mm/pagetable.h"
 #include "kernel/mm/kmem.h"
 #include "kernel/mm/addressconv.h"
 #include "kernel/mm/buddy.h"
 #include "kernel/arch/mem.h"
 #include "kernel/lib/math.h"
 #include "kernel/compiler/bug.h"
-
 
 extern volatile void kernel_virt_start_addr;
 extern volatile void kernel_virt_end_addr;
@@ -35,13 +35,6 @@ static uint64_t calc_kernel_mem_space() {
     return k_mem_space;
 }
 
-static void print_mem_alloc(char *desc, mem_map_region_t *region) {
-    printk_info("[%s]: start: 0x%llx end: 0x%llx length (Kb): %llu", desc,
-            region->base_addr,
-            region->base_addr + region->length,
-            region->length / 1024);
-}
-
 static void reserve_kernel_sections(void) {
     /* reserve memory area to hold kernel stack which is going to be 2x 4Kb PAGES (same as Linux) */
     mem_map_region_t kern_stack = mem_alloc_region(
@@ -60,6 +53,7 @@ static void paging_setup(uint64_t total_kern_space) {
     /* Calculate space required to hold page table struct to accomodate the entire kernel space */
     uint64_t paging_mem = paging_calc_space_needed(total_kern_space);
     uint64_t pfdb_mem = pageframe_calc_space_needed(paging_mem);
+
     /* The PML4 table must be aligned on a 4-Kbyte base address - AMD manual section 5.3.2  */
     mem_map_region_t k_pages_struct_rg = mem_alloc_amount(paging_mem, PAGE_SIZE);
     print_mem_alloc("K_PAGE_STR", &k_pages_struct_rg);
@@ -75,12 +69,20 @@ static void paging_setup(uint64_t total_kern_space) {
      */
     BUG_ON((k_pages_struct_rg.base_addr + k_pages_struct_rg.length) > (16 * 1024 * 1024));
     BUG_ON((k_pfdb_struct_rg.base_addr + k_pfdb_struct_rg.length) > (16 * 1024 * 1024));
-    paging_init(k_pages_struct_rg, k_pfdb_struct_rg);
+    paging_init(kernel_pagetable(), k_pages_struct_rg, k_pfdb_struct_rg);
 
-    /* identity mapping all the way to the end kernel text */
-    paging_contiguous_map(0,
+    /* identity-map all the way to the end kernel text */
+    paging_contiguous_map(kernel_pagetable(),
+            0,
             pa((uint64_t) &kernel_virt_end_addr),
             K_VIRT_TEXT_ADDR,
+            PAGE_PRESENT_BIT | PAGE_READ_WRITE_BIT | PAGE_GLOBAL_BIT);
+
+    /* identity-map area in which the page tables sit, so we can access it later */
+    paging_contiguous_map(kernel_pagetable(),
+            k_pages_struct_rg.base_addr,
+            k_pages_struct_rg.base_addr + k_pages_struct_rg.length,
+            va(k_pages_struct_rg.base_addr),
             PAGE_PRESENT_BIT | PAGE_READ_WRITE_BIT | PAGE_GLOBAL_BIT);
 
 }
@@ -98,18 +100,20 @@ static void buddy_allocator_setup(void) {
 //    mem_print_entries();
 
     /* anticipatory paging for kernel space. Demand paging will be used for user space only */
-    paging_contiguous_map(k_mem_header_rg.base_addr,
+    paging_contiguous_map(kernel_pagetable(),
+            k_mem_header_rg.base_addr,
             k_mem_header_rg.base_addr + k_mem_header_rg.length,
             K_VIRT_MEM_HEADER_ADDR,
             PAGE_PRESENT_BIT | PAGE_READ_WRITE_BIT | PAGE_GLOBAL_BIT);
 
-    paging_contiguous_map(k_mem_content_rg.base_addr,
+    paging_contiguous_map(kernel_pagetable(),
+            k_mem_content_rg.base_addr,
             k_mem_content_rg.base_addr + k_mem_content_rg.length,
             K_VIRT_MEM_CONTENT_ADDR,
             PAGE_PRESENT_BIT | PAGE_READ_WRITE_BIT | PAGE_GLOBAL_BIT);
 
     /* Reload CR3 with new Paging structure */
-    paging_reload_cr3();
+    paging_reload_cr3(kernel_pagetable());
 
     /* initialise kernel memory && kmalloc */
     k_mem_header_rg.base_addr = K_VIRT_MEM_HEADER_ADDR;

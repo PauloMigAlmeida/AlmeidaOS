@@ -8,6 +8,7 @@
 #include "kernel/mm/pageframe.h"
 #include "kernel/mm/init.h"
 #include "kernel/compiler/bug.h"
+#include "kernel/mm/addressconv.h"
 
 static pageframe_database pfdb;
 
@@ -27,7 +28,12 @@ void pageframe_init(mem_map_region_t k_pages_struct_rg, mem_map_region_t k_pfdb_
     uint64_t pageframe_addr = k_pfdb_struct_rg.base_addr;
 
     for (size_t i = 0; i < pfn; i++) {
-        struct pageframe_t *pf = (struct pageframe_t*) pageframe_addr;
+        /*
+         * It's very important that we transform pageframe_addr to virtual address,
+         * otherwise, we won't be able to access this linked list after finalising
+         * the shift to higher-half memory.
+         */
+        struct pageframe_t *pf = (struct pageframe_t*) va(pageframe_addr);
         pf->phy_addr = pagetable_addr;
 
         if (pfdb.free == NULL) {

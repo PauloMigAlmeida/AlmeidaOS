@@ -63,4 +63,13 @@ __force_inline void load_cr3(uint64_t addr) {
     );
 }
 
+__force_inline void invalidate_page(uint64_t p_addr) {
+    asm volatile(
+            "invlpg [%[addr]] \n"
+            :
+            : [addr] "D" (p_addr)
+            : "memory"
+    );
+}
+
 #endif /* INCLUDE_KERNEL_ASM_GENERIC_H_ */

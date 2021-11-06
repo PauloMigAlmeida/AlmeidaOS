@@ -58,7 +58,8 @@ SECTIONS
   .rodata : {
     *(.rodata)
   }
-   
+  
+  . = ALIGN(4096); 
   PROVIDE(kernel_virt_end_addr = .);
 
 /*

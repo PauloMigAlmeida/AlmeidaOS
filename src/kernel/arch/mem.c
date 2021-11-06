@@ -310,3 +310,10 @@ mem_map_region_t mem_alloc_amount(uint64_t length, uint64_t addr_align) {
     return ret_region;
 }
 
+void print_mem_alloc(char *desc, mem_map_region_t *region) {
+    printk_info("[%s]: start: 0x%llx end: 0x%llx length (Kb): %llu", desc,
+            region->base_addr,
+            region->base_addr + region->length,
+            region->length / 1024);
+}
+
