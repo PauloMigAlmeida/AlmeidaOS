@@ -64,7 +64,7 @@ void paging_init(pagetable_t *pgtable, mem_map_region_t k_pages_struct_rg, mem_m
     pgtable->virt_root = va(pgtable->phys_root);
 }
 
-__force_inline bool is_page_entry_empty(void *entry) {
+__force_inline static bool is_page_entry_empty(void *entry) {
     return *((uint64_t*) entry) == 0;
 }
 
@@ -132,35 +132,69 @@ void page_alloc(pagetable_t *pgtable, uint64_t v_addr, uint64_t p_dest_addr, uin
 
 }
 
-void page_free(pagetable_t *pgtable, uint64_t v_addr) {
-    //TODO add sanity checks (whether page exist or not)
-    // recurssively remove empty parent pagetables
+static bool is_pagetable_empty(const void *pgtable) {
+    bool ret = true;
+    const char* src = (const char*)pgtable;
+    for(size_t i = 0; i < 512; i++){
+        if(*src != 0){
+            ret = false;
+            break;
+        }
+    }
+    return ret;
+}
 
+void page_free(pagetable_t *pgtable, uint64_t v_addr) {
     /* delete entry from page table */
     pml4e_t *pml4_pgtable = (pml4e_t*) pgtable->virt_root;
 
     uint16_t pm4l_idx = extract_bit_chunk(39, 47, v_addr);
+    BUG_ON(is_page_entry_empty(&pml4_pgtable[pm4l_idx]));
     pdpe_t *pdp_pgtable = (pdpe_t*) va(pml4_pgtable[pm4l_idx].pdpe_base_addr << 12);
 
     uint16_t pdp_idx = extract_bit_chunk(30, 38, v_addr);
+    BUG_ON(is_page_entry_empty(&pdp_pgtable[pdp_idx]));
     pde_t *pd_pgtable = (pde_t*) va(pdp_pgtable[pdp_idx].pde_base_addr << 12);
 
     uint16_t pd_idx = extract_bit_chunk(21, 29, v_addr);
+    BUG_ON(is_page_entry_empty(&pd_pgtable[pd_idx]));
     pte_t *pt_pgtable = (pte_t*) va(pd_pgtable[pd_idx].pte_base_addr << 12);
 
+    /* zero-out entry that is about to be freed */
     uint16_t pt_idx = extract_bit_chunk(12, 20, v_addr);
-    uint64_t pf_phys_addr = pt_pgtable[pt_idx].phys_pg_base_addr << 12;
+    BUG_ON(is_page_entry_empty(&pt_pgtable[pt_idx]));
     memzero(&pt_pgtable[pt_idx], sizeof(pte_t));
 
-    //TODO for tomorrow: we can only delete a pageframe once the entire pagetable is actually free.
-    /* delete pageframe */
-//    pageframe_free(pf_phys_addr);
+    /* check if pte table is empty*/
+    if (is_pagetable_empty(pt_pgtable)) {
+        /* delete pageframe */
+        pageframe_free(pa((uint64_t) pt_pgtable));
+        /* zero-out entry from previous pgtable chain */
+        memzero(&pd_pgtable[pd_idx], sizeof(pde_t));
+
+        /* check if pde table is empty*/
+        if (is_pagetable_empty(pd_pgtable)) {
+            /* delete pageframe */
+            pageframe_free(pa((uint64_t) pd_pgtable));
+            /* zero-out entry from previous pgtable chain */
+            memzero(&pdp_pgtable[pdp_idx], sizeof(pdpe_t));
+
+            /* check if pdpe table is empty*/
+            if (is_pagetable_empty(pdp_pgtable)) {
+                /* delete pageframe */
+                pageframe_free(pa((uint64_t) pdp_pgtable));
+                /* zero-out entry from previous pgtable chain */
+                memzero(&pml4_pgtable[pm4l_idx], sizeof(pml4e_t));
+            }
+        }
+    }
 
     /* invalidate entry */
     invalidate_page(v_addr);
 }
 
-void paging_contiguous_map(pagetable_t *pgtable, uint64_t p_start_addr, uint64_t p_end_addr, uint64_t v_base_start_addr, uint16_t flags) {
+void paging_contiguous_map(pagetable_t *pgtable, uint64_t p_start_addr, uint64_t p_end_addr, uint64_t v_base_start_addr,
+        uint16_t flags) {
     while (p_start_addr <= p_end_addr) {
         page_alloc(pgtable, v_base_start_addr, p_start_addr, flags);
         p_start_addr += PAGE_SIZE;

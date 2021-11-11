@@ -87,15 +87,15 @@ static struct pageframe_t* find_predecessor(struct pageframe_t *head, uint64_t v
     return NULL;
 }
 
-static struct pageframe_t* delete_node(struct pageframe_t *head, uint64_t val) {
-    struct pageframe_t *pred = find_predecessor(head, val);
+static struct pageframe_t* delete_node(struct pageframe_t **head, uint64_t val) {
+    struct pageframe_t *pred = find_predecessor(*head, val);
     struct pageframe_t *item = NULL;
 
     if (pred == NULL) {
-        if (head->phy_addr == val) {
+        if ((*head)->phy_addr == val) {
             // the item is at the begining of the list
-            item = head;
-            head = head->next;
+            item = *head;
+            *head = (*head)->next;
         }
     } else {
         item = pred->next;
@@ -104,7 +104,7 @@ static struct pageframe_t* delete_node(struct pageframe_t *head, uint64_t val) {
 
     /* means the item wasn't found */
     BUG_ON(item == NULL);
-    return NULL;
+    return item;
 }
 
 void pageframe_free(uint64_t phy_addr) {
@@ -112,7 +112,7 @@ void pageframe_free(uint64_t phy_addr) {
     BUG_ON(pfdb.used == NULL);
 
     /* alloc page frame */
-    struct pageframe_t *pf = delete_node(pfdb.used, phy_addr);
+    struct pageframe_t *pf = delete_node(&pfdb.used, phy_addr);
 
     /* something went terribly wrong for this to be true, ay? */
     BUG_ON(pf == NULL);

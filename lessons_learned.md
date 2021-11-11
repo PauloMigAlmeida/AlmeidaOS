@@ -373,3 +373,24 @@ void kmain(void) {
 }
 	
 ```
+
+### Printing Linked List on GDB - (11/11/2021)
+
+Printing arrays are straightforward in GDB but when you have other (more complex) types of struct then you
+have to define custom commands in GDB to help you out.
+
+The code below allows me to print an entire linked list which was very helpful to debug pageframe_free 
+problems I had in the past. 
+
+```
+define plist
+  set var $n = $arg0
+  while $n
+    printf "0x%x ", $n->phy_addr
+    set var $n = $n->next
+  end
+end
+
+plist pfdb.free
+```
+
