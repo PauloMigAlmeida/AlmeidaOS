@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------------
-# AlmeidaOS kernel/mm makefile
+# AlmeidaOS kernel/syscall makefile
 #----------------------------------------------------------------------------
 
 DIR_ROOT	:= $(CURDIR)/../../../
@@ -7,12 +7,12 @@ DIR_ROOT	:= $(CURDIR)/../../../
 include $(DIR_ROOT)/scripts/config.mk
 
 DIR_SRC_SUBSYSTEMS := $(shell find $(CURDIR)/* -maxdepth 1 -type d)
-DIR_TARGET	:= $(DIR_BUILD)/kernel/mm
+DIR_TARGET	:= $(DIR_BUILD)/kernel/syscall
 
 SRC_C_FILES	:= $(wildcard *.c)
 BIN_C_FILES	:= $(SRC_C_FILES:%.c=$(DIR_TARGET)/%.o)
 
-TAG 		:= [kernel/mm]
+TAG 		:= [kernel/syscall]
 
 all: mkdir compile
 	@echo "$(TAG) Compiled successfully"
