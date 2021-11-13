@@ -14,7 +14,7 @@ static pageframe_database pfdb;
 
 /* calc amount of pageframes that that pfdb must store */
 uint64_t pageframe_calc_space_needed(uint64_t pagetable_bytes) {
-    return (pagetable_bytes / PAGE_SIZE) * sizeof(struct pageframe_t);
+    return (pagetable_bytes / PAGEFRAME_SIZE) * sizeof(struct pageframe_t);
 }
 
 void pageframe_init(mem_map_region_t k_pages_struct_rg, mem_map_region_t k_pfdb_struct_rg) {
@@ -49,7 +49,7 @@ void pageframe_init(mem_map_region_t k_pages_struct_rg, mem_map_region_t k_pfdb_
         pfdb.free = pf;
 
         /* adjust pointers */
-        pagetable_addr += PAGE_SIZE;
+        pagetable_addr += PAGEFRAME_SIZE;
         pageframe_addr += sizeof(struct pageframe_t);
     }
 }

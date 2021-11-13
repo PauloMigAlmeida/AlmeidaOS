@@ -15,7 +15,13 @@
 #include "kernel/lib/math.h"
 #include "kernel/lib/bit.h"
 
-#define PREP_BASE_ADDR(addr)        (((addr) >> 12) & (UINT64_MAX >> (sizeof(uint64_t) * CHAR_BIT - (64-36))))
+#define PAGE_SHIFT                  12
+#define PREP_BASE_ADDR(addr)        (((addr) >> PAGE_SHIFT) & (UINT64_MAX >> (sizeof(uint64_t) * CHAR_BIT - (64-36))))
+
+#define PML4E(a)                    (extract_bit_chunk(39, 47, a))
+#define PDPTE(a)                    (extract_bit_chunk(30, 38, a))
+#define PDE(a)                      (extract_bit_chunk(21, 29, a))
+#define PTE(a)                      (extract_bit_chunk(12, 20, a))
 
 /*
  * this code block makes the assumption that
@@ -69,10 +75,15 @@ __force_inline static bool is_page_entry_empty(void *entry) {
 }
 
 void page_alloc(pagetable_t *pgtable, uint64_t v_addr, uint64_t p_dest_addr, uint16_t flags) {
-    pml4e_t *pml4_pgtable = (pml4e_t*) pgtable->virt_root;
+
+    /* decompose virtual address into pagetable indexes */
+    uint16_t pm4l_idx = PML4E(v_addr);
+    uint16_t pdp_idx = PDPTE(v_addr);
+    uint16_t pd_idx = PDE(v_addr);
+    uint16_t pt_idx = PTE(v_addr);
 
     /* Alloc PML4if needed */
-    uint16_t pm4l_idx = extract_bit_chunk(39, 47, v_addr);
+    pml4e_t *pml4_pgtable = (pml4e_t*) pgtable->virt_root;
     if (is_page_entry_empty(&pml4_pgtable[pm4l_idx])) {
         uintptr_t pdp_pgtable_addr = pageframe_alloc();
 
@@ -87,8 +98,7 @@ void page_alloc(pagetable_t *pgtable, uint64_t v_addr, uint64_t p_dest_addr, uin
     }
 
     /* Alloc PDP if needed */
-    uint16_t pdp_idx = extract_bit_chunk(30, 38, v_addr);
-    pdpe_t *pdp_pgtable = (pdpe_t*) va(pml4_pgtable[pm4l_idx].pdpe_base_addr << 12);
+    pdpe_t *pdp_pgtable = (pdpe_t*) va(pml4_pgtable[pm4l_idx].pdpe_base_addr << PAGE_SHIFT);
     if (is_page_entry_empty(&pdp_pgtable[pdp_idx])) {
         uintptr_t pd_pgtable_addr = pageframe_alloc();
 
@@ -103,8 +113,7 @@ void page_alloc(pagetable_t *pgtable, uint64_t v_addr, uint64_t p_dest_addr, uin
     }
 
     /* Alloc PD if needed */
-    uint16_t pd_idx = extract_bit_chunk(21, 29, v_addr);
-    pde_t *pd_pgtable = (pde_t*) va(pdp_pgtable[pdp_idx].pde_base_addr << 12);
+    pde_t *pd_pgtable = (pde_t*) va(pdp_pgtable[pdp_idx].pde_base_addr << PAGE_SHIFT);
     if (is_page_entry_empty(&pd_pgtable[pd_idx])) {
         uintptr_t pt_pgtable_addr = pageframe_alloc();
 
@@ -118,8 +127,7 @@ void page_alloc(pagetable_t *pgtable, uint64_t v_addr, uint64_t p_dest_addr, uin
     }
 
     /* Alloc PT if needed */
-    uint16_t pt_idx = extract_bit_chunk(12, 20, v_addr);
-    pte_t *pt_pgtable = (pte_t*) va(pd_pgtable[pd_idx].pte_base_addr << 12);
+    pte_t *pt_pgtable = (pte_t*) va(pd_pgtable[pd_idx].pte_base_addr << PAGE_SHIFT);
     if (is_page_entry_empty(&pt_pgtable[pt_idx])) {
         pte_t hh_pte_entry = {
                 .no_execute_bit = 0,
@@ -134,9 +142,9 @@ void page_alloc(pagetable_t *pgtable, uint64_t v_addr, uint64_t p_dest_addr, uin
 
 static bool is_pagetable_empty(const void *pgtable) {
     bool ret = true;
-    const char* src = (const char*)pgtable;
-    for(size_t i = 0; i < 512; i++){
-        if(*src != 0){
+    const char *src = (const char*) pgtable;
+    for (size_t i = 0; i < 512; i++) {
+        if (*src != 0) {
             ret = false;
             break;
         }
@@ -144,50 +152,46 @@ static bool is_pagetable_empty(const void *pgtable) {
     return ret;
 }
 
-void page_free(pagetable_t *pgtable, uint64_t v_addr) {
-    /* delete entry from page table */
-    pml4e_t *pml4_pgtable = (pml4e_t*) pgtable->virt_root;
+static bool page_free_resources(uint64_t pgt_phy_addr, uint64_t v_addr, int level) {
 
-    uint16_t pm4l_idx = extract_bit_chunk(39, 47, v_addr);
-    BUG_ON(is_page_entry_empty(&pml4_pgtable[pm4l_idx]));
-    pdpe_t *pdp_pgtable = (pdpe_t*) va(pml4_pgtable[pm4l_idx].pdpe_base_addr << 12);
+    if (level <= 0)
+        return true;
 
-    uint16_t pdp_idx = extract_bit_chunk(30, 38, v_addr);
-    BUG_ON(is_page_entry_empty(&pdp_pgtable[pdp_idx]));
-    pde_t *pd_pgtable = (pde_t*) va(pdp_pgtable[pdp_idx].pde_base_addr << 12);
+    uintptr_t *pgt_virt_addr = (uintptr_t*) va(pgt_phy_addr);
 
-    uint16_t pd_idx = extract_bit_chunk(21, 29, v_addr);
-    BUG_ON(is_page_entry_empty(&pd_pgtable[pd_idx]));
-    pte_t *pt_pgtable = (pte_t*) va(pd_pgtable[pd_idx].pte_base_addr << 12);
+    uint16_t idx = 0;
+    if (level == 4)
+        idx = PML4E(v_addr);
+    else if (level == 3)
+        idx = PDPTE(v_addr);
+    else if (level == 2)
+        idx = PDE(v_addr);
+    else if (level == 1)
+        idx = PTE(v_addr);
+    else
+        fatal();
 
-    /* zero-out entry that is about to be freed */
-    uint16_t pt_idx = extract_bit_chunk(12, 20, v_addr);
-    BUG_ON(is_page_entry_empty(&pt_pgtable[pt_idx]));
-    memzero(&pt_pgtable[pt_idx], sizeof(pte_t));
+    uintptr_t *page_entry = (uintptr_t*) va((pgt_phy_addr + (idx * sizeof(uint64_t))));
+    uint64_t lpgt_phy_base_addr = extract_bit_chunk(12, 51, *page_entry) << PAGE_SHIFT;
 
-    /* check if pte table is empty*/
-    if (is_pagetable_empty(pt_pgtable)) {
-        /* delete pageframe */
-        pageframe_free(pa((uint64_t) pt_pgtable));
-        /* zero-out entry from previous pgtable chain */
-        memzero(&pd_pgtable[pd_idx], sizeof(pde_t));
+    if (page_free_resources(lpgt_phy_base_addr, v_addr, level - 1)) {
+        /* zero-out entry that is about to be freed */
+        memzero(page_entry, sizeof(uint64_t));
 
-        /* check if pde table is empty*/
-        if (is_pagetable_empty(pd_pgtable)) {
-            /* delete pageframe */
-            pageframe_free(pa((uint64_t) pd_pgtable));
-            /* zero-out entry from previous pgtable chain */
-            memzero(&pdp_pgtable[pdp_idx], sizeof(pdpe_t));
-
-            /* check if pdpe table is empty*/
-            if (is_pagetable_empty(pdp_pgtable)) {
-                /* delete pageframe */
-                pageframe_free(pa((uint64_t) pdp_pgtable));
-                /* zero-out entry from previous pgtable chain */
-                memzero(&pml4_pgtable[pm4l_idx], sizeof(pml4e_t));
-            }
+        /* delete pageframe if possible */
+        if (is_pagetable_empty(pgt_virt_addr)) {
+            pageframe_free(pgt_phy_addr);
+            return true;
         }
     }
+
+    return false;
+
+}
+
+void page_free(pagetable_t *pgtable, uint64_t v_addr) {
+    /* free pagetables and pageframes where possible */
+    page_free_resources(pgtable->phys_root, v_addr, 4);
 
     /* invalidate entry */
     invalidate_page(v_addr);
