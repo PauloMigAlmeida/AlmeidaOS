@@ -10,6 +10,7 @@
 #include "kernel/device/keyboard.h"
 #include "kernel/interrupt/spurious.h"
 #include "kernel/mm/init.h"
+#include "kernel/syscall/init.h"
 
 //temp
 #include "kernel/mm/page.h"
@@ -43,20 +44,24 @@ void kmain(void) {
     keyboard_enable();
     pit_enable();
 
-    /* Test page alloc and page free */
-    page_alloc(kernel_pagetable(),
-    K_VIRT_END_ADDR + 1,
-            0x10000,
-            PAGE_PRESENT_BIT | PAGE_READ_WRITE_BIT);
-    int *x = (int*) (K_VIRT_END_ADDR + 1);
-    *x = 10;
-    BUG_ON(*x != 10);
-    printk_info("&x: 0x%.16llx *x: 0x%.16llx", x, *x);
+    /* enable syscalls */
+    syscall_init();
 
-
-    page_free(kernel_pagetable(),
-            K_VIRT_END_ADDR + 1);
-    // This should cause a page fault exception if the page free did its work right (including invalidation)
+//    /* Test page alloc and page free */
+//    page_alloc(kernel_pagetable(),
+//        K_VIRT_END_ADDR + 1,
+//                0x10000,
+//                PAGE_PRESENT_BIT | PAGE_READ_WRITE_BIT);
+//        int *x = (int*) (K_VIRT_END_ADDR + 1);
+//        *x = 10;
+//        BUG_ON(*x != 10);
+//        printk_info("&x: 0x%.16llx *x: 0x%.16llx", x, *x);
+//
+//
+//        page_free(kernel_pagetable(),
+//                K_VIRT_END_ADDR + 1);
+//
+//     /* This should cause a page fault exception if the page free did its work right (including invalidation) */
 //    *x = 11;
 //    BUG_ON(*x != 11);
 //    printk_info("&x: 0x%.16llx *x: 0x%.16llx", x, *x);
