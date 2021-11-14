@@ -11,8 +11,14 @@
 #include "kernel/compiler/freestanding.h"
 #include "kernel/compiler/macro.h"
 
-// MSR Addresses
+/* MSR Addresses */
 #define MSR_IA32_MISC_ENABLE 0x1A0
+
+/* Model-specific registers used to set up system calls. */
+#define MSR_IA32_EFER   0xC0000080
+#define MSR_IA32_STAR   0xC0000081
+#define MSR_IA32_LSTAR  0xC0000082
+#define MSR_IA32_FMASK  0xC0000084
 
 // MSR Addresses/Features
 #define MSR_IA32_MISC_ENABLE_FAST_STRING_BIT (1ULL << 0)
