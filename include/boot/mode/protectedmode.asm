@@ -17,7 +17,7 @@ PM.Video_Text.Colour      equ 0x07    ; White on black attribute
 ; Message Constants
 ;===============================================================================
 ProtectedMode.SecondStage.CleanPages.Msg db 'Cleaning 4-level paging structure',CR,LF,0
-ProtectedMode.SecondStage.PagesBuilt.Msg db 'Identity-mapped pages setup for first 16MiB',CR,LF,0
+ProtectedMode.SecondStage.PagesBuilt.Msg db 'Identity-mapped pages setup for first 1GB',CR,LF,0
 
 ;=============================================================================
 ; Global variables
@@ -301,6 +301,7 @@ pm_setup_page_tables:
 
     ; Present (bit 1) and ReadWrite(bit 2) bits are set
     .StdBits   equ 0x03
+    .PDE_PS	   equ (1 << 7)
 
     ; Create a single entry [0] in PML4 Table.
     ;   -> one entry in a PML4T can address 512GB
@@ -320,30 +321,18 @@ pm_setup_page_tables:
     ;   -> one entry in a PDPT can address 1GB
     mov DWORD [Mem.PDPE.Address], (Mem.PDE.Address ) | .StdBits
 
-    ; Create entries [0...7] in PDE Table. (8 PDE pages == 16 MB)
+    ; Create entries [0...512] in PDE Table. (512 PDE entries == 1 GB)
     ;   -> one entry in a PDE can address 2MB
     mov edi, Mem.PDE.Address
-    mov ecx, 8
-    mov eax, Mem.PTE.Address | .StdBits
+    mov ecx, 512
+    mov eax, .StdBits | .PDE_PS
 
     .make_pde_page:
       mov [edi], eax
       add edi, 0x8
-      add eax, 0x1000
+      add eax, 0x200000
       loop .make_pde_page
 
-
-    ; Create all 512 entries in the PT table.
-    ;   -> one entry in a PT can address 4Kb
-    mov edi, Mem.PTE.Address
-    mov ecx, 512 * 8
-    mov eax, .StdBits
-
-    .make_pte_page:
-      mov [edi], eax
-      add edi, 8
-      add eax, 0x1000
-      loop .make_pte_page
 
   ; Display status message
   mov eax, ProtectedMode.SecondStage.PagesBuilt.Msg

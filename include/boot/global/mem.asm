@@ -55,8 +55,7 @@ Paging.Table.Size     equ   0x1000									  ; 0x1000 = 4kb = 512 entries of 64 
 Mem.PML4.Address      equ   Paging.Start.Address                      ; PML4
 Mem.PDPE.Address      equ   Mem.PML4.Address + Paging.Table.Size      ; 0x20000 + PML4 (512 entries of 64 bits)
 Mem.PDE.Address       equ   Mem.PDPE.Address + Paging.Table.Size      ; 0x21000 + PDPE (512 entries of 64 bits)
-Mem.PTE.Address       equ   Mem.PDE.Address  + Paging.Table.Size      ; 0x22000 + PDE (512 entries of 64 bits)
-Paging.End.Address    equ   Mem.PTE.Address  + Paging.Table.Size * 8  ; 0x2a000 + 8 PT tables (512 entries of 64 bits)
+Paging.End.Address    equ   Mem.PDE.Address  + Paging.Table.Size      ; 0x22000 + PDE (512 entries of 64 bits)
 
 
 ;======================================================================================================================
@@ -83,10 +82,10 @@ Paging.End.Address    equ   Mem.PTE.Address  + Paging.Table.Size * 8  ; 0x2a000 
 ; ffff800020000000 | ~ -128  TB | ffff80003fffffff |  512 MB | unused hole / guard hole
 ;__________________|____________|____________________________|__________________________________________________________
 ;                  |            |                  |         |
-; ffff800040000000 | ~ -128  TB | ffff80005fffffff |  512 MB | kernel address space -> memory allocator header
+; ffff800040000000 | ~ -128  TB | ffff80005fffffff |  512 MB | memory allocator header
 ;__________________|____________|____________________________|__________________________________________________________
 ;                  |            |                  |         |
-; ffff800060000000 | ~ -128  TB | ffff80009fffffff |    1 GB | kernel address space -> content (max), which includes
+; ffff800060000000 | ~ -128  TB | ffff80205fffffff |  128 GB | memory allocator content -> content (max), which includes
 ;                  |            |                  |         | space mapped for kmalloc, vmalloc
 ;__________________|____________|__________________|_________|__________________________________________________________
 ;
