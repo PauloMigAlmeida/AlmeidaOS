@@ -13,12 +13,6 @@
 #include "kernel/lib/string.h"
 #include "kernel/lib/bit.h"
 
-/*
- * Typically the lower limit would be small enough to minimize the average
- * wasted space per allocation, but large enough to avoid excessive overhead.
- */
-#define BUDDY_ALLOC_SMALLEST_BLOCK   4096
-
 typedef enum {
     UNUSED,
     SPLIT,
@@ -75,7 +69,7 @@ __force_inline static buddy_slot_t* goto_sibling(buddy_ref_t *ref, buddy_slot_t 
 }
 
 __force_inline static uint64_t n_of_entries(buddy_ref_t *ref, uint8_t pow_order) {
-    return upow(2, ref->max_pow_order - pow_order);
+    return upow(2, ref->max_pow_order) / upow(2, pow_order);
 }
 
 __force_inline static bool is_entry_empty(buddy_slot_t *idx) {
@@ -254,3 +248,107 @@ void buddy_free(buddy_ref_t *ref, uintptr_t ptr) {
     }
 
 }
+
+//TODO optimise this fuction..there are several references to upow that can be replaced with a variable
+void buddy_pre_alloc(buddy_ref_t *ref, mem_map_region_t mem_rg) {
+    /* sanity checks */
+    BUG_ON(mem_rg.length == 0
+            || mem_rg.length > ref->content_mem_reg.length
+            || mem_rg.base_addr < ref->content_mem_reg.base_addr);
+
+    uint8_t k_order = ilog2(clp2(mem_rg.length));
+
+    if (k_order < ref->min_pow_order)
+        k_order = ref->min_pow_order;
+
+    uint64_t ptr = mem_rg.base_addr;
+    uint64_t length = clp2(mem_rg.length);
+
+    buddy_slot_t *idx = (buddy_slot_t*) goto_porder_idx(ref, ref->max_pow_order);
+    while (true) {
+
+        if (ptr >= idx->base_addr && (ptr + length) <= (idx->base_addr + upow(2, idx->pow_order))) {
+
+            if (idx->pow_order > k_order) {
+
+                if (idx->type == UNUSED) {
+
+                    /* split and insert */
+                    buddy_slot_t left = {
+                            .base_addr = idx->base_addr,
+                            .pow_order = idx->pow_order - 1,
+                            .type = UNUSED
+                    };
+
+                    buddy_slot_t right = {
+                            .base_addr = idx->base_addr + upow(2, idx->pow_order - 1),
+                            .pow_order = idx->pow_order - 1,
+                            .type = UNUSED
+                    };
+
+                    insert_child_slot(ref, idx, &left);
+                    insert_child_slot(ref, idx, &right);
+
+                    /* remove higher one (old) */
+                    idx->type = SPLIT;
+
+                    if (ptr >= idx->base_addr && (ptr + length) <= (idx->base_addr + (upow(2, idx->pow_order) / 2))) {
+                        idx = goto_left_child(ref, idx);
+                    } else {
+                        idx = goto_right_child(ref, idx);
+                    }
+
+                } else if (idx->type == SPLIT) {
+
+                    if ((ptr + length) <= (idx->base_addr + (upow(2, idx->pow_order) / 2))) {
+                        idx = goto_left_child(ref, idx);
+                    } else if (ptr >= (idx->base_addr + (upow(2, idx->pow_order) / 2))) {
+                        idx = goto_right_child(ref, idx);
+                    } else {
+                        /*
+                         * Darn it... there is an overlapping between requested and allocated blocks
+                         *
+                         * rather than make it a complex tree traversal, I will split that into 2 simpler requests
+                         * this will ensure that we mark as used only the blocks that we really need
+                         */
+
+                        mem_map_region_t req_1 = {
+                                .base_addr = mem_rg.base_addr,
+                                .length = (upow(2, idx->pow_order) / 2) - mem_rg.base_addr,
+                                .type = E820_MEM_TYPE_RESERVED
+                        };
+                        buddy_pre_alloc(ref, req_1);
+
+                        mem_map_region_t req_2 = {
+                                .base_addr = (upow(2, idx->pow_order) / 2),
+                                .length = mem_rg.base_addr - ((upow(2, idx->pow_order) / 2) - mem_rg.base_addr),
+                                .type = E820_MEM_TYPE_RESERVED
+                        };
+                        buddy_pre_alloc(ref, req_2);
+
+                        // work should be done by previous 2 calls
+                        break;
+
+                    }
+
+                } else if (idx->type == USED) {
+                    //job seems to be done already...so don't bother
+                    break;
+                }
+            } else if (idx->pow_order == k_order) {
+
+                if (idx->type == UNUSED) {
+                    /* perfect fit (that's rare.. go celebrate it) */
+                    idx->type = USED;
+                    break;
+
+                } else {
+                    fatal();
+                }
+            }
+
+        }
+    }
+
+}
+

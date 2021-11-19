@@ -11,6 +11,12 @@
 #include "kernel/compiler/freestanding.h"
 #include "kernel/arch/mem.h"
 
+/*
+ * Typically the lower limit would be small enough to minimize the average
+ * wasted space per allocation, but large enough to avoid excessive overhead.
+ */
+#define BUDDY_ALLOC_SMALLEST_BLOCK   4096
+
 typedef struct {
     mem_map_region_t header_mem_reg;
     mem_map_region_t content_mem_reg;
@@ -22,6 +28,6 @@ uint64_t buddy_calc_header_space(uint64_t mem_space);
 buddy_ref_t buddy_init(mem_map_region_t h_mem_reg, mem_map_region_t c_mem_reg);
 void* buddy_alloc(buddy_ref_t *ref, uint64_t bytes);
 void buddy_free(buddy_ref_t *ref, uintptr_t ptr);
-
+void buddy_pre_alloc(buddy_ref_t *ref, mem_map_region_t mem_rg);
 
 #endif /* INCLUDE_KERNEL_MM_BUDDY_H_ */
