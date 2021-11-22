@@ -11,6 +11,10 @@
 #include "kernel/compiler/freestanding.h"
 #include "kernel/compiler/macro.h"
 
+
+#define E820_MEM_TYPE_USABLE    1
+#define E820_MEM_TYPE_RESERVED  2
+
 /*
  *  Address Range Descriptor Structure
  *
@@ -39,12 +43,14 @@ typedef struct {
    uint64_t phys_free_mem;
 } mem_phys_stats_t;
 
+typedef void (*mem_proc_fun)(const mem_map_region_t *);
+
 void mem_init(void);
 void mem_print_entries(void);
-void print_mem_alloc(char *desc, mem_map_region_t *region);
 mem_phys_stats_t mem_stat(void);
 mem_map_region_t mem_alloc_region(uint64_t phys_start_addr, uint64_t phys_end_addr);
 mem_map_region_t mem_alloc_amount(uint64_t length, uint64_t aligment);
+void mem_list_entries(uint32_t type, mem_proc_fun handler);
 
 
 #endif /* INCLUDE_KERNEL_ARCH_MEM_H_ */

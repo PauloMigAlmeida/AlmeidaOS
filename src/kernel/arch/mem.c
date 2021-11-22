@@ -13,14 +13,15 @@
 #include "kernel/lib/qsort.h"
 #include "kernel/lib/math.h"
 
-#define E820_MEM_TYPE_USABLE    1
-#define E820_MEM_TYPE_RESERVED  2
-
 extern uintptr_t e820_mem_start;
 extern uintptr_t e820_mem_end;
 
 static mem_map_block_t *mem_blocks;
 static mem_phys_stats_t phys_mem_stat = { 0 };
+
+static bool mem_is_entry_empty(mem_map_region_t *reg) {
+    return reg->length == 0 && reg->type == 0;
+}
 
 /* calculates how much memory we have available so we can choose how to partition the phys mem later */
 static void calc_phys_memory_stats(void) {
@@ -118,13 +119,13 @@ static void squash_mem_regions() {
     for (size_t ptr_1 = 0; ptr_1 < mem_blocks->num_entries - 1; ptr_1++) {
         mem_rg = &mem_blocks->mem_region[ptr_1];
 
-        if (mem_rg->length == 0 && mem_rg->type == 0) {
+        if (mem_is_entry_empty(mem_rg)) {
 
             bool found_next_entry = false;
             for (size_t next_ptr = ptr_1 + 1; next_ptr < mem_blocks->num_entries; next_ptr++) {
                 mem_map_region_t *next_mem_rg = &mem_blocks->mem_region[next_ptr];
 
-                if (next_mem_rg->length != 0 && next_mem_rg->type != 0) {
+                if (!mem_is_entry_empty(next_mem_rg)) {
                     found_next_entry = true;
 
                     memcpy(mem_rg, next_mem_rg, sizeof(mem_map_region_t));
@@ -144,7 +145,7 @@ static void squash_mem_regions() {
     /* adjust num_entries value */
     for (size_t ptr_1 = 0; ptr_1 < mem_blocks->num_entries; ptr_1++) {
         mem_rg = &mem_blocks->mem_region[ptr_1];
-        if (mem_rg->length == 0 && mem_rg->type == 0) {
+        if (mem_is_entry_empty(mem_rg)) {
             mem_blocks->num_entries = ptr_1;
             break;
         }
@@ -174,6 +175,8 @@ void mem_init(void) {
 
     mem_blocks = (mem_map_block_t*) va(e820_mem_start);
 
+//    mem_print_entries();
+
     /* reserve low 1 Mb as this is used by the BIOS, VGA among other things */
     mem_reserve_first_mb();
 
@@ -186,7 +189,6 @@ void mem_init(void) {
 
     /* Calculate available phys memory once so we don't have to do it again */
     calc_phys_memory_stats();
-//    mem_print_entries();
 
     printk_info("read_bios_mem_map routine read %llu entries", mem_blocks->num_entries);
 }
@@ -296,7 +298,7 @@ mem_map_region_t mem_alloc_amount(uint64_t length, uint64_t addr_align) {
             uint64_t base_addr = round_up_po2(mem_rg->base_addr, addr_align);
 
             /* check if that region is still fit for the job after the start address alignment round up */
-            if(base_addr >= mem_rg->base_addr && (base_addr + length ) <= (mem_rg->base_addr + mem_rg->length)){
+            if (base_addr >= mem_rg->base_addr && (base_addr + length) <= (mem_rg->base_addr + mem_rg->length)) {
                 ret_region = mem_alloc_region(mem_rg->base_addr, mem_rg->base_addr + length);
                 break;
             }
@@ -305,15 +307,17 @@ mem_map_region_t mem_alloc_amount(uint64_t length, uint64_t addr_align) {
 
     }
 
-    BUG_ON(ret_region.base_addr == 0 || ret_region.length == 0 || ret_region.type == 0);
+    BUG_ON(mem_is_entry_empty(&ret_region));
 
     return ret_region;
 }
 
-void print_mem_alloc(char *desc, mem_map_region_t *region) {
-    printk_info("[%s]: start: 0x%llx end: 0x%llx length (Kb): %llu", desc,
-            region->base_addr,
-            region->base_addr + region->length,
-            region->length / 1024);
+void mem_list_entries(uint32_t type, mem_proc_fun handler) {
+    for (size_t cur_pos = 0; cur_pos < mem_blocks->num_entries; cur_pos++) {
+        mem_map_region_t *mem_rg = &mem_blocks->mem_region[cur_pos];
+        if(mem_rg->type == type){
+            handler(mem_rg);
+        }
+    }
 }
 
