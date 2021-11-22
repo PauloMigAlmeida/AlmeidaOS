@@ -250,104 +250,148 @@ void buddy_free(buddy_ref_t *ref, uintptr_t ptr) {
 }
 
 //TODO optimise this fuction..there are several references to upow that can be replaced with a variable
-void buddy_pre_alloc(buddy_ref_t *ref, mem_map_region_t mem_rg) {
+void buddy_pre_alloc(buddy_ref_t *ref, uint64_t base_addr, uint64_t length) {
     /* sanity checks */
-    BUG_ON(mem_rg.length == 0
-            || mem_rg.length > ref->content_mem_reg.length
-            || mem_rg.base_addr < ref->content_mem_reg.base_addr);
+    printk_debug("base_addr 0x%.16llx length 0x%.16llx", base_addr, length);
+    BUG_ON(length == 0
+            || length > ref->content_mem_reg.length
+            || base_addr < ref->content_mem_reg.base_addr);
 
-    uint8_t k_order = ilog2(clp2(mem_rg.length));
+    length = round_up_po2(length, BUDDY_ALLOC_SMALLEST_BLOCK);
 
-    if (k_order < ref->min_pow_order)
-        k_order = ref->min_pow_order;
+    if (length != clp2(length)) {
+        /* we may need to break this up to fulfill the request and save space */
+        uint64_t req_1_length = flp2(length);
 
-    uint64_t ptr = mem_rg.base_addr;
-    uint64_t length = clp2(mem_rg.length);
+        buddy_pre_alloc(ref, base_addr, req_1_length);
+        buddy_pre_alloc(ref, base_addr + req_1_length, length - req_1_length);
 
-    buddy_slot_t *idx = (buddy_slot_t*) goto_porder_idx(ref, ref->max_pow_order);
-    while (true) {
+    } else {
+        uint8_t k_order = ilog2(length);
+        if (k_order < ref->min_pow_order)
+            k_order = ref->min_pow_order;
 
-        if (ptr >= idx->base_addr && (ptr + length) <= (idx->base_addr + upow(2, idx->pow_order))) {
+        uint64_t ptr = base_addr;
 
-            if (idx->pow_order > k_order) {
+        buddy_slot_t *idx = (buddy_slot_t*) goto_porder_idx(ref, ref->max_pow_order);
+        while (true) {
 
-                if (idx->type == UNUSED) {
+            if (ptr >= idx->base_addr && (ptr + length) <= (idx->base_addr + upow(2, idx->pow_order))) {
 
-                    /* split and insert */
-                    buddy_slot_t left = {
-                            .base_addr = idx->base_addr,
-                            .pow_order = idx->pow_order - 1,
-                            .type = UNUSED
-                    };
+                if (idx->pow_order > k_order) {
 
-                    buddy_slot_t right = {
-                            .base_addr = idx->base_addr + upow(2, idx->pow_order - 1),
-                            .pow_order = idx->pow_order - 1,
-                            .type = UNUSED
-                    };
+                    if (idx->type == UNUSED) {
 
-                    insert_child_slot(ref, idx, &left);
-                    insert_child_slot(ref, idx, &right);
+                        /* split and insert */
+                        buddy_slot_t left = {
+                                .base_addr = idx->base_addr,
+                                .pow_order = idx->pow_order - 1,
+                                .type = UNUSED
+                        };
 
-                    /* remove higher one (old) */
-                    idx->type = SPLIT;
+                        buddy_slot_t right = {
+                                .base_addr = idx->base_addr + upow(2, idx->pow_order - 1),
+                                .pow_order = idx->pow_order - 1,
+                                .type = UNUSED
+                        };
 
-                    if (ptr >= idx->base_addr && (ptr + length) <= (idx->base_addr + (upow(2, idx->pow_order) / 2))) {
-                        idx = goto_left_child(ref, idx);
-                    } else {
-                        idx = goto_right_child(ref, idx);
+                        insert_child_slot(ref, idx, &left);
+                        insert_child_slot(ref, idx, &right);
+
+                        /* remove higher one (old) */
+                        idx->type = SPLIT;
+
+                        if (ptr >= idx->base_addr
+                                && (ptr + length) <= (idx->base_addr + (upow(2, idx->pow_order) / 2))) {
+                            idx = goto_left_child(ref, idx);
+                        } else if (ptr >= (idx->base_addr + (upow(2, idx->pow_order) / 2))) {
+                            idx = goto_right_child(ref, idx);
+                        } else {
+                            /*
+                             * Darn it... there is an overlapping between requested and allocated blocks
+                             *
+                             * that's absolutely the worst case scenario which leads to memory fragmentation
+                             * unfortunately there is no much else to do in this case
+                             */
+
+//                            uint64_t new_length = upow(2, idx->pow_order) / 2;
+//                            printk_info(
+//                                    "Overlapping block found: 0x%.16llx - 0x%.16llx. "
+//                                            "Using 0x%.16llx - 0x%.16llx. "
+//                                            "Memory loss: 0x%.16llx bytes",
+//                                    ptr,
+//                                    ptr + length,
+//                                    idx->base_addr,
+//                                    idx->base_addr + new_length * 2,
+//                                    (new_length * 2) - length
+//                                            );
+//
+//                            buddy_pre_alloc(ref, idx->base_addr, upow(2, idx->pow_order) / 2);
+//                            buddy_pre_alloc(ref, idx->base_addr + upow(2, idx->pow_order) / 2,
+//                                    upow(2, idx->pow_order) / 2);
+
+                            buddy_pre_alloc(ref, ptr, (idx->base_addr + (upow(2, idx->pow_order) / 2)) - ptr);
+                            buddy_pre_alloc(ref, (idx->base_addr + (upow(2, idx->pow_order) / 2)),
+                                    (ptr + length) - (idx->base_addr + (upow(2, idx->pow_order) / 2)));
+
+                            // work should be done by previous 2 calls
+                            break;
+
+                        }
+
+                    } else if (idx->type == SPLIT) {
+
+                        if ((ptr + length) <= (idx->base_addr + (upow(2, idx->pow_order) / 2))) {
+                            idx = goto_left_child(ref, idx);
+                        } else if (ptr >= (idx->base_addr + (upow(2, idx->pow_order) / 2))) {
+                            idx = goto_right_child(ref, idx);
+                        } else {
+                            /*
+                             * Darn it... there is an overlapping between requested and allocated blocks
+                             *
+                             * rather than make it a complex tree traversal, I will split that into 2 simpler requests
+                             * this will ensure that we mark as used only the blocks that we really need
+                             */
+
+                            /*
+                             * 0x1fe_000 -> 0x4_1fe_000 (0x4_000_000)
+                             *  -> 0x1fe_000    -> 0x4_000_000
+                             *  -> 0x4_000_000  -> 0x4_1fe_000
+                             *
+                             * 0xfff_1fe_000 -> 0xfff_4_1fe_000 (0x4_000_000)
+                             *  -> 0xfff_1fe_000    -> 0xfff_4_000_000
+                             *  -> 0xfff_4_000_000  -> 0xfff_4_1fe_000
+                             *
+                             */
+
+                            buddy_pre_alloc(ref, ptr, (idx->base_addr + (upow(2, idx->pow_order) / 2)) - ptr);
+                            buddy_pre_alloc(ref, (idx->base_addr + (upow(2, idx->pow_order) / 2)),
+                                    (ptr + length) - (idx->base_addr + (upow(2, idx->pow_order) / 2)));
+
+                            // work should be done by previous 2 calls
+                            break;
+
+                        }
+
+                    } else if (idx->type == USED) {
+                        //job seems to be done already...so don't bother
+                        break;
                     }
+                } else if (idx->pow_order == k_order) {
 
-                } else if (idx->type == SPLIT) {
-
-                    if ((ptr + length) <= (idx->base_addr + (upow(2, idx->pow_order) / 2))) {
-                        idx = goto_left_child(ref, idx);
-                    } else if (ptr >= (idx->base_addr + (upow(2, idx->pow_order) / 2))) {
-                        idx = goto_right_child(ref, idx);
-                    } else {
-                        /*
-                         * Darn it... there is an overlapping between requested and allocated blocks
-                         *
-                         * rather than make it a complex tree traversal, I will split that into 2 simpler requests
-                         * this will ensure that we mark as used only the blocks that we really need
-                         */
-
-                        mem_map_region_t req_1 = {
-                                .base_addr = mem_rg.base_addr,
-                                .length = (upow(2, idx->pow_order) / 2) - mem_rg.base_addr,
-                                .type = E820_MEM_TYPE_RESERVED
-                        };
-                        buddy_pre_alloc(ref, req_1);
-
-                        mem_map_region_t req_2 = {
-                                .base_addr = (upow(2, idx->pow_order) / 2),
-                                .length = mem_rg.base_addr - ((upow(2, idx->pow_order) / 2) - mem_rg.base_addr),
-                                .type = E820_MEM_TYPE_RESERVED
-                        };
-                        buddy_pre_alloc(ref, req_2);
-
-                        // work should be done by previous 2 calls
+                    if (idx->type == UNUSED) {
+                        /* perfect fit (that's rare.. go celebrate it) */
+                        idx->type = USED;
                         break;
 
+                    } else {
+                        fatal();
                     }
-
-                } else if (idx->type == USED) {
-                    //job seems to be done already...so don't bother
-                    break;
                 }
-            } else if (idx->pow_order == k_order) {
 
-                if (idx->type == UNUSED) {
-                    /* perfect fit (that's rare.. go celebrate it) */
-                    idx->type = USED;
-                    break;
-
-                } else {
-                    fatal();
-                }
             }
-
         }
+
     }
 
 }
