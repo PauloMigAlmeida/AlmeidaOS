@@ -51,11 +51,11 @@ Kernel.New.ELFTextHeader.Offset   equ 0x00001000 ; .text starts <p> + 0x1000
 
 ; Early paging
 Paging.Start.Address  equ   0x20000
-Paging.Table.Size     equ   0x1000									  ; 0x1000 = 4kb = 512 entries of 64 bits
-Mem.PML4.Address      equ   Paging.Start.Address                      ; PML4
-Mem.PDPE.Address      equ   Mem.PML4.Address + Paging.Table.Size      ; 0x20000 + PML4 (512 entries of 64 bits)
-Mem.PDE.Address       equ   Mem.PDPE.Address + Paging.Table.Size      ; 0x21000 + PDPE (512 entries of 64 bits)
-Paging.End.Address    equ   Mem.PDE.Address  + Paging.Table.Size      ; 0x22000 + PDE (512 entries of 64 bits)
+Paging.Table.Size     equ   0x1000									  		; 0x1000 = 4kb = 512 entries of 64 bits
+Mem.PML4.Address      equ   Paging.Start.Address                      		; PML4
+Mem.PDPE.Address      equ   Mem.PML4.Address + Paging.Table.Size      		; 0x20000 + PML4 (512 entries of 64 bits)
+Mem.PDE.Address       equ   Mem.PDPE.Address + Paging.Table.Size      		; 0x21000 + PDPE (512 entries of 64 bits)
+Paging.End.Address    equ   Mem.PDE.Address  + (64 * Paging.Table.Size)     ; 0x22000 + 64x PDE (512 entries of 64 bits)
 
 
 ;======================================================================================================================

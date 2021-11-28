@@ -17,7 +17,7 @@ PM.Video_Text.Colour      equ 0x07    ; White on black attribute
 ; Message Constants
 ;===============================================================================
 ProtectedMode.SecondStage.CleanPages.Msg db 'Cleaning 4-level paging structure',CR,LF,0
-ProtectedMode.SecondStage.PagesBuilt.Msg db 'Identity-mapped pages setup for first 1GB',CR,LF,0
+ProtectedMode.SecondStage.PagesBuilt.Msg db 'Identity-mapped pages setup for first 64GiB',CR,LF,0
 
 ;=============================================================================
 ; Global variables
@@ -317,14 +317,22 @@ pm_setup_page_tables:
     ; video mem address (0xb8000) and the area designated in which BIOS 0xe820 results were stored and so on.
     mov DWORD [Mem.PML4.Address + 256 * 0x08], (Mem.PDPE.Address) | .StdBits
 
-    ; Create a single entry [0] in PDPT Table.
+    ; Create a single entry [0...63] in PDPT Table.
     ;   -> one entry in a PDPT can address 1GB
-    mov DWORD [Mem.PDPE.Address], (Mem.PDE.Address ) | .StdBits
+    mov edi, Mem.PDPE.Address
+    mov ecx, 64
+    mov eax, Mem.PDE.Address | .StdBits
 
-    ; Create entries [0...512] in PDE Table. (512 PDE entries == 1 GB)
+    .make_pdpe_page:
+      mov [edi], eax
+      add edi, 0x8
+      add eax, 0x1000
+      loop .make_pdpe_page
+
+    ; Create entries [0...512] in each PDE Table. (512 PDE entries == 1 GB)
     ;   -> one entry in a PDE can address 2MB
     mov edi, Mem.PDE.Address
-    mov ecx, 512
+    mov ecx, 512 * 64
     mov eax, .StdBits | .PDE_PS
 
     .make_pde_page:
