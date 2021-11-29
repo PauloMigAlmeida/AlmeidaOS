@@ -12,17 +12,11 @@
 #include "kernel/mm/init.h"
 #include "kernel/syscall/init.h"
 
-//temp
-#include "kernel/mm/page.h"
-#include "kernel/compiler/bug.h"
 
 void kmain(void) {
     /* printk init */
     printk_init(PRINTK_INFO_LEVEL);
     vga_console_init();
-
-    /* memory management module init */
-    mm_init();
 
     /* CPU features initialisation */
     cpu_init();
@@ -38,6 +32,9 @@ void kmain(void) {
 
     /* Unleash all possible problems in the world */
     enable_interrupts();
+
+    /* memory management module init */
+    mm_init();
 
     /* enabled IRQs */
     spurious_irq_enable();
@@ -72,9 +69,14 @@ void kmain(void) {
 //    /* Testing kmalloc and kmem */
 //    #include "kernel/lib/math.h"
 //    #include "kernel/mm/kmem.h"
+
+
+
 //    for (int i = 0; i < 8192; i++) {
 //        int rnd = (rand() % (8192)) + 1;
-//        int *ptr = kmalloc(rnd);
+//
+//        int *ptr = (int*)va((uint64_t)kmalloc(rnd, KMEM_DEFAULT));
+//
 //        if (ptr) {
 //            *ptr = 10;
 //        }
