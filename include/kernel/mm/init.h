@@ -16,10 +16,6 @@
 
 /* Virtual Memory Mapping -> More at: /include/boot/global/mem.asm */
 #define K_VIRT_START_ADDR           0xffff800000000000
-#define K_VIRT_END_ADDR             0xffff80009fffffff
-#define K_VIRT_TEXT_ADDR            0xffff800000000000
-#define K_VIRT_MEM_HEADER_ADDR      0xffff800040000000
-#define K_VIRT_MEM_CONTENT_ADDR     0xffff800060000000
 
 /* Functions */
 

@@ -39,7 +39,7 @@ void* kmalloc(uint64_t bytes, int flags) {
                 phy_addr,
                 phy_addr + bytes,
                 va(phy_addr),
-                PAGE_PRESENT_BIT | PAGE_READ_WRITE_BIT | PAGE_GLOBAL_BIT);
+                PAGE_PRESENT_BIT | PAGE_READ_WRITE_BIT);
     }
 
     return (uintptr_t*) phy_addr;
