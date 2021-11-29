@@ -129,7 +129,7 @@ static void insert_child_slot(buddy_ref_t *ref, buddy_slot_t *parent, buddy_slot
     memcpy(idx, child, sizeof(buddy_slot_t));
 }
 
-void* buddy_alloc(buddy_ref_t *ref, uint64_t bytes) {
+uintptr_t buddy_alloc(buddy_ref_t *ref, uint64_t bytes) {
     BUG_ON(bytes == 0 || bytes > ref->content_mem_reg.length);
 
     uint8_t k_order = ilog2(clp2(bytes));
@@ -139,7 +139,7 @@ void* buddy_alloc(buddy_ref_t *ref, uint64_t bytes) {
         k_order = ref->min_pow_order;
 
     bool found = false;
-    uintptr_t *ptr = NULL;
+    uintptr_t ptr = 0;
     uint8_t tmp_k_order = k_order;
 
     while (true) {
@@ -179,7 +179,7 @@ void* buddy_alloc(buddy_ref_t *ref, uint64_t bytes) {
             /* we found the perfect fit \o/ */
             idx->type = USED;
             found = true;
-            ptr = (uintptr_t*) idx->base_addr;
+            ptr = idx->base_addr;
             break;
         }
     }
@@ -196,7 +196,7 @@ static buddy_slot_t* find_slot_by_addr(buddy_ref_t *ref, uintptr_t ptr) {
     while (idx->pow_order >= ref->min_pow_order) {
         if (idx->type == UNUSED)
             break; // fail-fast
-        else if (ptr >= idx->base_addr && ptr <= (idx->base_addr + (upow(2, idx->pow_order) / 2))) {
+        else if (ptr >= idx->base_addr && ptr <= (idx->base_addr + (upow(2, idx->pow_order) / 2) - 1)) {
             if (idx->type == SPLIT) {
                 idx = goto_left_child(ref, idx);
             } else if (idx->type == USED) {

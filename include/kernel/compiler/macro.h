@@ -32,9 +32,6 @@
 /* calculate the length of the array - and avoid tendinitis ;) */
 #define ARR_SIZE(arr)		sizeof(arr)/sizeof(arr[0])
 
-/* Min value routine - widely used to truncate memcpy op for security reasons */
-#define MIN(a, b)           ((a) < (b) ? (a) : (b))
-
 /* Byte-wise swap two items of size SIZE. Credits: GNU libC*/
 #define EXCH(a, b, size)                                                      \
   do {                                                                        \

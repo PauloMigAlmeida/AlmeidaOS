@@ -26,7 +26,7 @@ typedef struct {
 
 uint64_t buddy_calc_header_space(uint64_t mem_space);
 buddy_ref_t buddy_init(mem_map_region_t h_mem_reg, mem_map_region_t c_mem_reg);
-void* buddy_alloc(buddy_ref_t *ref, uint64_t bytes);
+uintptr_t buddy_alloc(buddy_ref_t *ref, uint64_t bytes);
 void buddy_free(buddy_ref_t *ref, uintptr_t ptr);
 void buddy_pre_alloc(buddy_ref_t *ref, uint64_t base_addr, uint64_t length);
 
