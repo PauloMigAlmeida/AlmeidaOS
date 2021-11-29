@@ -14,6 +14,7 @@
 #include "kernel/lib/string.h"
 #include "kernel/lib/math.h"
 #include "kernel/lib/bit.h"
+#include "kernel/lib/printk.h"
 
 #define PAGE_SHIFT                  12
 #define PREP_BASE_ADDR(addr)        (((addr) >> PAGE_SHIFT) & (UINT64_MAX >> (sizeof(uint64_t) * CHAR_BIT - (64-36))))
@@ -199,6 +200,10 @@ void page_free(pagetable_t *pgtable, uint64_t v_addr) {
 
 void paging_contiguous_map(pagetable_t *pgtable, uint64_t p_start_addr, uint64_t p_end_addr, uint64_t v_base_start_addr,
         uint16_t flags) {
+
+    printk_fine("mapping 0x%.16llx - 0x%.16llx to 0x%.16llx - 0x%.16llx", p_start_addr, p_end_addr, v_base_start_addr,
+            v_base_start_addr + (p_end_addr - p_start_addr));
+
     while (p_start_addr <= p_end_addr) {
         page_alloc(pgtable, v_base_start_addr, p_start_addr, flags);
         p_start_addr += PAGE_SIZE;
