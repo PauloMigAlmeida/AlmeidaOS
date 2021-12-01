@@ -12,6 +12,10 @@
 #include "kernel/mm/init.h"
 #include "kernel/syscall/init.h"
 
+/* Testing kmalloc and kmem */
+#include "kernel/lib/math.h"
+#include "kernel/mm/kmem.h"
+#include "kernel/mm/addressconv.h"
 
 void kmain(void) {
     /* printk init */
@@ -69,20 +73,30 @@ void kmain(void) {
 //    /* Testing kmalloc and kmem */
 //    #include "kernel/lib/math.h"
 //    #include "kernel/mm/kmem.h"
-
-
-
-//    for (int i = 0; i < 8192; i++) {
+//    #include "kernel/mm/addressconv.h"
+//
+//    size_t arr_size = 8192;
+//    uint64_t *ptr_arr = kmalloc(arr_size * sizeof(uint64_t), KMEM_DEFAULT);
+//
+//    for (size_t i = 0; i < arr_size; i++) {
 //        int rnd = (rand() % (8192)) + 1;
 //
-//        int *ptr = (int*)va((uint64_t)kmalloc(rnd, KMEM_DEFAULT));
+//        int *ptr = (int*) kmalloc(rnd, KMEM_DEFAULT);
+//        *(ptr_arr + i) = (uint64_t) ptr;
 //
 //        if (ptr) {
 //            *ptr = 10;
 //        }
-//        printk_info("i: %d ptr: %p rnd: %d content: %d", i, ptr, rnd, *ptr);
-//        if(ptr)
+//        printk_info("kmalloc: i: %d ptr: %p rnd: %d content: %d", i, ptr, rnd, *ptr);
+//    }
+//
+//    for (size_t i = 0; i < arr_size; i++) {
+//        int *ptr = (int*) (*(ptr_arr + i));
+//        if (ptr) {
 //            kfree(ptr);
+//            printk_info("kfree: i: %d ptr: %p content: %d", i, ptr, *ptr);
+//        }
+//
 //    }
 
 //    mem_phys_stats_t t = mem_phys_stat();

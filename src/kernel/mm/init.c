@@ -74,12 +74,12 @@ static void paging_setup(uint64_t total_kern_space) {
 
     /* The PML4 table must be aligned on a 4-Kbyte base address - AMD manual section 5.3.2  */
     mem_map_region_t k_pages_struct_rg = {
-            .base_addr = (uintptr_t) kmalloc(paging_mem, KMEM_RAW_ALLOC),
+            .base_addr = pa((uintptr_t) kmalloc(paging_mem, KMEM_RAW_ALLOC)),
             .length = paging_mem
     };
     print_mem_alloc("K_PAGE_STR", &k_pages_struct_rg);
     mem_map_region_t k_pfdb_struct_rg = {
-            .base_addr = (uintptr_t) kmalloc(pfdb_mem, KMEM_RAW_ALLOC),
+            .base_addr = pa((uintptr_t) kmalloc(pfdb_mem, KMEM_RAW_ALLOC)),
             .length = pfdb_mem
     };
     print_mem_alloc("K_PFDB_STR", &k_pfdb_struct_rg);

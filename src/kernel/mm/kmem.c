@@ -32,17 +32,18 @@ void kmem_init(mem_map_region_t k_mem_header_rg, mem_map_region_t k_mem_content_
 
 void* kmalloc(uint64_t bytes, int flags) {
     uintptr_t phy_addr = buddy_alloc(&k_mem_alloc, bytes);
+    uintptr_t va_addr = va(phy_addr);
 
     if (!(flags & KMEM_RAW_ALLOC)) {
         //TODO Switch that to active_pagetable to account for user space stuff?
         paging_contiguous_map(kernel_pagetable(),
                 phy_addr,
                 phy_addr + bytes,
-                va(phy_addr),
+                va_addr,
                 PAGE_PRESENT_BIT | PAGE_READ_WRITE_BIT);
     }
 
-    return (uintptr_t*) phy_addr;
+    return (uintptr_t*) va_addr;
 }
 
 void kfree(void *ptr) {
