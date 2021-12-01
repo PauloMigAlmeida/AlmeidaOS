@@ -231,8 +231,8 @@ void buddy_free(buddy_ref_t *ref, uintptr_t ptr) {
         /* find the buddy */
         buddy_slot_t *sibling_slot = goto_sibling(ref, ptr_slot);
 
-        /* if it's still used then party is over */
-        if (sibling_slot->type == USED)
+        /* if it's still used or split then party is over */
+        if (sibling_slot->type != UNUSED)
             break;
 
         /* we can merge this one */
