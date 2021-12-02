@@ -10,15 +10,16 @@
 #include "kernel/compiler/bug.h"
 #include "kernel/mm/addressconv.h"
 
-static pageframe_database pfdb;
+//static pageframe_database_t pfdb;
 
 /* calc amount of pageframes that that pfdb must store */
 uint64_t pageframe_calc_space_needed(uint64_t pagetable_bytes) {
     return (pagetable_bytes / PAGEFRAME_SIZE) * sizeof(struct pageframe_t);
 }
 
-void pageframe_init(mem_map_region_t k_pages_struct_rg, mem_map_region_t k_pfdb_struct_rg) {
+pageframe_database_t pageframe_init(mem_map_region_t k_pages_struct_rg, mem_map_region_t k_pfdb_struct_rg) {
     /* init page frame database */
+    pageframe_database_t pfdb;
     pfdb.free = NULL;
     pfdb.used = NULL;
 
@@ -52,20 +53,22 @@ void pageframe_init(mem_map_region_t k_pages_struct_rg, mem_map_region_t k_pfdb_
         pagetable_addr += PAGEFRAME_SIZE;
         pageframe_addr += sizeof(struct pageframe_t);
     }
+
+    return pfdb;
 }
 
-uint64_t pageframe_alloc(void) {
+uint64_t pageframe_alloc(pageframe_database_t *pfdb) {
     /* check if we haven't run out of page frames to allocate */
-    BUG_ON(pfdb.free == NULL);
+    BUG_ON(pfdb->free == NULL);
 
     /* alloc page frame */
-    struct pageframe_t *page_frame = pfdb.free;
+    struct pageframe_t *page_frame = pfdb->free;
     uint64_t ret = page_frame->phy_addr;
 
     /* adjust references to the next free page frame */
-    pfdb.free = pfdb.free->next;
-    page_frame->next = pfdb.used;
-    pfdb.used = page_frame;
+    pfdb->free = pfdb->free->next;
+    page_frame->next = pfdb->used;
+    pfdb->used = page_frame;
 
     return ret;
 }
@@ -107,17 +110,17 @@ static struct pageframe_t* delete_node(struct pageframe_t **head, uint64_t val) 
     return item;
 }
 
-void pageframe_free(uint64_t phy_addr) {
+void pageframe_free(pageframe_database_t *pfdb, uint64_t phy_addr) {
     /* sanity check */
-    BUG_ON(pfdb.used == NULL);
+    BUG_ON(pfdb->used == NULL);
 
     /* alloc page frame */
-    struct pageframe_t *pf = delete_node(&pfdb.used, phy_addr);
+    struct pageframe_t *pf = delete_node(&pfdb->used, phy_addr);
 
     /* something went terribly wrong for this to be true, ay? */
     BUG_ON(pf == NULL);
 
     /* prepend item to list */
-    pf->next = pfdb.free;
-    pfdb.free = pf;
+    pf->next = pfdb->free;
+    pfdb->free = pf;
 }

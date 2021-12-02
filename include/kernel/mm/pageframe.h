@@ -19,11 +19,11 @@ struct pageframe_t {
 typedef struct {
     struct pageframe_t *free;
     struct pageframe_t *used;
-} pageframe_database;
+} pageframe_database_t;
 
-void pageframe_init(mem_map_region_t k_pages_struct_rg, mem_map_region_t k_pfdb_struct_rg);
+pageframe_database_t pageframe_init(mem_map_region_t k_pages_struct_rg, mem_map_region_t k_pfdb_struct_rg);
 uint64_t pageframe_calc_space_needed(uint64_t pagetable_bytes);
-uint64_t pageframe_alloc(void);
-void pageframe_free(uint64_t phy_addr);
+uint64_t pageframe_alloc(pageframe_database_t *pfdb);
+void pageframe_free(pageframe_database_t *pfdb, uint64_t phy_addr);
 
 #endif /* INCLUDE_KERNEL_MM_PAGEFRAME_H_ */

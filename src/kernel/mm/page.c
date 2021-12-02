@@ -64,10 +64,10 @@ void paging_init(pagetable_t *pgtable, mem_map_region_t k_pages_struct_rg, mem_m
     memzero((void*) k_pfdb_struct_rg.base_addr, k_pfdb_struct_rg.length);
 
     /* initialise pageframe database */
-    pageframe_init(k_pages_struct_rg, k_pfdb_struct_rg);
+    pgtable->pfdb = pageframe_init(k_pages_struct_rg, k_pfdb_struct_rg);
 
     /* allocate the root page table that will be used across the OS */
-    pgtable->phys_root = pageframe_alloc();
+    pgtable->phys_root = pageframe_alloc(&pgtable->pfdb);
     pgtable->virt_root = va(pgtable->phys_root);
 }
 
@@ -86,7 +86,7 @@ void page_alloc(pagetable_t *pgtable, uint64_t v_addr, uint64_t p_dest_addr, uin
     /* Alloc PML4if needed */
     pml4e_t *pml4_pgtable = (pml4e_t*) pgtable->virt_root;
     if (is_page_entry_empty(&pml4_pgtable[pm4l_idx])) {
-        uintptr_t pdp_pgtable_addr = pageframe_alloc();
+        uintptr_t pdp_pgtable_addr = pageframe_alloc(&pgtable->pfdb);
 
         pml4e_t hh_pml4_entry = {
                 .no_execute_bit = 0,
@@ -101,7 +101,7 @@ void page_alloc(pagetable_t *pgtable, uint64_t v_addr, uint64_t p_dest_addr, uin
     /* Alloc PDP if needed */
     pdpe_t *pdp_pgtable = (pdpe_t*) va(pml4_pgtable[pm4l_idx].pdpe_base_addr << PAGE_SHIFT);
     if (is_page_entry_empty(&pdp_pgtable[pdp_idx])) {
-        uintptr_t pd_pgtable_addr = pageframe_alloc();
+        uintptr_t pd_pgtable_addr = pageframe_alloc(&pgtable->pfdb);
 
         pdpe_t hh_pdpe_entry = {
                 .no_execute_bit = 0,
@@ -116,7 +116,7 @@ void page_alloc(pagetable_t *pgtable, uint64_t v_addr, uint64_t p_dest_addr, uin
     /* Alloc PD if needed */
     pde_t *pd_pgtable = (pde_t*) va(pdp_pgtable[pdp_idx].pde_base_addr << PAGE_SHIFT);
     if (is_page_entry_empty(&pd_pgtable[pd_idx])) {
-        uintptr_t pt_pgtable_addr = pageframe_alloc();
+        uintptr_t pt_pgtable_addr = pageframe_alloc(&pgtable->pfdb);
 
         pde_t hh_pde_entry = {
                 .no_execute_bit = 0,
@@ -153,7 +153,7 @@ static bool is_pagetable_empty(const void *pgtable) {
     return ret;
 }
 
-static bool page_free_resources(uint64_t pgt_phy_addr, uint64_t v_addr, int level) {
+static bool page_free_resources(pagetable_t *pgtable, uint64_t pgt_phy_addr, uint64_t v_addr, int level) {
 
     if (level <= 0)
         return true;
@@ -175,13 +175,13 @@ static bool page_free_resources(uint64_t pgt_phy_addr, uint64_t v_addr, int leve
     uintptr_t *page_entry = (uintptr_t*) va((pgt_phy_addr + (idx * sizeof(uint64_t))));
     uint64_t lpgt_phy_base_addr = extract_bit_chunk(12, 51, *page_entry) << PAGE_SHIFT;
 
-    if (page_free_resources(lpgt_phy_base_addr, v_addr, level - 1)) {
+    if (page_free_resources(pgtable, lpgt_phy_base_addr, v_addr, level - 1)) {
         /* zero-out entry that is about to be freed */
         memzero(page_entry, sizeof(uint64_t));
 
         /* delete pageframe if possible */
         if (is_pagetable_empty(pgt_virt_addr)) {
-            pageframe_free(pgt_phy_addr);
+            pageframe_free(&pgtable->pfdb, pgt_phy_addr);
             return true;
         }
     }
@@ -192,7 +192,7 @@ static bool page_free_resources(uint64_t pgt_phy_addr, uint64_t v_addr, int leve
 
 void page_free(pagetable_t *pgtable, uint64_t v_addr) {
     /* free pagetables and pageframes where possible */
-    page_free_resources(pgtable->phys_root, v_addr, 4);
+    page_free_resources(pgtable, pgtable->phys_root, v_addr, 4);
 
     /* invalidate entry */
     invalidate_page(v_addr);

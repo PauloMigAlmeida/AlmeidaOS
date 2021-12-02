@@ -9,10 +9,12 @@
 #define INCLUDE_KERNEL_MM_PAGETABLE_H_
 
 #include "kernel/compiler/freestanding.h"
+#include "kernel/mm/pageframe.h"
 
 typedef struct {
-    uint64_t phys_root;     ///< Physical address of root page table (PML4T) entry
-    uint64_t virt_root;     ///< Virtual address of root page table (PML4T) entry
+    uint64_t phys_root;             /* Physical address of root page table (PML4T) entry */
+    uint64_t virt_root;             /* Virtual address of root page table (PML4T) entry  */
+    pageframe_database_t pfdb;      /* Pageframe database reference  */
 } pagetable_t;
 
 pagetable_t* kernel_pagetable(void);
