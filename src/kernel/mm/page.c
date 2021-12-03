@@ -60,8 +60,8 @@ uint64_t paging_calc_space_needed(uint64_t bytes) {
 void paging_init(pagetable_t *pgtable, mem_map_region_t k_pages_struct_rg, mem_map_region_t k_pfdb_struct_rg) {
 
     /* clean area in which page tables will eventually be stored at */
-    memzero((void*) k_pages_struct_rg.base_addr, k_pages_struct_rg.length);
-    memzero((void*) k_pfdb_struct_rg.base_addr, k_pfdb_struct_rg.length);
+    memzero((void*) va(k_pages_struct_rg.base_addr), k_pages_struct_rg.length);
+    memzero((void*) va(k_pfdb_struct_rg.base_addr), k_pfdb_struct_rg.length);
 
     /* initialise pageframe database */
     pgtable->pfdb = pageframe_init(k_pages_struct_rg, k_pfdb_struct_rg);
