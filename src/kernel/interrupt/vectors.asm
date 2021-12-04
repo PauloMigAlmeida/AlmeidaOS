@@ -1,4 +1,4 @@
-%include "../../include/boot/global/macro.asm"
+%include "../../../include/boot/global/macro.asm"
 
 ; C-defined functions that this code relies on
 extern interrupt_handler
