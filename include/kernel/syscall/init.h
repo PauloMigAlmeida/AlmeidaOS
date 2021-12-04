@@ -8,6 +8,10 @@
 #ifndef INCLUDE_KERNEL_SYSCALL_INIT_H_
 #define INCLUDE_KERNEL_SYSCALL_INIT_H_
 
+#include "kernel/compiler/freestanding.h"
+
 void syscall_init(void);
+extern void jump_usermode(uint64_t start_addr);
+
 
 #endif /* INCLUDE_KERNEL_SYSCALL_INIT_H_ */

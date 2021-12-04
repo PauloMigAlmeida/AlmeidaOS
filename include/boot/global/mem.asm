@@ -45,9 +45,15 @@ e820.Mem.Start.Address     equ (Loader.Mem.Stack.Top + Loader.File.NumberOfBlock
 e820.Mem.End.Address       equ (e820.Mem.Start.Address + 4 * 512) ; enough for 102 entries
 
 ; Kernel code:
-Loader.Kernel.Start.Address       equ e820.Mem.End.Address
+Loader.Kernel.Start.Address       equ e820.Mem.End.Address ; This should be 0x9000
+Loader.Kernel.End.Address         equ (Loader.Kernel.Start.Address + Kernel.File.NumberOfBlocks * 512)
 Kernel.New.Start.PhysicalAddress  equ 0x00200000
 Kernel.New.ELFTextHeader.Offset   equ 0x00001000 ; .text starts <p> + 0x1000
+
+; User code:
+; 		-> this should be 0x1c000 assuming kernel occupies 152 IO blocks
+Loader.User.Start.Address		equ Loader.Kernel.End.Address
+Loader.User.End.Address			equ Loader.Kernel.End.Address + User.File.NumberOfBlocks * 512
 
 ; Early paging
 Paging.Start.Address  equ   0x20000

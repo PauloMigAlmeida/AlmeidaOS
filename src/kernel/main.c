@@ -12,10 +12,8 @@
 #include "kernel/mm/init.h"
 #include "kernel/syscall/init.h"
 
-/* Testing kmalloc and kmem */
-#include "kernel/lib/math.h"
-#include "kernel/mm/kmem.h"
-#include "kernel/mm/addressconv.h"
+/* Testing launch process */
+#include "kernel/task/process.h"
 
 void kmain(void) {
     /* printk init */
@@ -47,6 +45,9 @@ void kmain(void) {
 
     /* enable syscalls */
     syscall_init();
+
+    task_struct_t* task = create_process(0x1C000);
+    jump_usermode(0x41000);
 
 //    /* Test page alloc and page free */
 //    page_alloc(kernel_pagetable(),

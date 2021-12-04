@@ -76,6 +76,9 @@ boot:
   ; read kernel from disk and move it to memory
   call read_kernel_from_disk
 
+  ; read kernel from disk and move it to memory
+  call read_user_from_disk
+
   ; Check whether we are running on a 64-bit processor
   call cpu_supports_64_bit_mode
 
