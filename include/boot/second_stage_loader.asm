@@ -267,7 +267,7 @@ read_kernel_from_disk:
   popa
   ret
 
-read_user_from_disk:
+read_userprog_from_disk:
   ; preserve all registers
   pusha
 
@@ -275,8 +275,8 @@ read_user_from_disk:
   xor edx, edx
 
   ; Set destination address where kernel will be loaded
-  mov eax, Loader.User.Start.Address
-  mov edx, User.File.NumberOfBlocks
+  mov eax, Loader.UserProg.Start.Address
+  mov edx, UserProg.File.NumberOfBlocks
   mov ecx, 158
 
   .read_run:

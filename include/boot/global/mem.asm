@@ -52,8 +52,8 @@ Kernel.New.ELFTextHeader.Offset   equ 0x00001000 ; .text starts <p> + 0x1000
 
 ; User code:
 ; 		-> this should be 0x1c000 assuming kernel occupies 152 IO blocks
-Loader.User.Start.Address		equ Loader.Kernel.End.Address
-Loader.User.End.Address			equ Loader.Kernel.End.Address + User.File.NumberOfBlocks * 512
+Loader.UserProg.Start.Address		equ Loader.Kernel.End.Address
+Loader.UserProg.End.Address			equ Loader.Kernel.End.Address + UserProg.File.NumberOfBlocks * 512
 
 ; Early paging
 Paging.Start.Address  equ   0x20000
