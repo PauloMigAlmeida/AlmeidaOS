@@ -47,7 +47,8 @@ void kmain(void) {
     syscall_init();
 
     task_struct_t* task = create_process(0x1C000);
-    jump_usermode(0x41000);
+//    interrupt_jump_usermode(0x41000);
+    syscall_jump_usermode(0x41000);
 
 //    /* Test page alloc and page free */
 //    page_alloc(kernel_pagetable(),

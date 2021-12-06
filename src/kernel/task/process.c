@@ -32,9 +32,13 @@ task_struct_t* create_process(uint64_t text_phy_addr) {
      *      -> I think I need a pageframedb struct here so I can initialise the paging structure properly -> Done
      *      -> ALERT: The paging_init() function will fail as it is because it tries to memzero the area using the phys_addr which
      *          isn't mapped in kernel's space..... I need to figure out an alternative here -> Done
-     *      -> Temp: Map video dma 0xb8000 to test whether user process is running
+     *      -> Temp: Map video dma 0xb8000 to test whether user process is running -> Done
      *      -> Need to pave the way to jump to ring 3 in C
      *      -> ALERT: Revist how pageframe requirements is calculated...I keep getting low numbers
+     *      -> Clean up BSS section on user process -> Done
+     *      -> Rename routines that doesn't say precisely userprogram such as "read_user_from_disk") -> Done
+     *      -> Fix this whole hardcoded mess created by the commit  https://github.com/PauloMigAlmeida/AlmeidaOS/commit/9563c415808877f7501c145445c53fb0a126d304
+     *      -> Remove mapping to 0xb8000 and force user program to go through syscalls instead
      *
      *  ->
      */
@@ -66,7 +70,7 @@ task_struct_t* create_process(uint64_t text_phy_addr) {
     paging_contiguous_map(&task->vm_area.pgtable,
                 0xb8000, 0xb8000 + 0x1000, 0xb8000, PAGE_STD_BITS | PAGE_USER_SUPERVISOR_BIT);
 
-    /* Copy kernel space PML4 entries to this process' page table */
+    /* Copy PML4  entries for kernel space (higher-half entries) to this process' page table */
 
     memcpy((uintptr_t*) (task->vm_area.pgtable.virt_root + (256 * sizeof(uint64_t))),
             (uintptr_t*) (kernel_pagetable()->virt_root + (256 * sizeof(uint64_t))),

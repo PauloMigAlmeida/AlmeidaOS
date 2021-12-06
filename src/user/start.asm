@@ -24,6 +24,10 @@ user_entry:
   ; The System V ABI requires the direction flag to be clear on function entry.
   cld
 
+  ; Set up RSP otherwise syscall/sysret fail since the context switch doesn't carry \
+  ;	RSP value for ring 3 like it does when using IRETQ
+  mov rsp, 0x41000
+
   ; ELF specification dictates that we must clean BSS area before init
   ;
   ; .bss: This section holds uninitialized data that contribute to the program's
@@ -32,9 +36,9 @@ user_entry:
   ; indicated by the section type, SHT_NOBITS.
   ;
   ; https://refspecs.linuxfoundation.org/elf/elf.pdf - Page 29
-  mov rdi, _BSS_START
-  mov rcx, _BSS_SIZE
-  call memzero
+  ;mov rdi, _BSS_START
+  ;mov rcx, _BSS_SIZE
+  ;call memzero
 
 
   ; Set %ebp to NULL. This sets a stopping point for coredump functionality when

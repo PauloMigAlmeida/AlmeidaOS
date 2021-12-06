@@ -6,13 +6,13 @@
 ;		syscall jump
 
 ; Export references to C
-global jump_usermode
-
+global syscall_jump_usermode
+global interrupt_jump_usermode
 
 ; create elf section that is always placed first when linking asm and c files
 section .text
 
-jump_usermode:
+interrupt_jump_usermode:
 	mov ax, 0x18 | 3 	; ring 3 data with bottom 2 bits set for ring 3
 	mov ds, ax
 	mov es, ax
@@ -34,4 +34,11 @@ jump_usermode:
 	iretq
 
 
-
+align 16
+syscall_jump_usermode:
+	pushaq
+	mov rcx, rdi ; to be loaded into RIP
+	mov r11, 0x202 ; to be loaded into EFLAGS
+	o64 sysret 	;use "o64 sysret" if you assemble with NASM
+	popaq
+	ret

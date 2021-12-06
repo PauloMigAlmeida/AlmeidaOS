@@ -11,7 +11,8 @@
 #include "kernel/compiler/freestanding.h"
 
 void syscall_init(void);
-extern void jump_usermode(uint64_t start_addr);
+extern void interrupt_jump_usermode(uint64_t start_addr);
+extern void syscall_jump_usermode(uint64_t start_addr);
 
 
 #endif /* INCLUDE_KERNEL_SYSCALL_INIT_H_ */
