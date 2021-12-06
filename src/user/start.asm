@@ -36,9 +36,9 @@ user_entry:
   ; indicated by the section type, SHT_NOBITS.
   ;
   ; https://refspecs.linuxfoundation.org/elf/elf.pdf - Page 29
-  ;mov rdi, _BSS_START
-  ;mov rcx, _BSS_SIZE
-  ;call memzero
+  mov rdi, _BSS_START
+  mov rcx, _BSS_SIZE
+  call memzero
 
 
   ; Set %ebp to NULL. This sets a stopping point for coredump functionality when
