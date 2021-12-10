@@ -26,7 +26,7 @@ user_entry:
 
   ; Set up RSP otherwise syscall/sysret fail since the context switch doesn't carry \
   ;	RSP value for ring 3 like it does when using IRETQ
-  mov rsp, 0x41000
+  mov rsp, 0x40000
 
   ; ELF specification dictates that we must clean BSS area before init
   ;

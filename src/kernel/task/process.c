@@ -7,6 +7,7 @@
 
 #include "kernel/task/process.h"
 #include "kernel/lib/string.h"
+#include "kernel/mm/init.h"
 #include "kernel/mm/kmem.h"
 #include "kernel/mm/page.h"
 #include "kernel/mm/addressconv.h"
@@ -62,16 +63,35 @@ task_struct_t* create_process(uint64_t text_phy_addr) {
             .length = pfdb_spc_req
     };
 
+    /* init paging structure for the process */
     paging_init(&task->vm_area.pgtable, u_pages_struct_rg, u_pfdb_struct_rg);
+
+    // TODO: this should be dynamic once we start loading files from disk
+    uint64_t elf_prog_size = 0x8000;
+
+    /* mapping program's physical location to process' pgtable */
     paging_contiguous_map(&task->vm_area.pgtable,
-            text_phy_addr, text_phy_addr + 0x8000, 0x40000, PAGE_STD_BITS | PAGE_USER_SUPERVISOR_BIT);
+            text_phy_addr,
+            text_phy_addr + elf_prog_size,
+            0x40000,
+            PAGE_STD_BITS | PAGE_USER_SUPERVISOR_BIT);
+
+    /* mapping stack's physical location to process' pgtable */
+    task->stack_area.length = PAGE_SIZE * 2;
+    task->stack_area.virt_addr = (uint64_t) kmalloc(task->stack_area.length, KMEM_DEFAULT | KMEM_ZERO);
+    task->stack_area.phys_addr = pa(task->stack_area.virt_addr);
+
+    paging_contiguous_map(&task->vm_area.pgtable,
+            task->stack_area.phys_addr,
+            task->stack_area.phys_addr + task->stack_area.length,
+            0x3e000,
+            PAGE_STD_BITS | PAGE_USER_SUPERVISOR_BIT);
 
     /* Temp: Map video DMA so I can test user program */
     paging_contiguous_map(&task->vm_area.pgtable,
-                0xb8000, 0xb8000 + 0x1000, 0xb8000, PAGE_STD_BITS | PAGE_USER_SUPERVISOR_BIT);
+            0xb8000, 0xb8000 + 0x1000, 0xb8000, PAGE_STD_BITS | PAGE_USER_SUPERVISOR_BIT);
 
     /* Copy PML4  entries for kernel space (higher-half entries) to this process' page table */
-
     memcpy((uintptr_t*) (task->vm_area.pgtable.virt_root + (256 * sizeof(uint64_t))),
             (uintptr_t*) (kernel_pagetable()->virt_root + (256 * sizeof(uint64_t))),
             256 * sizeof(uint64_t));

@@ -19,26 +19,16 @@ SECTIONS
   }
 
 
-  .bss : ALIGN(4K)
-  {
-		_BSS_START = ABSOLUTE(.);
-		*(.bss)
-		*(COMMON)
+  .bss : ALIGN(4K) {
+    _BSS_START = ABSOLUTE(.);
+    *(.bss)
+    *(COMMON)
   }
+  
   _BSS_SIZE = ABSOLUTE(.) - _BSS_START;
 
   .rodata : {
     *(.rodata)
   }   
 
-/*
-  /DISCARD/ : {
-  	*(.debug_info)
-    *(.debug_abbrev)
-    *(.debug_aranges)
-    *(.debug_line)
-    *(.debug_str)
-    *(.debug_frame)
-	}
-*/
 }

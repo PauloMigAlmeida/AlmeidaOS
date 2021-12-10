@@ -23,7 +23,7 @@ interrupt_jump_usermode:
 	; SS selector + RPL = 3 (Ring 3)
 	push 0x18 | 3
 	; RSP address that IRET will return to
-	mov rax, 0x41000
+	mov rax, 0x40000
 	push rax
 	; RFLAGS (inclusing interrupt flag = enabled)
     pushf
