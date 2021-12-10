@@ -25,7 +25,7 @@ that I want to implement in the short to medium term.
 - [ ] Serial port driver
 - [ ] Early printk (contingent on serial port driver) -> will help debugging in real computers
 - [ ] limited libc
-- [ ] Userspace
+- [X] Userspace
 - [ ] Rudimentary Bash-like terminal
 
 ## Stretch goals
