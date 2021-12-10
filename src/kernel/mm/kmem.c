@@ -11,6 +11,7 @@
 #include "kernel/mm/page.h"
 #include "kernel/mm/addressconv.h"
 #include "kernel/arch/mem.h"
+#include "kernel/lib/string.h"
 
 static buddy_ref_t k_mem_alloc;
 
@@ -41,12 +42,16 @@ void* kmalloc(uint64_t bytes, int flags) {
                 phy_addr + bytes,
                 va_addr,
                 PAGE_PRESENT_BIT | PAGE_READ_WRITE_BIT);
+
+        if (flags & KMEM_ZERO) {
+            memzero((uintptr_t*) va_addr, bytes);
+        }
     }
 
     return (uintptr_t*) va_addr;
 }
 
 void kfree(void *ptr) {
-    buddy_free(&k_mem_alloc, pa((uintptr_t)ptr));
+    buddy_free(&k_mem_alloc, pa((uintptr_t) ptr));
 }
 
