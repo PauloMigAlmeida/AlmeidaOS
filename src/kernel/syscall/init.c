@@ -13,6 +13,8 @@
 #include "kernel/lib/printk.h"
 #include "kernel/arch/msr.h"
 #include "kernel/arch/gdt_segments.h"
+#include "kernel/arch/cpu_registers.h"
+#include "kernel/syscall/write.h"
 
 /*
 
@@ -47,9 +49,7 @@
 
  */
 
-void syscall_handler(void) {
-    printk_info("syscall_handler called");
-}
+extern void syscall_entry(void);
 
 static bool is_syscall_inst_supported(void) {
     /* If CPUID.80000001H:EDX[11] = 1 -> SYSCALL and SYSRET are available */
@@ -57,90 +57,6 @@ static bool is_syscall_inst_supported(void) {
     cpuid(&eax, &ebx, &ecx, &edx);
     return test_bit(11, edx);
 }
-
-/**
- * Notes to myself:
- *  For some reason when sysret, the CS and SS are not set to the values I expected them to be
- *
- *   cs             0x23 -> This was meant to be 0x20
- *   ss             0x1b -> This was meant to be 0x18
- *
- *   Nah... this isn't the problem...
- *
- *   this is what I get when doing iretq jump
- *
- *   rax            0x41000             266240
- *   rbx            0x0                 0
- *   rcx            0x0                 0
- *   rdx            0xffff8000001f6000  -140737486299136
- *   rsi            0xffff800000141000  -140737487040512
- *   rdi            0x41000             266240
- *   rbp            0xffff8000001ffff0  0xffff8000001ffff0
- *   rsp            0x41000             0x41000
- *   r8             0x0                 0
- *   r9             0xb9000             757760
- *   r10            0xffff800000205002  -140737486237694
- *   r11            0x0                 0
- *   r12            0x0                 0
- *   r13            0x0                 0
- *   r14            0x0                 0
- *   r15            0x0                 0
- *   rip            0x41000             0x41000
- *   eflags         0x296               [ IOPL=0 IF SF AF PF ]
- *   cs             0x23                35
- *   ss             0x1b                27
- *   ds             0x1b                27
- *   es             0x1b                27
- *   fs             0x1b                27
- *   gs             0x1b                27
- *   fs_base        0x0                 0
- *   gs_base        0x0                 0
- *   k_gs_base      0x0                 0
- *   cr0            0x80000011          [ PG ET PE ]
- *   cr2            0x0                 0
- *   cr3            0x1f5000            [ PDBR=0 PCID=0 ]
- *   cr4            0xa0                [ PGE PAE ]
- *   cr8            0x0                 0
- *   efer           0x501               [ LMA LME SCE ]
- *
- *
- *
- * SYScall
- *
- * rax            0xffff800000209490  -140737486220144
-rbx            0x0                 0
-rcx            0x41000             266240
-rdx            0xffff8000001f6000  -140737486299136
-rsi            0xffff800000141000  -140737487040512
-rdi            0x41000             266240
-rbp            0xffff8000001ffff0  0xffff8000001ffff0
-rsp            0xffff8000001fff60  0xffff8000001fff60
-r8             0x0                 0
-r9             0xb9000             757760
-r10            0xffff800000205002  -140737486237694
-r11            0x296               662
-r12            0x0                 0
-r13            0x0                 0
-r14            0x0                 0
-r15            0x0                 0
-rip            0x41000             0x41000
-eflags         0x296               [ IOPL=0 IF SF AF PF ]
-cs             0x23                35
-ss             0x1b                27
-ds             0x10                16
-es             0x10                16
-fs             0x10                16
-gs             0x10                16
-fs_base        0x0                 0
-gs_base        0x0                 0
-k_gs_base      0x0                 0
-cr0            0x80000011          [ PG ET PE ]
-cr2            0x0                 0
-cr3            0x1f5000            [ PDBR=0 PCID=0 ]
-cr4            0xa0                [ PGE PAE ]
-cr8            0x0                 0
-efer           0x501               [ LMA LME SCE ]
- */
 
 void syscall_init(void) {
     /* sanity checks */
@@ -156,12 +72,12 @@ void syscall_init(void) {
     wrmsr(MSR_IA32_STAR, star_reg);
     printk_fine("MSR_IA32_STAR contents: 0x%.16llx", star_reg);
     printk_fine("MSR_STAR.SYSCALL_CS + 16: 0x%.16llx, MSR_STAR.SYSCALL_SS + 8: 0x%.16llx",
-                extract_bit_chunk(32, 47, star_reg) , extract_bit_chunk(32, 47, star_reg) + 8);
+            extract_bit_chunk(32, 47, star_reg), extract_bit_chunk(32, 47, star_reg) + 8);
     printk_fine("MSR_STAR.SYSRET_CS + 16: 0x%.16llx, MSR_STAR.SYSRET_SS + 8: 0x%.16llx",
             extract_bit_chunk(48, 63, star_reg) + 16, extract_bit_chunk(48, 63, star_reg) + 8);
 
     /* SYSCALL target instruction pointer */
-    wrmsr(MSR_IA32_LSTAR, (uint64_t) syscall_handler);
+    wrmsr(MSR_IA32_LSTAR, (uint64_t) syscall_entry);
 
     /* enable syscall */
     uint64_t efer_reg = rdmsr(MSR_IA32_EFER);
@@ -174,4 +90,18 @@ void syscall_init(void) {
 
     printk_info("SYSCALL/SYSRET initialised");
 
+}
+
+long syscall_handler(registers_64_t regs) {
+    printk_info("syscall_handler called");
+
+    switch (regs.rax) {
+    case 1:
+        // const char *string, size_t length
+        return sys_write((const char*) regs.rdi, (size_t) regs.rsi);
+    default:
+        fatal();
+    }
+
+    return -1;
 }
