@@ -11,6 +11,7 @@
 #include "kernel/compiler/macro.h"
 #include "kernel/lib/string.h"
 #include "kernel/lib/vsnprintf.h"
+#include "kernel/device/serial.h"
 
 static uint8_t logging_level = PRINTK_INFO_LEVEL;
 static char buffer[1024];
@@ -39,5 +40,6 @@ void printk(const uint8_t level, const char *fmt, ...) {
     va_end(args);
 
     write_console(buffer, buf_pointer + 1); // copy nul-terminator too
+    write_string_serial(buffer, buf_pointer);
 }
 

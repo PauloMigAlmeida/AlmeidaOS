@@ -11,6 +11,7 @@
 #include "kernel/interrupt/spurious.h"
 #include "kernel/mm/init.h"
 #include "kernel/syscall/init.h"
+#include "kernel/device/serial.h"
 
 /* Testing launch process */
 #include "kernel/task/process.h"
@@ -34,6 +35,9 @@ void kmain(void) {
 
     /* Unleash all possible problems in the world */
     enable_interrupts();
+
+    /* Serial COM1 port - RS232 */
+    init_serial();
 
     /* memory management module init */
     mm_init();
