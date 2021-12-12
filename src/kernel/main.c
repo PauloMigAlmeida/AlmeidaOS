@@ -21,6 +21,9 @@ void kmain(void) {
     printk_init(PRINTK_INFO_LEVEL);
     vga_console_init();
 
+    /* Serial COM1 port - RS232 */
+    init_serial();
+
     /* CPU features initialisation */
     cpu_init();
 
@@ -35,9 +38,6 @@ void kmain(void) {
 
     /* Unleash all possible problems in the world */
     enable_interrupts();
-
-    /* Serial COM1 port - RS232 */
-    init_serial();
 
     /* memory management module init */
     mm_init();
