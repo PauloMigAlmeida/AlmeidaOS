@@ -9,5 +9,5 @@
 #include "libc/internals/syscall.h"
 
 long write(const char *string, size_t length) {
-    return syscall2(1, string, length);
+    return syscall2(NR_SYS_WRITE, string, length);
 }

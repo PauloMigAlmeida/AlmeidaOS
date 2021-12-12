@@ -19,7 +19,12 @@ size_t sys_write(const char *string, size_t length){
     char* content = kmalloc(length, KMEM_DEFAULT);
     memcpy(content, string, length);
 
+    /* serve syscall */
     printk_info(content);
+
+    /* dealloc resources */
+    kfree(content);
+
     return length;
 }
 
