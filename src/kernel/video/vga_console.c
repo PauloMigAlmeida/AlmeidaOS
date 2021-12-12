@@ -59,10 +59,10 @@ void update_cursor(int row, int col) {
 
     uint16_t pos = row * VGA_MAX_COLS + col;
 
-    outb(0x3D4, 0x0F);
-    outb(0x3D5, (uint8_t) (pos & 0xFF));
-    outb(0x3D4, 0x0E);
-    outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+    outb(UNSAFE_VA(0x3D4), 0x0F);
+    outb(UNSAFE_VA(0x3D5), (uint8_t) (pos & 0xFF));
+    outb(UNSAFE_VA(0x3D4), 0x0E);
+    outb(UNSAFE_VA(0x3D5), (uint8_t) ((pos >> 8) & 0xFF));
 }
 
 void clear_console() {
