@@ -12,7 +12,7 @@ long syscall(long nr_number, ...) {
     va_list args;
     va_start(args, nr_number);
 
-    uint64_t rax = nr_number;
+    long rax = nr_number;
     uint64_t rdi = va_arg(args, uint64_t);
     uint64_t rsi = va_arg(args, uint64_t);
     uint64_t rdx = va_arg(args, uint64_t);

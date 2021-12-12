@@ -96,8 +96,7 @@ long syscall_handler(registers_64_t regs) {
     printk_info("syscall_handler called");
 
     switch (regs.rax) {
-    case 1:
-        // const char *string, size_t length
+    case NR_SYS_WRITE:
         return sys_write((const char*) regs.rdi, (size_t) regs.rsi);
     default:
         fatal();

@@ -19,12 +19,13 @@
 //}
 
 void umain(void) {
-    long ret = write("Hello from user space", 21);
-    ret = write("Fuck yeah!", 10);
+    write("Hello from user space", 22);
+    write("Fuck yeah!", 11);
 
 //    char c[2];
 //    c[0] = ret + 48;
 //    c[1] = '\0';
 //    write_string(c);
+    while(true);
 }
 
