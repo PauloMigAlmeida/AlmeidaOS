@@ -1,15 +1,15 @@
 #include "kernel/interrupt/idt.h"
-#include "kernel/compiler/freestanding.h"
 #include "kernel/asm/generic.h"
 #include "kernel/video/vga_console.h"
-#include "kernel/lib/string.h"
 #include "kernel/lib/printk.h"
 #include "kernel/arch/cpu.h"
 #include "kernel/arch/pic.h"
-#include "kernel/arch/pit.h"
 #include "kernel/device/keyboard.h"
 #include "kernel/interrupt/spurious.h"
 #include "kernel/mm/init.h"
+#include "kernel/time/jiffies.h"
+#include "kernel/time/delay.h"
+#include "kernel/arch/pit.h"
 #include "kernel/syscall/init.h"
 #include "kernel/device/serial.h"
 
@@ -34,7 +34,7 @@ void kmain(void) {
     pic_init();
 
     /* Programmable Interval Timerchip */
-    pit_init(100);
+    pit_init(HZ);
 
     /* Unleash all possible problems in the world */
     enable_interrupts();
@@ -47,13 +47,16 @@ void kmain(void) {
     keyboard_enable();
     pit_enable();
 
+    /* Calibrate (x)delay functions */
+    calibrate_delay();
+    printk_info("Calibrated loops_per_jiffy: %.16llu", loops_per_jiffy);
+
     /* enable syscalls */
     syscall_init();
 
     /* Temp: Launch first process */
-    task_struct_t* task = create_process(0x1C000);
+    task_struct_t *task = create_process(0x1C000);
     syscall_jump_usermode(0x41000);
-
 
     /* don't let kmain finish. Among other things, this ensure that interrupts have to to occur */
     for (;;) {

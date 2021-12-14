@@ -50,7 +50,6 @@ gdb-debug:
 test:
 	@$(QEMU) -drive format=raw,file=$(OUTPUT_RAW_DISK) \
 		-d guest_errors \
-		-d int \
 		-no-reboot \
 		-no-shutdown \
 		-serial stdio
