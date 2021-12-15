@@ -14,6 +14,7 @@
 #include "kernel/device/serial.h"
 #include "kernel/task/scheduler.h"
 
+#include "kernel/arch/cmos.h"
 
 void kmain(void) {
     /* printk init */
@@ -22,6 +23,12 @@ void kmain(void) {
 
     /* Serial COM1 port - RS232 */
     init_serial();
+
+    /* read CMOS RTC */
+    cmos_clock_t startup_time = cmos_read_rtc();
+    printk_info("Startup time: %d/%d/%d %d:%d:%d",
+            startup_time.day, startup_time.month, startup_time.year,
+            startup_time.hour, startup_time.minute, startup_time.second);
 
     /* CPU features initialisation */
     cpu_init();
@@ -52,7 +59,6 @@ void kmain(void) {
 
     /* enable syscalls */
     syscall_init();
-
 
     /* initialise scheduler */
     task_struct_t *init_proc = create_process(0x1C000);

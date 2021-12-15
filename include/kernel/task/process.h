@@ -23,8 +23,10 @@ typedef struct {
 
     /* intial virtual address */
     uint64_t ini_addr;
+
     /* final virtual address */
     uint64_t fini_addr;
+
     /* reference to process' page table */
     pagetable_t pgtable;
 
@@ -34,8 +36,10 @@ typedef struct {
 
     /* physical address */
     uint64_t phys_addr;
+
     /* virtual address */
     uint64_t virt_addr;
+
     /* length */
     uint64_t length;
 
@@ -51,6 +55,7 @@ typedef struct {
 
     /* virtual memory related info */
     mm_vm_area_t vm_area;
+
     /* address of the stack used by process */
     stack_area_t stack_area;
 
