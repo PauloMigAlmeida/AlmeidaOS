@@ -12,6 +12,7 @@
 long syscall(long nr_number, ...);
 
 /* utility macros */
+#define syscall0(nr_number)                                     syscall(nr_number, 0, 0, 0, 0, 0, 0)
 #define syscall1(nr_number, arg1)                               syscall(nr_number, arg1, 0, 0, 0, 0, 0)
 #define syscall2(nr_number, arg1, arg2)                         syscall(nr_number, arg1, arg2, 0, 0, 0, 0)
 #define syscall3(nr_number, arg1, arg2, arg3)                   syscall(nr_number, arg1, arg2, arg3, 0, 0, 0)
@@ -20,7 +21,8 @@ long syscall(long nr_number, ...);
 #define syscall6(nr_number, arg1, arg2, arg3, arg4, arg5, arg6) syscall(nr_number, arg1, arg2, arg3, arg4, arg5, arg6)
 
 /* syscall IDs */
-#define NR_SYS_READ     0
-#define NR_SYS_WRITE    1
+#define __NR_read     0
+#define __NR_write    1
+#define __NR_getpid   39
 
 #endif /* INCLUDE_LIBC_INTERNAL_SYSCALL_H_ */

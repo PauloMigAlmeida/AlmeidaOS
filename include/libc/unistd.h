@@ -9,8 +9,9 @@
 #define INCLUDE_LIBC_UNISTD_H_
 
 #include "libc/compiler/freestanding.h"
+#include "libc/sys/types.h"
 
 long write(const char* string, size_t length);
-
+pid_t getpid(void);
 
 #endif /* INCLUDE_LIBC_UNISTD_H_ */
