@@ -38,15 +38,15 @@
 #define CMOS_STATUS_B_REG       0x0B
 
 /* flags */
-#define CMOS_UPD_IN_PROG_BIT    (1 << 7)
-#define CMOS_HOUR_PM_BIT        (1 << 7)
-#define CMOS_NMI_DISABLE_BIT    (1 << 7)
+#define CMOS_UPD_IN_PROG_BIT    0x07
+#define CMOS_HOUR_PM_MASK       (1 << 7)
+#define CMOS_NMI_DISABLE_MASK   (1 << 7)
 
 /* utility macros */
 #define BCD_TO_BIN(bcd) ((bcd / 16) * 10) + (bcd & 0xf)
 
 static uint8_t cmos_read_reg(int reg) {
-    reg |= CMOS_NMI_DISABLE_BIT;
+    reg |= CMOS_NMI_DISABLE_MASK;
     outb(CMOS_INDEX_PORT, reg);
     return inb(CMOS_DATA_PORT);
 }
@@ -56,7 +56,7 @@ cmos_clock_t cmos_read_rtc(void) {
 
     do {
         /* wait for next CMOS tick */
-        while (test_bit(7, cmos_read_reg(CMOS_STATUS_A_REG)))
+        while (test_bit(CMOS_UPD_IN_PROG_BIT, cmos_read_reg(CMOS_STATUS_A_REG)))
             /* nothing */;
 
         /* read registers */
@@ -84,8 +84,8 @@ cmos_clock_t cmos_read_rtc(void) {
     }
 
     /* convert 12 hour clock to 24 hour format if needed */
-    if (!fmt24_set && (ret.hour & CMOS_HOUR_PM_BIT)) {
-        ret.hour = ((ret.hour & ~CMOS_HOUR_PM_BIT) + 12) % 24;
+    if (!fmt24_set && (ret.hour & CMOS_HOUR_PM_MASK)) {
+        ret.hour = ((ret.hour & ~CMOS_HOUR_PM_MASK) + 12) % 24;
     }
     return ret;
 }
