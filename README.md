@@ -1,6 +1,16 @@
 # AlmeidaOS
-My journey into learning how to create a hobbyist x86-64 simple OS... it will be in the works for years..don't expect anything ready
 
+
+Simple, self-contained, clean code, well-documented, hobbyist 64-bit operating system for Intel and AMD processors. It's written in Assembly (Intel syntax) and C (GNU99 Standard) in which I strived for adding comments to the source code as much as possible so it could be used as a reference for future OS developers.
+
+It contains the following components written from scratch:
+
+- BIOS Boot loader: [code](src/boot)
+- Buddy Memory Allocation System
+- libc (functions are being added on-demand): 
+- printk -> simplified printf-like string format parsing
+
+More to come.
 
 ## Build
 In order to build this app, you are expected to have `make` and `docker` installed in your machine. All of the other building dependencies should be taken care of automatically by the docker image created during this step.

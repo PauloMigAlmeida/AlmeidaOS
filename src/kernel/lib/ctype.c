@@ -2,7 +2,7 @@
  * ctype.c
  *
  *  Created on: Jul 4, 2021
- *      Author: parallels
+ *      Author: Paulo Almeida
  */
 
 #include "kernel/lib/ctype.h"
