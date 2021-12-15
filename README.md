@@ -26,10 +26,10 @@ It contains the following components written from scratch:
 | CMOS RTC | Real-time clock | [code](src/kernel/arch/cmos.c) |
 | Scheduler | Work-in-Progress | [code](src/kernel/task/scheduler.c) |
 
-## libc (functions are being added on-demand):  [code](src/libc)
+## libc
+functions are being added on-demand:  [code](src/libc)
 
-
-More to come.
+More to come! Star/Watch this repo to stay tuned!
 
 ## Build
 In order to build this app, you are expected to have `make` and `docker` installed in your machine. All of the other building dependencies should be taken care of automatically by the docker image created during this step.
