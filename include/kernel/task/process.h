@@ -12,6 +12,13 @@
 #include "kernel/sys/types.h"
 #include "kernel/mm/pagetable.h"
 
+/* Task states */
+#define TASK_RUNNING            0
+#define TASK_INTERRUPTIBLE      1
+#define TASK_UNINTERRUPTIBLE    2
+#define TASK_ZOMBIE             3
+#define TASK_STOPPED            4
+
 typedef struct {
 
     /* intial virtual address */
@@ -38,6 +45,10 @@ typedef struct {
 
     /* process identification */
     pid_t pid;
+
+    /* process scheduling state */
+    int state;
+
     /* virtual memory related info */
     mm_vm_area_t vm_area;
     /* address of the stack used by process */

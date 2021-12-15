@@ -46,6 +46,7 @@ task_struct_t* create_process(uint64_t text_phy_addr) {
 
     task_struct_t *task = kmalloc(sizeof(task_struct_t), KMEM_DEFAULT);
     task->pid = 1; // TODO: create routine to get free PID
+    task->state = TASK_RUNNING;
     task->vm_area.ini_addr = 0x0;
     task->vm_area.fini_addr = 0x100000 * 10;
 
