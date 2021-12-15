@@ -9,6 +9,7 @@
 #define INCLUDE_KERNEL_TASK_PROCESS_H_
 
 #include "kernel/compiler/freestanding.h"
+#include "kernel/sys/types.h"
 #include "kernel/mm/pagetable.h"
 
 typedef struct {
@@ -36,7 +37,7 @@ typedef struct {
 typedef struct {
 
     /* process identification */
-    unsigned int pid;
+    pid_t pid;
     /* virtual memory related info */
     mm_vm_area_t vm_area;
     /* address of the stack used by process */
