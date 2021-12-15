@@ -5,10 +5,29 @@ Simple, self-contained, clean code, well-documented, hobbyist 64-bit operating s
 
 It contains the following components written from scratch:
 
-- BIOS Boot loader: [code](src/boot)
-- Buddy Memory Allocation System
-- libc (functions are being added on-demand): 
-- printk -> simplified printf-like string format parsing
+## BIOS
+| Component | Description | Source code |
+| --- | ----------- | ----------- |
+| MBR | First stage bootloader | [code](src/boot/mbr.asm) |
+| Loader | Second stage bootloader | [code](src/boot/loader.asm) |
+
+
+## Kernel
+| Component | Description | Source code |
+| --- | ----------- | ----------- |
+| PML4 | Paging Structure | [code](src/kernel/mm/page.c) |
+| Buddy | Memory allocator System | [code](src/kernel/mm/buddy.c) |
+| PrintK | printf-like string format parsing utility | [code](src/kernel/lib/printk.c) |
+| Serial Driver | send printk msgs via RS232 to help debugging | [code](src/kernel/device/serial.c) |
+| Core Dump | Dump CPU registers for debugging purposes  | [code](src/kernel/debug/coredump.c) |
+| Syscall/Sysret | method chosen to jump to Ring 3 and back | [code](src/kernel/syscall) |
+| PIT | Programmable Interval Timer | [code](src/kernel/arch/pit.c) |
+| x(delay) | Based on tightloops given that I'm using PIT | [code](src/kernel/time/delay.c) |
+| CMOS RTC | Real-time clock | [code](src/kernel/arch/cmos.c) |
+| Scheduler | Work-in-Progress | [code](src/kernel/task/scheduler.c) |
+
+## libc (functions are being added on-demand):  [code](src/libc)
+
 
 More to come.
 
