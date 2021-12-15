@@ -15,6 +15,7 @@
 #include "kernel/arch/gdt_segments.h"
 #include "kernel/arch/cpu_registers.h"
 #include "kernel/syscall/write.h"
+#include "kernel/syscall/getpid.h"
 
 /*
 
@@ -96,8 +97,10 @@ long syscall_handler(registers_64_t regs) {
     printk_info("syscall_handler called");
 
     switch (regs.rax) {
-    case NR_SYS_WRITE:
+    case __NR_write:
         return sys_write((const char*) regs.rdi, (size_t) regs.rsi);
+    case __NR_getpid:
+        return sys_getpid();
     default:
         fatal();
     }
