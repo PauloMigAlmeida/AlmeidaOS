@@ -1,7 +1,7 @@
 # AlmeidaOS
 
 
-Simple, self-contained, clean code, well-documented, hobbyist 64-bit operating system for Intel and AMD processors. It's written in Assembly (Intel syntax) and C (GNU99 Standard) in which I strived for adding comments to the source code as much as possible so it could be used as a reference for future OS developers.
+Simple, self-contained, clean code, well-documented, hobbyist 64-bit operating system for Intel and AMD processors. It's written in Assembly (Intel syntax) and C (GNU99 Standard) in which I strive for adding comments to the source code as much as possible so it could be used as a reference for future OS developers.
 
 It contains the following components written from scratch:
 
