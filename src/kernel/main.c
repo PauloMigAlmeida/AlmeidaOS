@@ -12,9 +12,8 @@
 #include "kernel/arch/pit.h"
 #include "kernel/syscall/init.h"
 #include "kernel/device/serial.h"
+#include "kernel/task/scheduler.h"
 
-/* Testing launch process */
-#include "kernel/task/process.h"
 
 void kmain(void) {
     /* printk init */
@@ -54,8 +53,12 @@ void kmain(void) {
     /* enable syscalls */
     syscall_init();
 
+
+    /* initialise scheduler */
+    task_struct_t *init_proc = create_process(0x1C000);
+    scheduler_init(init_proc);
+
     /* Temp: Launch first process */
-    task_struct_t *task = create_process(0x1C000);
     syscall_jump_usermode(0x41000);
 
     /* don't let kmain finish. Among other things, this ensure that interrupts have to to occur */

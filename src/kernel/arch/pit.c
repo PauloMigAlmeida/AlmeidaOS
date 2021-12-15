@@ -10,6 +10,7 @@
 #include "kernel/lib/printk.h"
 #include "kernel/mm/addressconv.h"
 #include "kernel/time/jiffies.h"
+#include "kernel/task/scheduler.h"
 
 /*
  * Notes for myself:
@@ -112,6 +113,10 @@ void pit_timer_handle_irq(void) {
     ++jiffies;
     if (jiffies % 1000 == 0)
         printk_info("pit_timer_handle_irq: %llu", jiffies);
-    //TODO do something useful with that.. I could only write part of this impl - Lunch time at work =S
+
+    /* give scheduler a change to change its mind */
+    scheduler_tick();
+
+    /* acknowlodge the interrupt back to PIT */
     pic_send_eoi(PIC_PROG_INT_TIMER_INTERRUPT);
 }
