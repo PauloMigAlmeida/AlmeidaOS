@@ -67,9 +67,17 @@ Things that would be fantastic to have but I am not sure if I have what it takes
 ## References
 These are all the references that helped me a lot during the development of AlmeidaOS
 
+Forums:
 - https://www.osdev.org/
+- https://www.reddit.com/r/osdev/
+
+Books:
 - https://www.amazon.com/Understanding-Linux-Kernel-Third-Daniel/dp/0596005652
 - https://www.amazon.com/Linux-Device-Drivers-Jonathan-Corbet/dp/0596005903/
+
+Existing OSes:
 - https://github.com/beevik/MonkOS
 - https://elixir.bootlin.com/linux/latest/source
+
+Courses:
 - https://www.udemy.com/course/writing-your-own-operating-system-from-scratch/
