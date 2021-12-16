@@ -72,3 +72,4 @@ These are all the references that helped me a lot during the development of Alme
 - https://www.amazon.com/Linux-Device-Drivers-Jonathan-Corbet/dp/0596005903/
 - https://github.com/beevik/MonkOS
 - https://elixir.bootlin.com/linux/latest/source
+- https://www.udemy.com/course/writing-your-own-operating-system-from-scratch/
