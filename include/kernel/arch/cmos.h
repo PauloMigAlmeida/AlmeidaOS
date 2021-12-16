@@ -10,13 +10,20 @@
 
 #include "kernel/compiler/freestanding.h"
 
+/*
+ * CMOS century register isn't standard and I'm not
+ * willing to implement ACPI now just to get
+ * that info :-)
+ */
+#define CMOS_ELAPSED_MSECS_UNTIL_20_CENTURY   0xdc6acfac00
+
 typedef struct {
-    unsigned char second;
-    unsigned char minute;
-    unsigned char hour;
-    unsigned char day;
-    unsigned char month;
-    unsigned char year;
+    uint8_t second;
+    uint8_t minute;
+    uint8_t hour;
+    uint8_t day;
+    uint8_t month;
+    uint8_t year;
 } cmos_clock_t;
 
 cmos_clock_t cmos_read_rtc(void);

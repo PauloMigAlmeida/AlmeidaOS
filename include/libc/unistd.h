@@ -13,5 +13,6 @@
 
 long write(const char* string, size_t length);
 pid_t getpid(void);
+time_t time(void);
 
 #endif /* INCLUDE_LIBC_UNISTD_H_ */

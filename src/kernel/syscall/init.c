@@ -16,6 +16,7 @@
 #include "kernel/arch/cpu_registers.h"
 #include "kernel/syscall/write.h"
 #include "kernel/syscall/getpid.h"
+#include "kernel/syscall/time.h"
 
 /*
 
@@ -94,13 +95,15 @@ void syscall_init(void) {
 }
 
 long syscall_handler(registers_64_t regs) {
-    printk_info("syscall_handler called");
+    printk_fine("syscall_handler called");
 
     switch (regs.rax) {
     case __NR_write:
         return sys_write((const char*) regs.rdi, (size_t) regs.rsi);
     case __NR_getpid:
         return sys_getpid();
+    case __NR_time:
+            return sys_time();
     default:
         fatal();
     }

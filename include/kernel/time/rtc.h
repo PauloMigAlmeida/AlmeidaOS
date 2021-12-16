@@ -13,5 +13,8 @@
 
 void rtc_init(void);
 cmos_clock_t rtc_startup_time(void);
+void rtc_init_curr_time(void);
+
+extern uint64_t rtc_curr_time;
 
 #endif /* INCLUDE_KERNEL_TIME_RTC_H_ */

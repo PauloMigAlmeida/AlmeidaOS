@@ -10,6 +10,7 @@
 #include "kernel/lib/printk.h"
 #include "kernel/mm/addressconv.h"
 #include "kernel/time/jiffies.h"
+#include "kernel/time/rtc.h"
 #include "kernel/task/scheduler.h"
 
 /*
@@ -113,6 +114,9 @@ void pit_timer_handle_irq(void) {
     ++jiffies;
     if (jiffies % 1000 == 0)
         printk_info("pit_timer_handle_irq: %llu", jiffies);
+
+    /* increment current time counter */
+    ++rtc_curr_time;
 
     /* give scheduler a change to change its mind */
     scheduler_tick();

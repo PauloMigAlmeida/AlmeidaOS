@@ -32,15 +32,21 @@ void kmain(void) {
 
     /* CPU features initialisation */
     cpu_init();
-    /* Interrupt Descriptor table */
-    idt_init();
+
     /* Programmable Interrupt Controller */
     pic_init();
 
     /* Programmable Interval Timerchip */
     pit_init(HZ);
+
+    /* Interrupt Descriptor table */
+    idt_init();
+
     /* Unleash all possible problems in the world */
     enable_interrupts();
+
+    /* init current time */
+    rtc_init_curr_time();
 
     /* memory management module init */
     mm_init();
