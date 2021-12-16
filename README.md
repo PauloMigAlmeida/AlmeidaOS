@@ -63,3 +63,12 @@ Things that would be fantastic to have but I am not sure if I have what it takes
 - [ ] networking capabilities (I would be damn happy with UDP already..I wouldn't dare trying to implement TCP)
 - [ ] Filesystem
 - [ ] Scheduler / Time-sharing OS
+
+## References
+These are all the references that helped me a lot during the development of AlmeidaOS
+
+- https://www.osdev.org/
+- https://www.amazon.com/Understanding-Linux-Kernel-Third-Daniel/dp/0596005652
+- https://www.amazon.com/Linux-Device-Drivers-Jonathan-Corbet/dp/0596005903/
+- https://github.com/beevik/MonkOS
+- https://elixir.bootlin.com/linux/latest/source
