@@ -87,6 +87,7 @@ cmos_clock_t cmos_read_rtc(void) {
     if (!fmt24_set && (ret.hour & CMOS_HOUR_PM_MASK)) {
         ret.hour = ((ret.hour & ~CMOS_HOUR_PM_MASK) + 12) % 24;
     }
+
     return ret;
 }
 

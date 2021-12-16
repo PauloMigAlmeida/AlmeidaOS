@@ -14,9 +14,15 @@
 #include "kernel/device/serial.h"
 #include "kernel/task/scheduler.h"
 
-#include "kernel/arch/cmos.h"
+#include "kernel/time/rtc.h"
 
 void kmain(void) {
+    /* disable all IRQs */
+    pic_disable_all_irq();
+
+    /* init real-time clock */
+    rtc_init();
+
     /* printk init */
     printk_init(PRINTK_INFO_LEVEL);
     vga_console_init();
@@ -24,24 +30,15 @@ void kmain(void) {
     /* Serial COM1 port - RS232 */
     init_serial();
 
-    /* read CMOS RTC */
-    cmos_clock_t startup_time = cmos_read_rtc();
-    printk_info("Startup time: %d/%d/%d %d:%d:%d",
-            startup_time.day, startup_time.month, startup_time.year,
-            startup_time.hour, startup_time.minute, startup_time.second);
-
     /* CPU features initialisation */
     cpu_init();
-
     /* Interrupt Descriptor table */
     idt_init();
-
     /* Programmable Interrupt Controller */
     pic_init();
 
     /* Programmable Interval Timerchip */
     pit_init(HZ);
-
     /* Unleash all possible problems in the world */
     enable_interrupts();
 
