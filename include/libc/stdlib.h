@@ -14,4 +14,9 @@ int rand(void);
 int rand_r(unsigned int *seedp);
 void srand(unsigned int s);
 
+char* ltoa(long value, char *str, int radix);
+
+int abs(int value);
+
+
 #endif /* INCLUDE_LIBC_STDLIB_H_ */

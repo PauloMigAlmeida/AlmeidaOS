@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------------
-# AlmeidaOS libc/stdlib makefile
+# AlmeidaOS libc/string makefile
 #----------------------------------------------------------------------------
 
 DIR_ROOT	:= $(CURDIR)/../../../
@@ -10,7 +10,7 @@ include $(DIR_ROOT)/scripts/config.mk
 ASFLAGS		:= -f elf64
 
 DIR_SRC_SUBSYSTEMS := $(shell find $(CURDIR)/* -maxdepth 1 -type d)
-DIR_TARGET	:= $(DIR_BUILD)/libc/stdlib
+DIR_TARGET	:= $(DIR_BUILD)/libc/string
 
 SRC_C_FILES	:= $(wildcard *.c)
 BIN_C_FILES	:= $(SRC_C_FILES:%.c=$(DIR_TARGET)/%.o)
@@ -18,7 +18,7 @@ BIN_C_FILES	:= $(SRC_C_FILES:%.c=$(DIR_TARGET)/%.o)
 SRC_ASM_FILES	:= $(wildcard *.asm)
 BIN_ASM_FILES	:= $(SRC_ASM_FILES:%.asm=$(DIR_TARGET)/%.o)
 
-TAG 		:= [libc/stdlib]
+TAG 		:= [libc/string]
 
 all: mkdir compile
 	@echo "$(TAG) Compiled successfully"
