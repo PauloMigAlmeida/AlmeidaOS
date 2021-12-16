@@ -65,8 +65,7 @@ void pic_init(void) {
     outb(PIC2_DATA, 1);
 
     /* mask (disable) all PIC interrupts */
-    outb(PIC1_DATA, 0xff);
-    outb(PIC2_DATA, 0xff);
+    pic_disable_all_irq();
 
     printk_info("PIC initialised");
 }
@@ -126,4 +125,9 @@ static uint16_t pic_get_irq_reg(uint8_t ocw3) {
 
 uint16_t pic_read_isr(void) {
     return pic_get_irq_reg(PIC_READ_ISR);
+}
+
+void pic_disable_all_irq(void) {
+    outb(PIC1_DATA, 0xff);
+    outb(PIC2_DATA, 0xff);
 }

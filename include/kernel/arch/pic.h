@@ -29,6 +29,7 @@ void pic_send_eoi(uint8_t isa_irq);
 void pic_unmask_irq(uint8_t isa_irq);
 void pic_mask_irq(uint8_t isa_irq);
 uint16_t pic_read_isr(void);
+void pic_disable_all_irq(void);
 
 void enable_keyboard_irq(void);
 
