@@ -43,7 +43,7 @@
 #define CMOS_NMI_DISABLE_MASK   (1 << 7)
 
 /* utility macros */
-#define BCD_TO_BIN(bcd) ((bcd / 16) * 10) + (bcd & 0xf)
+#define BCD_TO_BIN(bcd) (((bcd / 16) * 10) + (bcd & 0xf))
 
 static uint8_t cmos_read_reg(int reg) {
     reg |= CMOS_NMI_DISABLE_MASK;
@@ -77,7 +77,7 @@ cmos_clock_t cmos_read_rtc(void) {
     if (!bin_mod_set) {
         ret.second = BCD_TO_BIN(ret.second);
         ret.minute = BCD_TO_BIN(ret.minute);
-        ret.hour =  (BCD_TO_BIN(ret.hour) | (ret.hour & CMOS_HOUR_PM_MASK));
+        ret.hour = BCD_TO_BIN(ret.hour) | (ret.hour & CMOS_HOUR_PM_MASK);
         ret.day = BCD_TO_BIN(ret.day);
         ret.month = BCD_TO_BIN(ret.month);
         ret.year = BCD_TO_BIN(ret.year);

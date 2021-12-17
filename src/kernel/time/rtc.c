@@ -78,9 +78,7 @@ void rtc_init_curr_time(void) {
     }
 
     /* calculate the diff - current year - month */
-    for (uint8_t i = 1; i < now.month; i++) {
-        rtc_curr_time += month[i];
-    }
+    rtc_curr_time += month[now.month - 1];
 
     /* adjust leap year calc if needed */
     if (now.month > 2 && is_leap_year(2000 + now.year))
