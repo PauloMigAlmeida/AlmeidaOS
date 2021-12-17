@@ -36,6 +36,7 @@ raw-disk:
 qemu-debug:
 	@$(QEMU) -qmp tcp:localhost:4444,server,nowait \
 		-gdb tcp::8864 -drive format=raw,file=$(OUTPUT_RAW_DISK) \
+		-rtc base=localtime \
 		-S -d guest_errors -d int -no-reboot -no-shutdown 
 	@# Help: Runs QEMU in debug mode so that we can debug the bootloader
 
@@ -49,6 +50,7 @@ gdb-debug:
 .PHONY: test
 test:
 	@$(QEMU) -drive format=raw,file=$(OUTPUT_RAW_DISK) \
+		-rtc base=localtime \
 		-d guest_errors \
 		-no-reboot \
 		-no-shutdown \
