@@ -12,9 +12,10 @@
 #include "kernel/arch/cmos.h"
 
 void rtc_init(void);
-cmos_clock_t rtc_startup_time(void);
 void rtc_init_curr_time(void);
+uint64_t rtc_covert_to_unixtime(cmos_clock_t now);
 
-extern uint64_t rtc_curr_time;
+extern uint64_t rtc_curr_unixtime;
+extern uint64_t rtc_startup_unixtime;
 
 #endif /* INCLUDE_KERNEL_TIME_RTC_H_ */

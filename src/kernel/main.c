@@ -63,6 +63,9 @@ void kmain(void) {
     /* enable syscalls */
     syscall_init();
 
+    /* how long did the boot take until here? */
+    printk_info("System boot completed in %.16llu ms", rtc_curr_unixtime - rtc_startup_unixtime);
+
     /* initialise scheduler */
     task_struct_t *init_proc = create_process(0x1C000);
     scheduler_init(init_proc);

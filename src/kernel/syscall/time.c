@@ -11,7 +11,7 @@
 #include "kernel/time/rtc.h"
 
 time_t sys_time(void) {
-    time_t ret = rtc_curr_time;
+    time_t ret = rtc_curr_unixtime;
 
     /* convert it to UNIX epoch time (seconds) */
     return ret / 1000;
