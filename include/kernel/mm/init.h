@@ -13,6 +13,7 @@
 #define ELF_TEXT_OFFSET         0x1000
 #define PAGE_SIZE               0x1000
 #define PAGEFRAME_SIZE          0x1000
+#define STACK_SIZE              PAGE_SIZE * 2
 
 /* Virtual Memory Mapping -> More at: /include/boot/global/mem.asm */
 #define K_VIRT_START_ADDR           0xffff800000000000

@@ -29,7 +29,7 @@ static void print_mem_alloc(char *desc, mem_map_region_t *region) {
 static void reserve_kernel_sections(void) {
     /* reserve memory area to hold kernel stack which is going to be 2x 4Kb PAGES (same as Linux) */
     mem_map_region_t kern_stack = mem_alloc_region(
-            pa((uint64_t) &kernel_virt_start_addr) - ELF_TEXT_OFFSET - PAGE_SIZE * 2,
+            pa((uint64_t) &kernel_virt_start_addr) - ELF_TEXT_OFFSET - STACK_SIZE,
             round_up_po2(pa((uint64_t) &kernel_virt_start_addr) - ELF_TEXT_OFFSET, PAGE_SIZE));
     print_mem_alloc("K_STACK", &kern_stack);
 
