@@ -78,7 +78,7 @@ GDT64.Table.Pointer:
     dw  GDT64.Table.Size - 1    		; Limit = offset of last byte in table
     dq  GDT64.Table
 
-TSS64.Segment:
+TSS64_Segment:
 	dd 	0x00							; Reserved
 	dq	0x00							; RSP0 (Ring 0 64-bit stack canonical address)
 	dq	0x00							; RSP1 (Ring 1 64-bit stack canonical address)
@@ -95,6 +95,6 @@ TSS64.Segment:
 	dw	0x00							; Reserved
 	dw	0x00							; I/O Map Base Address
 
-TSS64.Segment.Size	equ		($ - TSS64.Segment)
+TSS64.Segment.Size	equ		($ - TSS64_Segment)
 
 %endif ; __ALMEIDAOS_GDT64_INC__

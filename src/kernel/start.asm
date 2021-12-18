@@ -2,14 +2,15 @@
 
 section .data
 
-; Include useful functions, constants and macros
-%include "../../include/boot/global/const.asm"
-%include "../../include/boot/global/mem.asm"
-%include "./gdt64.asm"
-
   ; Export references to C
   global e820_mem_start
   global e820_mem_end
+  global TSS64_Segment
+
+  ; Include useful functions, constants and macros
+  %include "../../include/boot/global/const.asm"
+  %include "../../include/boot/global/mem.asm"
+  %include "./gdt64.asm"
 
   ; variables
   e820_mem_start:  dq  e820.Mem.Start.Address
@@ -37,7 +38,7 @@ kernel_entry:
   lgdt	[rdi]
 
   ; Prepare TSS Segment
-  mov	rdi,			TSS64.Segment
+  mov	rdi,			TSS64_Segment
   ; RSP0 (lower 32 bits)
   mov 	DWORD[rdi+4],	Kernel.New.Start.VirtualAddress & 0xffffffff
   ; RSP0 (upper 32 bits)
@@ -46,7 +47,7 @@ kernel_entry:
 
   ; Prepare TSS Descriptor
   mov	rdi,			TSS64.Descriptor
-  mov	rsi,			TSS64.Segment
+  mov	rsi,			TSS64_Segment
   ; Set Base Low 	 [15:00]
   mov	[rdi+2],		si
   shr	rsi,			16
