@@ -9,7 +9,7 @@
 #include "kernel/time/jiffies.h"
 #include "kernel/lib/printk.h"
 
-unsigned long loops_per_jiffy = (1 << 12);
+unsigned long loops_per_jiffy = (1 << 16);
 
 static void __delay(unsigned long loops_num) {
 
