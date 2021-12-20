@@ -13,7 +13,6 @@
 #include "kernel/syscall/init.h"
 #include "kernel/device/serial.h"
 #include "kernel/task/scheduler.h"
-
 #include "kernel/time/rtc.h"
 
 void kmain(void) {
@@ -66,12 +65,18 @@ void kmain(void) {
     /* how long did the boot take until here? */
     printk_info("System boot completed in %.16llu ms", rtc_curr_unixtime - rtc_startup_unixtime);
 
+    disable_interrupts();
+
     /* initialise scheduler */
     task_struct_t *init_proc = create_process(0x1C000);
     scheduler_init(init_proc);
 
-    /* Temp: Launch first process */
-    syscall_jump_usermode(0x41000);
+    /* test scheduler's ability to switch between tasks */
+    for (size_t i = 2; i <= 9; i++) {
+        scheduler_add(create_process(0x1C000));
+    }
+
+    enable_interrupts();
 
     /* don't let kmain finish. Among other things, this ensure that interrupts have to to occur */
     for (;;) {
