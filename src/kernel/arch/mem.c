@@ -94,6 +94,10 @@ static void combine_mergeable_regions() {
             else if (mem_rg_1->type > E820_MEM_TYPE_USABLE && mem_rg_2->type > E820_MEM_TYPE_USABLE)
                 merge = true;
         }
+        /* implicit holes between two reserved regions isn't necesseraly a free region - learned this the hard way */
+        else if (mem_rg_1->type > E820_MEM_TYPE_USABLE && mem_rg_2->type > E820_MEM_TYPE_USABLE) {
+            merge = true;
+        }
 
         if (merge) {
             /* combine regions */
@@ -315,7 +319,7 @@ mem_map_region_t mem_alloc_amount(uint64_t length, uint64_t addr_align) {
 void mem_list_entries(uint32_t type, mem_proc_fun handler) {
     for (size_t cur_pos = 0; cur_pos < mem_blocks->num_entries; cur_pos++) {
         mem_map_region_t *mem_rg = &mem_blocks->mem_region[cur_pos];
-        if(mem_rg->type == type){
+        if (mem_rg->type == type) {
             handler(mem_rg);
         }
     }
