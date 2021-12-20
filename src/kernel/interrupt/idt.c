@@ -13,6 +13,7 @@
 #include "kernel/device/keyboard.h"
 #include "kernel/arch/pit.h"
 #include "kernel/interrupt/spurious.h"
+#include "kernel/task/scheduler.h"
 
 /*
  * Notes to myself:
@@ -207,6 +208,11 @@ void interrupt_handler(interrupt_stack_frame_t *int_frame) {
         for (;;) {
             halt();
         }
+    }
+
+	/* check if there are peding tasks such as scheduling to be done before returning */
+    if(int_frame->trap_number == 32 && this_rq()->need_resched){
+        schedule(int_frame);
     }
 
 }
