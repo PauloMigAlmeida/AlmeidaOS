@@ -50,7 +50,6 @@ static void move_end_of_list(struct task_list_t *element) {
 
     if (head->next == NULL) {
         head->next = element;
-        element->next = NULL;
     } else {
         struct task_list_t *tmp = this_rq()->tasks;
         /* find list's tail */
@@ -61,9 +60,9 @@ static void move_end_of_list(struct task_list_t *element) {
         }
 
         tmp->next = element;
-        this_rq()->tasks = element->next;
-        element->next = NULL;
     }
+
+    element->next = NULL;
 
 }
 
@@ -84,7 +83,7 @@ void schedule(interrupt_stack_frame_t *int_frame) {
     struct task_list_t *head = this_rq()->tasks;
 
     /* fail-fast if there is nothing else to run */
-    if ((this_rq()->curr != NULL && head->next == NULL) || head == NULL)
+    if (!head || (this_rq()->curr && !head->next))
         return;
 
     task_struct_t *curr = this_rq()->curr;
@@ -92,7 +91,10 @@ void schedule(interrupt_stack_frame_t *int_frame) {
 
     /* puts current process at the end of list to
      * give a change for the other tasks to run */
-    move_end_of_list(head);
+    if (head->next) {
+        this_rq()->tasks = head->next;
+        move_end_of_list(head);
+    }
 
     /* select process to be executed */
     this_rq()->curr = next;
