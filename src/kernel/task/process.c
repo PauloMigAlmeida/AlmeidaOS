@@ -11,6 +11,13 @@
 #include "kernel/mm/kmem.h"
 #include "kernel/mm/page.h"
 #include "kernel/mm/addressconv.h"
+#include "kernel/arch/tss.h"
+#include "kernel/task/pid.h"
+#include "kernel/syscall/init.h"
+#include "kernel/lib/printk.h"
+#include "kernel/arch/gdt_segments.h"
+
+extern tss_t TSS64_Segment;
 
 /**
  * text_phy_addr: should container the address of the start of the text section
@@ -18,6 +25,8 @@
  */
 task_struct_t* create_process(uint64_t text_phy_addr) {
     /**
+     * Notes to myself:
+     *
      * Allocate Space:
      *  -> text code :: The stack references will be relative to the ini_addr, so these pages must also be mapped
      *              The problem here is that it should work differently depending on whether this is already in memory
@@ -29,23 +38,10 @@ task_struct_t* create_process(uint64_t text_phy_addr) {
      *              In the case of a new file, we need to allocate the space dynamically and then load it from the filesystem/disk
      *              (Most likely the right way of doing things but it requires implementing a FS and interfacing with the HD)
      *
-     *  -> pagetable :: where the pages will be stored really...no biggie
-     *      -> I think I need a pageframedb struct here so I can initialise the paging structure properly -> Done
-     *      -> ALERT: The paging_init() function will fail as it is because it tries to memzero the area using the phys_addr which
-     *          isn't mapped in kernel's space..... I need to figure out an alternative here -> Done
-     *      -> Temp: Map video dma 0xb8000 to test whether user process is running -> Done
-     *      -> Need to pave the way to jump to ring 3 in C -> Done
-     *      -> ALERT: Revist how pageframe requirements is calculated...I keep getting low numbers
-     *      -> Clean up BSS section on user process -> Done
-     *      -> Rename routines that doesn't say precisely userprogram such as "read_user_from_disk") -> Done
-     *      -> Fix this whole hardcoded mess created by the commit  https://github.com/PauloMigAlmeida/AlmeidaOS/commit/9563c415808877f7501c145445c53fb0a126d304
-     *      -> Remove mapping to 0xb8000 and force user program to go through syscalls instead -> Done
-     *
-     *  ->
      */
 
     task_struct_t *task = kmalloc(sizeof(task_struct_t), KMEM_DEFAULT);
-    task->pid = 1; // TODO: create routine to get free PID
+    task->pid = find_free_pid();
     task->state = TASK_RUNNING;
     task->vm_area.ini_addr = 0x0;
     task->vm_area.fini_addr = 0x100000 * 10;
@@ -65,6 +61,7 @@ task_struct_t* create_process(uint64_t text_phy_addr) {
     };
 
     /* init paging structure for the process */
+    printk_info("u_pages_struct_rg: %.16llx u_pfdb_struct_rg: %.16llx", u_pages_struct_rg.base_addr, u_pfdb_struct_rg.base_addr);
     paging_init(&task->vm_area.pgtable, u_pages_struct_rg, u_pfdb_struct_rg);
 
     // TODO: this should be dynamic once we start loading files from disk
@@ -77,24 +74,71 @@ task_struct_t* create_process(uint64_t text_phy_addr) {
             0x40000,
             PAGE_STD_BITS | PAGE_USER_SUPERVISOR_BIT);
 
-    /* mapping stack's physical location to process' pgtable */
-    task->stack_area.length = PAGE_SIZE * 2;
-    task->stack_area.virt_addr = (uint64_t) kmalloc(task->stack_area.length, KMEM_DEFAULT | KMEM_ZERO);
-    task->stack_area.phys_addr = pa(task->stack_area.virt_addr);
+    /* mapping process' stack physical location to process' pgtable */
+    task->task_stack_area.length = STACK_SIZE;
+    task->task_stack_area.virt_addr = (uint64_t) kmalloc(task->task_stack_area.length, KMEM_DEFAULT | KMEM_ZERO);
+    task->task_stack_area.phys_addr = pa(task->task_stack_area.virt_addr);
 
     paging_contiguous_map(&task->vm_area.pgtable,
-            task->stack_area.phys_addr,
-            task->stack_area.phys_addr + task->stack_area.length,
+            task->task_stack_area.phys_addr,
+            task->task_stack_area.phys_addr + task->task_stack_area.length,
             0x3e000,
             PAGE_STD_BITS | PAGE_USER_SUPERVISOR_BIT);
+
+    /* allocate stack for kernel  */
+    task->kernel_stack_area.length = STACK_SIZE;
+    task->kernel_stack_area.virt_addr = (uint64_t) kmalloc(task->kernel_stack_area.length, KMEM_DEFAULT | KMEM_ZERO);
+    task->kernel_stack_area.phys_addr = pa(task->kernel_stack_area.virt_addr);
+
+    /* in the future we should read this info from the ELF headers */
+    task->rip = 0x41000;
+    task->rsp = 0x40000;
+    task->rflags = 0x202;
+    task->cs = GDT64_SEGMENT_SELECTOR_USER_CODE | DPL_RING_3;
+    task->ss = GDT64_SEGMENT_SELECTOR_USER_DATA | DPL_RING_3;
+    memzero(&task->regs, sizeof(registers_64_t));
 
     /* Copy PML4  entries for kernel space (higher-half entries) to this process' page table */
     memcpy((uintptr_t*) (task->vm_area.pgtable.virt_root + (256 * sizeof(uint64_t))),
             (uintptr_t*) (kernel_pagetable()->virt_root + (256 * sizeof(uint64_t))),
             256 * sizeof(uint64_t));
 
-    paging_reload_cr3(&task->vm_area.pgtable);
-
     return task;
+}
+
+void launch_process(task_struct_t *task) {
+    TSS64_Segment.rsp0 = task->kernel_stack_area.virt_addr + STACK_SIZE;
+    paging_reload_cr3(&task->vm_area.pgtable);
+}
+
+void process_context_swtich(interrupt_stack_frame_t *int_frame, task_struct_t *curr, task_struct_t *next) {
+    /* software context - save current task's context and load next task's context*/
+    if (curr == NULL) {
+        int_frame->regs = next->regs;
+
+        int_frame->ss = next->ss;
+        int_frame->cs = next->cs;
+        int_frame->rflags = next->rflags;
+        int_frame->rsp = next->rsp;
+        int_frame->rip = next->rip;
+
+        launch_process(next);
+    } else {
+        curr->rsp = int_frame->rsp;
+        curr->rip = int_frame->rip;
+        curr->ss = int_frame->ss;
+        curr->cs = int_frame->cs;
+        curr->regs = int_frame->regs;
+        curr->rflags = int_frame->rflags;
+
+        int_frame->rsp = next->rsp;
+        int_frame->rip = next->rip;
+        int_frame->regs = next->regs;
+        int_frame->ss = next->ss;
+        int_frame->cs = next->cs;
+        int_frame->rflags = next->rflags;
+
+        launch_process(next);
+    }
 }
 

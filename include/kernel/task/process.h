@@ -12,6 +12,9 @@
 #include "kernel/sys/types.h"
 #include "kernel/mm/pagetable.h"
 
+#include "kernel/arch/cpu_registers.h"
+#include "kernel/interrupt/idt.h"
+
 /* Task states */
 #define TASK_RUNNING            0
 #define TASK_INTERRUPTIBLE      1
@@ -57,10 +60,23 @@ typedef struct {
     mm_vm_area_t vm_area;
 
     /* address of the stack used by process */
-    stack_area_t stack_area;
+    stack_area_t task_stack_area;
+
+    /* address of the stack used by kernel */
+    stack_area_t kernel_stack_area;
+
+    /* save/restore data to return from a context switch*/
+    registers_64_t regs;
+    uint64_t rip;
+    uint64_t cs;
+    uint64_t rflags;
+    uint64_t rsp;
+    uint64_t ss;
 
 } task_struct_t;
 
 task_struct_t* create_process(uint64_t text_phy_addr);
+void launch_process(task_struct_t *task);
+void process_context_swtich(interrupt_stack_frame_t *int_frame, task_struct_t *curr, task_struct_t *next);
 
 #endif /* INCLUDE_KERNEL_TASK_PROCESS_H_ */
