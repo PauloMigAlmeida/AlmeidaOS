@@ -12,7 +12,6 @@
 
 /* functions */
 void syscall_init(void);
-extern void syscall_jump_usermode(uint64_t start_addr);
 
 /* syscall IDs */
 #define __NR_read     0

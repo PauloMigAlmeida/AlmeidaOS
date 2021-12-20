@@ -1,7 +1,6 @@
 %include "../../../include/boot/global/macro.asm"
 
 ; Export references to C
-global syscall_jump_usermode
 global syscall_entry
 
 extern syscall_handler
@@ -9,13 +8,14 @@ extern syscall_handler
 ; create elf section that is always placed first when linking asm and c files
 section .text
 
-;align 16
-syscall_jump_usermode:
-	mov rcx, rdi ; to be loaded into RIP
-	mov r11, 0x202 ; to be loaded into EFLAGS
-	o64 sysret 	;use "o64 sysret" if you assemble with NASM
-
 syscall_entry:
+	;TODO: Test (while I figure out how to disable interrupts via SFMASK)
+	; the idea is to not have to deal with preemptable stuff that can cause
+	; a syscall to be stopped half-way to server an interrupt and then come back.
+	; While this seems pretty cool to figure out, it will for certain take a
+	; little longer as debugging becomes really hard.
+	cli
+
 	; preserve all values so we can access them from C
 	;  and know where to go back to (RCX, r11)
 	pushaq
