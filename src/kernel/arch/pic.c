@@ -13,8 +13,6 @@
 #include "kernel/mm/addressconv.h"
 
 /*
- *  TODO: study about PIC and APIC -> So we can get the timer working
- *
  *  PIC 8259A Datasheet: https://pdos.csail.mit.edu/6.828/2005/readings/hardware/8259A.pdf
  *
  *  Pic Notes:

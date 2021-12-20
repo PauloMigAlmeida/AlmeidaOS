@@ -17,8 +17,11 @@ static buddy_ref_t k_mem_alloc;
 
 static void mem_proc_handler(const mem_map_region_t *mem_rg) {
 
-    /* sanity check as some BIOSes can return regions outside of the physical memory range*/
-    //TODO research a bit more about it Paulo...that sounds very weird tbh
+    /*
+     * sanity check as some BIOSes can return regions outside of the physical memory range.
+     * that's becaused all PCs require a memory hole just below 4GB for additional memory
+     * mapped hardware (including the actual BIOS ROM).
+     */
     if ((mem_rg->base_addr + mem_rg->length) <= k_mem_alloc.content_mem_reg.length) {
         buddy_pre_alloc(&k_mem_alloc, mem_rg->base_addr, mem_rg->length);
     }
