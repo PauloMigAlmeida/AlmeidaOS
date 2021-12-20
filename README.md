@@ -22,9 +22,10 @@ It contains the following components written from scratch:
 | Core Dump | Dump CPU registers for debugging purposes  | [code](src/kernel/debug/coredump.c) |
 | Syscall/Sysret | method chosen to jump to Ring 3 and back | [code](src/kernel/syscall) |
 | PIT | Programmable Interval Timer | [code](src/kernel/arch/pit.c) |
-| x(delay) | Based on tightloops given that I'm using PIT | [code](src/kernel/time/delay.c) |
+| PIC | Programmable Interrupt Controller | [code](src/kernel/arch/pic.c) |
+| (x)delay | Based on tightloops given that I'm using PIT | [code](src/kernel/time/delay.c) |
 | CMOS RTC | Real-time clock | [code](src/kernel/arch/cmos.c) |
-| Scheduler | Work-in-Progress | [code](src/kernel/task/scheduler.c) |
+| Scheduler | Simple Round-Robin scheduler | [code](src/kernel/task/scheduler.c) |
 
 ## libc
 functions are being added on-demand:  [code](src/libc)
@@ -53,7 +54,7 @@ that I want to implement in the short to medium term.
 
 - [X] Serial port driver
 - [X] Early printk (contingent on serial port driver) -> will help debugging in real computers
-- [ ] limited libc -> (Work in progress)
+- [X] limited libc -> (It will always be "Work in progress" as I add functions as I need them)
 - [X] Userspace
 - [ ] Rudimentary Bash-like terminal
 
@@ -62,7 +63,7 @@ Things that would be fantastic to have but I am not sure if I have what it takes
 
 - [ ] networking capabilities (I would be damn happy with UDP already..I wouldn't dare trying to implement TCP)
 - [ ] Filesystem
-- [ ] Scheduler / Time-sharing OS
+- [X] Scheduler / Time-sharing OS
 
 ## References
 These are all the references that helped me a lot during the development of AlmeidaOS
@@ -74,6 +75,7 @@ Forums:
 Books:
 - https://www.amazon.com/Understanding-Linux-Kernel-Third-Daniel/dp/0596005652
 - https://www.amazon.com/Linux-Device-Drivers-Jonathan-Corbet/dp/0596005903/
+- https://www.amazon.com/Hackers-Delight-2nd-Henry-Warren/dp/0321842685 - (thanks [@igorlg](https://github.com/igorlg)) 
 
 Existing OSes:
 - https://github.com/beevik/MonkOS
