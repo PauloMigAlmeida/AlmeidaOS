@@ -17,6 +17,7 @@
 #include "kernel/syscall/write.h"
 #include "kernel/syscall/getpid.h"
 #include "kernel/syscall/time.h"
+#include "kernel/arch/cpu.h"
 
 /*
 
@@ -39,7 +40,6 @@
 
  - Flags — The processor sets RFLAGS to the logical-AND of its current value with the complement of the value in
  the IA32_FMASK MSR.
-
 
  When SYSRET transfers control to 64-bit mode user code using REX.W, the processor gets the privilege level 3
  target code segment, instruction pointer, stack segment, and flags as follows:
@@ -87,8 +87,8 @@ void syscall_init(void) {
     wrmsr(MSR_IA32_EFER, efer_reg);
     printk_fine("MSR_IA32_EFER contents: 0x%.16llx", efer_reg);
 
-    /* Don't clear RFLAGS during SYSCALL */
-    wrmsr(MSR_IA32_FMASK, 0);
+    /* Mask interrupts and direction flag during syscall */
+    wrmsr(MSR_IA32_FMASK, RFLAGS_IF | RFLAGS_DF);
 
     printk_info("SYSCALL/SYSRET initialised");
 
