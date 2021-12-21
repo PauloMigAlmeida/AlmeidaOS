@@ -61,7 +61,7 @@ task_struct_t* create_process(uint64_t text_phy_addr) {
     };
 
     /* init paging structure for the process */
-    printk_info("u_pages_struct_rg: %.16llx u_pfdb_struct_rg: %.16llx", u_pages_struct_rg.base_addr, u_pfdb_struct_rg.base_addr);
+    printk_fine("u_pages_struct_rg: %.16llx u_pfdb_struct_rg: %.16llx", u_pages_struct_rg.base_addr, u_pfdb_struct_rg.base_addr);
     paging_init(&task->vm_area.pgtable, u_pages_struct_rg, u_pfdb_struct_rg);
 
     // TODO: this should be dynamic once we start loading files from disk
