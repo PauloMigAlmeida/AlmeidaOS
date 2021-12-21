@@ -1,7 +1,7 @@
 # gcc 10.2.0 x86_64-elf cross-compiler container
 
 # Acknowledgement: 
-#  This docker file was original written by Github @beevik/docker.
+#  This docker file was originally written by @beevik.
 #  He did an extraordinary job writing it and I'm only having a copy of that work
 #  in this repo to make sure that this repo is self-sufficient. 
 #  All the kudos goes to him
@@ -46,6 +46,12 @@ RUN set -x \
 	&& ./build-gcc.sh ${GCC_VERSION}
 
 # Install NASM
-RUN set -x && apt-get install nasm
+RUN set -x && apt-get install -y nasm
+
+# Install mkfs.exfat utility
+RUN set -x && apt-get install -y exfat-utils
+
+# Clean cache
+RUN apt-get clean
 
 CMD ["/bin/bash"]

@@ -8,6 +8,6 @@ DIR_DOCKER	:= $(DIR_ROOT)/docker
 #-------------------
 DOCKER			:= docker
 
-IMAGE_NAME	:= ghcr.io/paulomigalmeida/almeidaos-build
+IMAGE_NAME		:= ghcr.io/paulomigalmeida/almeidaos-build
 
 IMAGE_TAG		:= gcc-10.2.0
