@@ -72,7 +72,7 @@ void kmain(void) {
     scheduler_init(init_proc);
 
     /* test scheduler's ability to switch between tasks */
-    for (size_t i = 2; i <= 9; i++) {
+    for (size_t i = 2; i <= 99; i++) {
         scheduler_add(create_process(0x1C000));
     }
 
