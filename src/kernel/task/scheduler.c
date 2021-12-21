@@ -40,7 +40,7 @@ void scheduler_tick(void) {
         return;
 
     /* keep the CPU occupied if it's not yet so */
-    if (this_rq()->curr == NULL || jiffies % 50 == 0)
+    if (this_rq()->curr == NULL || jiffies % 10 == 0)
         this_rq()->need_resched = true;
 
 }
