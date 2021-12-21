@@ -111,7 +111,7 @@ void pic_mask_irq(uint8_t isa_irq) {
         value = set_bit(isa_irq, value);
         printk_debug("PIC Addr: 0x%x new mask State: %u\n", pic_selector, value);
         outb(pic_selector, value);
-        printk_debug("IRQ %u unmasked\n", isa_irq);
+        printk_debug("IRQ %u masked\n", isa_irq);
     }
 }
 
