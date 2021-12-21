@@ -12,8 +12,10 @@
 #include "kernel/debug/coredump.h"
 #include "kernel/device/keyboard.h"
 #include "kernel/arch/pit.h"
+#include "kernel/arch/pic.h"
 #include "kernel/interrupt/spurious.h"
 #include "kernel/task/scheduler.h"
+
 
 /*
  * Notes to myself:
@@ -191,13 +193,18 @@ void interrupt_handler(interrupt_stack_frame_t *int_frame) {
     /* spurious interrupt */
     if (int_frame->trap_number == 39) {
         /* there is nothing to be done here... let's carry on with our lives */
+        pic_mask_irq(PIC_LPT1_OR_SPURIOUS_INTERRUPT);
         spurious_handle_irq();
+        pic_unmask_irq(PIC_LPT1_OR_SPURIOUS_INTERRUPT);
     } else if (int_frame->trap_number == 32) {
+        pic_mask_irq(PIC_PROG_INT_TIMER_INTERRUPT);
         /* PIT is expected to send EOI */
         pit_timer_handle_irq();
     } else if (int_frame->trap_number == 33) {
+        pic_unmask_irq(PIC_KEYBOARD_INTERRUPT);
         /* keyboard is expected to send EOI */
         keyboard_handle_irq();
+        pic_unmask_irq(PIC_KEYBOARD_INTERRUPT);
     } else {
         /* disable interrupts and hang the system */
         disable_interrupts();
@@ -210,9 +217,12 @@ void interrupt_handler(interrupt_stack_frame_t *int_frame) {
         }
     }
 
-	/* check if there are peding tasks such as scheduling to be done before returning */
-    if(int_frame->trap_number == 32 && this_rq()->need_resched){
-        schedule(int_frame);
+    /* check if there are peding tasks such as scheduling to be done before returning */
+    if (int_frame->trap_number == 32) {
+        if (this_rq()->need_resched)
+            schedule(int_frame);
+
+        pic_unmask_irq(PIC_PROG_INT_TIMER_INTERRUPT);
     }
 
 }
