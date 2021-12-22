@@ -44,7 +44,7 @@ void keyboard_handle_irq(void) {
     } else {
         event = "released";
     }
-    printk_info("Keyboard %s %u\n", event, scan_code);
+    printk_info("Keyboard %s %u", event, scan_code);
 
     /* Acknowledge that we've received the interrupt */
     pic_send_eoi(PIC_KEYBOARD_INTERRUPT);

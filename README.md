@@ -75,7 +75,8 @@ Forums:
 Books:
 - https://www.amazon.com/Understanding-Linux-Kernel-Third-Daniel/dp/0596005652
 - https://www.amazon.com/Linux-Device-Drivers-Jonathan-Corbet/dp/0596005903/
-- https://www.amazon.com/Hackers-Delight-2nd-Henry-Warren/dp/0321842685 - (thanks [@igorlg](https://github.com/igorlg)) 
+- https://www.amazon.com/Hackers-Delight-2nd-Henry-Warren/dp/0321842685 - (thanks [@igorlg](https://github.com/igorlg))
+- https://www.amazon.com/Understanding-Using-Pointers-Techniques-Management/dp/1449344186 
 
 Existing OSes:
 - https://github.com/beevik/MonkOS
