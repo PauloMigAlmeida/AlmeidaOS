@@ -1,5 +1,7 @@
 # AlmeidaOS
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/6b347fd89f044178aa0638d43a03c3c3)](https://app.codacy.com/gh/PauloMigAlmeida/AlmeidaOS?utm_source=github.com&utm_medium=referral&utm_content=PauloMigAlmeida/AlmeidaOS&utm_campaign=Badge_Grade_Settings)
+
 
 Simple, self-contained, clean code, well-documented, hobbyist 64-bit operating system for Intel and AMD processors. It's written in Assembly (Intel syntax) and C (GNU99 Standard) in which I strive for adding comments to the source code as much as possible so it could be used as a reference for future OS developers.
 
